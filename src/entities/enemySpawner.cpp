@@ -24,7 +24,7 @@ enemySpawner::enemySpawner(entityManager *manager, gameMain *game, glm::vec3 pos
 
 	// TODO: resource manager
 	if (!spawnerModel) {
-		spawnerModel = loadSceneAsyncCompiled(manager->engine, "assets/obj/enemy-spawner.glb");
+		spawnerModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/enemy-spawner.glb");
 	}
 
 	node->transform.position = position;

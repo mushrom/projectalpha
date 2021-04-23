@@ -19,7 +19,7 @@ flag::flag(entityManager *manager, gameMain *game,
 	// TODO: resource manager
 	static gameObject::ptr flagModel = nullptr;
 	if (!flagModel) {
-		flagModel = loadSceneCompiled("assets/obj/flag.glb");
+		flagModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/flag.glb");
 		flagModel->transform.scale = glm::vec3(2.0);
 	}
 

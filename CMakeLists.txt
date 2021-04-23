@@ -8,7 +8,7 @@ if (NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS         "-Wall")
+set(CMAKE_CXX_FLAGS         "-Wall -Wnon-virtual-dtor")
 set(CMAKE_CXX_FLAGS_DEBUG   "-DGAME_BUILD_DEBUG=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-DGAME_BUILD_RELEASE=1 -O2")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
@@ -38,6 +38,8 @@ endif()
 
 set (DEMO_LINK_LIBS)
 set (DEMO_LINK_OPTIONS)
+set (DEMO_PREFIX)
+
 if (ANDROID OR GREND_PATH)
 	# everything needed should be pulled in here
 	find_library(Grend Grend)
@@ -58,7 +60,8 @@ elseif(EMSCRIPTEN)
 # TODO: assume unixen, presumably there'll be different library lookup
 #       stuff for windows/etc
 else()
-	add_compile_options(-DDEMO_PREFIX="${CMAKE_INSTALL_PREFIX}/share/landscape-demo/")
+	#add_compile_options(-DDEMO_PREFIX="${CMAKE_INSTALL_PREFIX}/share/landscape-demo/")
+
 	find_package(PkgConfig REQUIRED)
 	pkg_check_modules(Grend REQUIRED IMPORTED_TARGET grend)
 	list(APPEND DEMO_LINK_LIBS PkgConfig::Grend)
@@ -155,6 +158,14 @@ target_link_libraries(${TARGET_NAME} ${DEMO_LINK_LIBS})
 target_link_options(${TARGET_NAME} PUBLIC ${DEMO_LINK_OPTIONS})
 
 if (PORTABLE_BUILD)
+	target_compile_options(${TARGET_NAME} PUBLIC -DDEMO_PREFIX="./share/proj/")
+else()
+	target_compile_options(${TARGET_NAME} PUBLIC
+	                       -DDEMO_PREFIX="${CMAKE_INSTALL_PREFIX}/share/proj/")
+endif()
+
+
+if (PORTABLE_BUILD)
 	# TODO: should also output a launcher script
 	install(CODE "set(CMAKE_INSTALL_LIBDIR \"${CMAKE_INSTALL_LIBDIR}\")")
 	install(CODE
@@ -175,7 +186,7 @@ if (PORTABLE_BUILD)
 
 		foreach(_lib ${runtime_libs})
 			file(INSTALL
-				DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+				DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
 				TYPE SHARED_LIBRARY
 				FOLLOW_SYMLINK_CHAIN
 				FILES "${_lib}")

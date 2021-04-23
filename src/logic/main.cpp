@@ -432,13 +432,15 @@ void projalphaView::logic(gameMain *game, float delta) {
 void projalphaView::render(gameMain *game) {
 	int winsize_x, winsize_y;
 	SDL_GetWindowSize(game->ctx.window, &winsize_x, &winsize_y);
-	renderFlags flags = game->rend->getLightingFlags();
+	renderFlags flags = game-> rend->getLightingFlags();
 
 	if (input.mode == modes::MainMenu) {
 		renderWorld(game, cam, flags);
 
 		// TODO: need to set post size on resize event..
 		//post->setSize(winsize_x, winsize_y);
+		post->setUniform("exposure", game->rend->exposure);
+		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
 		//input.setMode(modes::Move);
 
@@ -480,6 +482,8 @@ void projalphaView::render(gameMain *game) {
 	} else {
 		// main game mode
 		renderWorld(game, cam, flags);
+		post->setUniform("exposure", game->rend->exposure);
+		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
 
 		Framebuffer().bind();
@@ -583,13 +587,13 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	vgui.newFrame(wx, wy);
 	vgui.menuBegin(wx / 2 - 100, wy / 2 - 100, 200, "Level select");
 
-	static auto maps = listdir("./assets/maps/");
+	static auto maps = listdir(DEMO_PREFIX "assets/maps/");
 
 	for (auto& [name, is_file] : maps) {
 		if (is_file && vgui.menuEntry(name.c_str(), &selected)) {
 			if (vgui.clicked()) {
 				SDL_Log("clicked %s", name.c_str());
-				currentMap = "./assets/maps/" + name;
+				currentMap = DEMO_PREFIX "assets/maps/" + name;
 				//load(game, name);
 				//reset = true; // XXX:
 				input.setMode(modes::Loading);
@@ -641,7 +645,7 @@ int WinMain(void) try {
 #else
 int main(int argc, char *argv[]) try {
 #endif
-	const char *mapfile = "assets/maps/level-test.map";
+	const char *mapfile = DEMO_PREFIX "assets/maps/level-test.map";
 
 	if (argc > 1) {
 		mapfile = argv[1];
