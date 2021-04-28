@@ -17,7 +17,8 @@ boxBullet::boxBullet(entityManager *manager, gameMain *game, glm::vec3 position)
 	if (!model) {
 		// TODO: assets
 		// TODO: resource manager
-		//model = loadSceneCompiled("test-assets/obj/smoothcube.glb");
+		//model = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/ld48/projectile-sphere.glb");
+		//model->transform.scale = glm::vec3(0.5);
 		gameModel::ptr mod = generate_cuboid(0.3, 0.3, 0.3);
 		model = std::make_shared<gameObject>();
 		compileModel("boxProjectile", mod);
@@ -30,13 +31,15 @@ boxBullet::boxBullet(entityManager *manager, gameMain *game, glm::vec3 position)
 void boxSpawner::handleInput(entityManager *manager, entity *ent, inputEvent& ev)
 {
 	if (ev.active && ev.type == inputEvent::types::primaryAction) {
+		TRS transform = ent->node->getTransformTRS();
+
 		std::cerr << "boxSpawner::handleInput(): got here" << std::endl;
-		glm::mat3 noderot = glm::mat3_cast(ent->node->transform.rotation);
+		glm::mat3 noderot = glm::mat3_cast(transform.rotation);
 		glm::vec3 playerrot = noderot*glm::vec3(0, 0, 1);
 
 		//auto box = new boxBullet(manager, manager->engine, ent->node->transform.position + 3.f*ev.data);
 		for (unsigned i = 0; i < 10; i++) {
-			auto box = new boxBullet(manager, manager->engine, ent->node->transform.position + (2.f + i)*playerrot);
+			auto box = new boxBullet(manager, manager->engine, transform.position + (2.f + i)*playerrot);
 
 			rigidBody *body;
 			castEntityComponent(body, manager, box, "rigidBody");

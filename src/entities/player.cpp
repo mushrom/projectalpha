@@ -66,30 +66,51 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 		// TODO: resource cache
 		//playerModel = loadScene(GR_PREFIX "assets/obj/TestGuy/rigged-lowpolyguy.glb");
 		SDL_Log("Loading player model...");
-		playerModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/buff-dude-testanim.glb");
+		//playerModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/buff-dude-testanim.glb");
+		playerModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/ld48/player-cursor.glb");
 		//playerModel = loadSceneCompiled("/home/flux/blender/objects/lowpoly-cc0-guy/low-poly-cc0-guy-fixedimport.gltf");
-		playerModel->transform.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0));
 
-		//playerModel->transform.scale = glm::vec3(0.16f);
-		playerModel->transform.position = glm::vec3(0, -0.5, 0);
+		TRS transform = playerModel->getTransformTRS();
+		transform.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0));
+		//transform.scale = glm::vec3(0.16f);
+		transform.position = glm::vec3(0, -0.5, 0);
+		playerModel->setTransform(transform);
+
 		assert(playerModel != nullptr);
 		SDL_Log("got player model");
 	}
 
-	node->transform.position = position;
+	TRS transform = node->getTransformTRS();
+	transform.position = position;
+	node->setTransform(transform);
 	setNode("model", node, playerModel);
 	//setNode("light", node, std::make_shared<gameLightPoint>());
 	//setNode("light", node, std::make_shared<gameLightPoint>());
 	//auto lit = std::make_shared<gameLightPoint>();
+
 	auto lit = std::make_shared<gameLightSpot>();
-	lit->transform.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0));
-	lit->transform.position = glm::vec3(0, 0, 1);
-	lit->intensity = 200;
+	lit->setTransform((TRS) {
+		.position = glm::vec3(0, 0, 1),
+		.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0)),
+	});
+
+	lit->intensity = 50;
 	lit->is_static = false;
-	lit->casts_shadows = true;
-	setNode("light", node, lit);
-	character = std::make_shared<animatedCharacter>(playerModel);
-	character->setAnimation("idle");
+	//lit->casts_shadows = true;
+	lit->casts_shadows = false;
+
+	auto plit = std::make_shared<gameLightPoint>();
+	plit->diffuse = glm::vec4(0.0, 0.17, 0.46, 1.0);
+	plit->setTransform((TRS) { .position = glm::vec3(0, 0.5, 0), });
+	plit->intensity = 100;
+	plit->radius = 0.75;
+	plit->is_static = false;
+	plit->casts_shadows = false;
+
+	setNode("spotlight", node, lit);
+	setNode("pointlight", node, plit);
+	//character = std::make_shared<animatedCharacter>(playerModel);
+	//character->setAnimation("idle");
 
 	body->registerCollisionQueue(manager->collisions);
 }
@@ -106,10 +127,13 @@ player::player(entityManager *manager,
 		//playerModel = loadScene(GR_PREFIX "assets/obj/TestGuy/rigged-lowpolyguy.glb");
 		SDL_Log("Loading player model...");
 		playerModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/buff-dude-testanim.glb");
-		playerModel->transform.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0));
 
-		//playerModel->transform.scale = glm::vec3(0.16f);
-		playerModel->transform.position = glm::vec3(0, -0.5, 0);
+		TRS transform = playerModel->getTransformTRS();
+		transform.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0));
+		//transform.scale = glm::vec3(0.16f);
+		transform.position = glm::vec3(0, -0.5, 0);
+		playerModel->setTransform(transform);
+
 		//bindCookedMeshes();
 		assert(playerModel != nullptr);
 		SDL_Log("got player model");
@@ -120,14 +144,17 @@ player::player(entityManager *manager,
 	//setNode("light", node, std::make_shared<gameLightPoint>());
 	//auto lit = std::make_shared<gameLightPoint>();
 	auto lit = std::make_shared<gameLightSpot>();
-	lit->transform.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0));
-	lit->transform.position = glm::vec3(0, 0, 1);
+	lit->setTransform((TRS) {
+		.position = glm::vec3(0, 0, 1),
+		.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0)),
+	});
+
 	lit->intensity = 200;
 	lit->is_static = false;
 	lit->casts_shadows = true;
 	setNode("light", node, lit);
 	character = std::make_shared<animatedCharacter>(playerModel);
-	character->setAnimation("idle");
+	//character->setAnimation("idle");
 }
 
 nlohmann::json player::serialize(entityManager *manager) {
@@ -138,10 +165,12 @@ void player::update(entityManager *manager, float delta) {
 	rigidBody *body = castEntityComponent<rigidBody*>(manager, this, "rigidBody");
 	if (!body) return;
 
+	/*
 	glm::vec3 vel = body->phys->getVelocity();
 	if (glm::length(vel) < 2.0) {
 		character->setAnimation("idle");
 	} else {
 		character->setAnimation("walking");
 	}
+	*/
 }

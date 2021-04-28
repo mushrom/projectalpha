@@ -1,0 +1,267 @@
+{
+	"tiles" : [
+		{
+			"name" : "floor-tile-empty",
+			"file" : "floor-tile-empty.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[0, "floor-tile-empty"],
+				[1, "floor-tile-empty"],
+				[2, "floor-tile-empty"],
+				[3, "floor-tile-empty"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-corner-0d",
+			"file" : "ext-corner-0d.gltf",
+			"comment" : "up, left, down, right (1, 0, 3, 2), left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[0, "ext-wall-270d"],
+				[3, "ext-wall-0d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-corner-90d",
+			"file" : "ext-corner-90d.gltf",
+			"adjacent" : [
+				[0, "ext-wall-90d"],
+				[1, "ext-wall-0d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-corner-180d",
+			"file" : "ext-corner-180d.gltf",
+			"comment" : "up, left, down, right (1, 0, 3, 2), left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[2, "ext-wall-90d"],
+				[1, "ext-wall-180d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-corner-270d",
+			"file" : "ext-corner-270d.gltf",
+			"adjacent" : [
+				[3, "ext-wall-180d"],
+				[2, "ext-wall-270d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-corner-270d",
+			"file" : "ext-corner-270d.gltf",
+			"adjacent" : [
+				[3, "ext-wall-180d"],
+				[2, "ext-wall-270d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-wall-0d",
+			"file" : "ext-wall-0d.gltf",
+			"adjacent" : [
+				[1, "ext-wall-0d"],
+				[3, "ext-wall-0d"],
+				[1, "ext-wall-light-0d"],
+				[3, "ext-wall-light-0d"],
+
+				[0, "floor-tile-empty"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-wall-90d",
+			"file" : "ext-wall-90d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[0, "ext-wall-90d"],
+				[2, "ext-wall-90d"],
+
+				[1, "floor-tile-empty"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-wall-180d",
+			"file" : "ext-wall-180d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[1, "ext-wall-180d"],
+				[3, "ext-wall-180d"],
+				[1, "ext-wall-light-180d"],
+				[3, "ext-wall-light-180d"],
+
+				[2, "floor-tile-empty"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-wall-270d",
+			"file" : "ext-wall-270d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[0, "ext-wall-270d"],
+				[2, "ext-wall-270d"],
+
+				[3, "floor-tile-empty"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-wall-light-0d",
+			"file" : "ext-wall-light-0d.gltf",
+			"adjacent" : [
+				[1, "ext-wall-0d"],
+				[3, "ext-wall-0d"],
+				[1, "ext-wall-light-0d"],
+				[3, "ext-wall-light-0d"],
+
+				[0, "floor-tile-empty"]
+			],
+			"weight" : 1
+		},
+		{
+			"name" : "ext-wall-light-180d",
+			"file" : "ext-wall-light-180d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[1, "ext-wall-180d"],
+				[3, "ext-wall-180d"],
+				[1, "ext-wall-light-180d"],
+				[3, "ext-wall-light-180d"],
+
+				[2, "floor-tile-empty"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "hall-wall-0d",
+			"file" : "hall-wall-0d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[0, "floor-tile-empty"],
+
+				[1, "hall-wall-0d"],
+				[3, "hall-wall-0d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "hall-wall-90d",
+			"file" : "hall-wall-90d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[1, "floor-tile-empty"],
+
+				[0, "hall-wall-90d"],
+				[2, "hall-wall-90d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "hall-wall-180d",
+			"file" : "hall-wall-180d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[2, "floor-tile-empty"],
+
+				[1, "hall-wall-180d"],
+				[3, "hall-wall-180d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "hall-wall-270d",
+			"file" : "hall-wall-270d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[3, "floor-tile-empty"],
+
+				[0, "hall-wall-270d"],
+				[2, "hall-wall-270d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-hall-corner-0d",
+			"file" : "ext-hall-corner-0d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[0, "floor-tile-empty"],
+				[3, "floor-tile-empty"],
+
+				[1, "ext-wall-0d"],
+				[1, "hall-wall-0d"],
+				[2, "ext-wall-270d"],
+				[2, "hall-wall-270d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-hall-corner-90d",
+			"file" : "ext-hall-corner-90d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[0, "floor-tile-empty"],
+				[1, "floor-tile-empty"],
+
+				[2, "ext-wall-90d"],
+				[2, "hall-wall-90d"],
+				[3, "ext-wall-0d"],
+				[3, "hall-wall-0d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-hall-corner-180d",
+			"file" : "ext-hall-corner-180d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[1, "floor-tile-empty"],
+				[2, "floor-tile-empty"],
+
+				[0, "ext-wall-90d"],
+				[0, "hall-wall-90d"],
+				[3, "ext-wall-180d"],
+				[3, "hall-wall-180d"]
+			],
+			"weight" : 1
+		},
+
+		{
+			"name" : "ext-hall-corner-270d",
+			"file" : "ext-hall-corner-270d.gltf",
+			"comment" : "left, up, right, down (0, 1, 2, 3)",
+			"adjacent" : [
+				[2, "floor-tile-empty"],
+				[3, "floor-tile-empty"],
+
+				[0, "ext-wall-270d"],
+				[0, "hall-wall-270d"],
+				[1, "ext-wall-180d"],
+				[1, "hall-wall-180d"]
+			],
+			"weight" : 1
+		}
+	]
+}

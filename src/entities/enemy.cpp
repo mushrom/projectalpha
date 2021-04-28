@@ -13,20 +13,23 @@ enemy::enemy(entityManager *manager, gameMain *game, glm::vec3 position)
 {
 	static gameObject::ptr enemyModel = nullptr;
 
-	node->transform.position = position;
+	TRS transform = node->getTransformTRS();
+	transform.position = position;
+	node->setTransform(transform);
+
 	new health(manager, this);
 	new worldHealthbar(manager, this);
 	new projectileCollision(manager, this);
 	new syncRigidBodyXZVelocity(manager, this);
-	auto body = new rigidBodySphere(manager, this, node->transform.position,
-	                                1.0, 0.5);
+	auto body = new rigidBodySphere(manager, this, transform.position, 1.0, 0.5);
 
 	manager->registerComponent(this, "enemy", this);
 
 	// TODO:
 	if (!enemyModel) {
-		enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/test-enemy.glb");
-		enemyModel->transform.scale = glm::vec3(0.25);
+		//enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/test-enemy.glb");
+		enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/ld48/enemy-cube.glb");
+		//enemyModel->transform.scale = glm::vec3(0.25);
 	}
 
 	setNode("model", node, enemyModel);
@@ -43,7 +46,8 @@ enemy::enemy(entityManager *manager, entity *ent, nlohmann::json properties)
 	new worldHealthbar(manager, this);
 	new projectileCollision(manager, this);
 	new syncRigidBodyXZVelocity(manager, this);
-	auto body = new rigidBodySphere(manager, this, node->transform.position,
+	auto body = new rigidBodySphere(manager, this,
+	                                node->getTransformTRS().position,
 	                                1.0, 0.5);
 
 	manager->registerComponent(this, "enemy", this);
@@ -51,7 +55,10 @@ enemy::enemy(entityManager *manager, entity *ent, nlohmann::json properties)
 	// TODO:
 	if (!enemyModel) {
 		enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/test-enemy.glb");
-		enemyModel->transform.scale = glm::vec3(0.25);
+
+		TRS transform = enemyModel->getTransformTRS();
+		transform.scale = glm::vec3(0.25);
+		enemyModel->setTransform(transform);
 	}
 
 	setNode("model", node, enemyModel);
@@ -63,14 +70,14 @@ void enemy::update(entityManager *manager, float delta) {
 	glm::vec3 playerPos;
 
 	entity *playerEnt =
-		findNearest(manager, node->transform.position, {"player"});
+		findNearest(manager, node->getTransformTRS().position, {"player"});
 
 	if (playerEnt) {
-		playerPos = playerEnt->getNode()->transform.position;
+		playerPos = playerEnt->getNode()->getTransformTRS().position;
 	}
 
 	// TODO: should this be a component, a generic chase implementation?
-	glm::vec3 diff = playerPos - node->transform.position;
+	glm::vec3 diff = playerPos - node->getTransformTRS().position;
 	glm::vec3 vel =  glm::normalize(glm::vec3(diff.x, 0, diff.z));
 
 

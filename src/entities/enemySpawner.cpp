@@ -27,7 +27,10 @@ enemySpawner::enemySpawner(entityManager *manager, gameMain *game, glm::vec3 pos
 		spawnerModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/enemy-spawner.glb");
 	}
 
-	node->transform.position = position;
+	TRS transform = node->getTransformTRS();
+	transform.position = position;
+	node->setTransform(transform);
+
 	// TODO: this should just be done as part of creating a rigidBody...
 	body->registerCollisionQueue(manager->collisions);
 	setNode("model", node, spawnerModel);
@@ -43,7 +46,7 @@ enemySpawner::enemySpawner(entityManager *manager,
 	new health(manager, this, 1.f, 1000.f);
 	new worldHealthbar(manager, this);
 	new projectileCollision(manager, this);
-	auto body = new rigidBodySphere(manager, this, node->transform.position,
+	auto body = new rigidBodySphere(manager, this, node->getTransformTRS().position,
 	                                0.0, 1.0);
 
 	manager->registerComponent(this, "enemySpawner", this);
@@ -68,7 +71,8 @@ void enemySpawner::update(entityManager *manager, float delta) {
 	if (curTime - lastSpawn > 2.0f) {
 		lastSpawn = curTime;
 
-		auto en = new enemy(manager, manager->engine, this->node->transform.position);
+		auto en = new enemy(manager, manager->engine,
+		                    this->node->getTransformTRS().position);
 		manager->add(en);
 
 		// if this spawner has an associated team, propagate that to

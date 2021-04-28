@@ -20,10 +20,13 @@ flag::flag(entityManager *manager, gameMain *game,
 	static gameObject::ptr flagModel = nullptr;
 	if (!flagModel) {
 		flagModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/flag.glb");
-		flagModel->transform.scale = glm::vec3(2.0);
+
+		TRS transform = flagModel->getTransformTRS();
+		transform.scale = glm::vec3(2.0);
+		flagModel->setTransform(transform);
 	}
 
-	node->transform.position = position;
+	node->setTransform((TRS) { .position = position, });
 	setNode("model", node, flagModel);
 }
 

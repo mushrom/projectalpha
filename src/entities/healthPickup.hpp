@@ -45,12 +45,21 @@ class healthPickup : public pickup {
 			}
 
 			lit->diffuse = glm::vec4(1, 0, 0, 1); // red
-			model->transform.scale = glm::vec3(0.5);
+
+			{
+				TRS transform = model->getTransformTRS();
+				transform.scale = glm::vec3(0.5);
+				model->setTransform(transform);
+			}
 
 			setNode("model", node, model);
 			setNode("light", node, lit);
 
-			node->transform.position = position;
+			{
+				TRS transform = model->getTransformTRS();
+				transform.position = position;
+				node->setTransform(transform);
+			}
 		}
 
 		virtual void apply(entityManager *manager, entity *ent) const {

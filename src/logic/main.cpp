@@ -49,7 +49,7 @@ using namespace grendx::ecs;
 #include <entities/killedParticles.hpp>
 #include <entities/targetArea.hpp>
 
-#include <logic/landscapeGenerator.hpp>
+#include <logic/wfcGenerator.hpp>
 #include <logic/UI.hpp>
 #include <logic/levelController.hpp>
 
@@ -67,7 +67,7 @@ class abyssDeleter : public entitySystem {
 			//      could be done more efficiently,
 			//      ie. some sort of spatial partitioning
 			for (auto& ent : manager->entities) {
-				if (ent->node->transform.position.y < -100.f) {
+				if (ent->node->getTransformTRS().position.y < -100.f) {
 					manager->remove(ent);
 				}
 			}
@@ -230,7 +230,8 @@ class projalphaView : public gameView {
 		float zoom = 20.f;
 
 		std::unique_ptr<levelController> level;
-		landscapeGenerator landscape;
+		//landscapeGenerator landscape;
+		std::unique_ptr<wfcGenerator> wfcgen;
 		inputHandlerSystem::ptr inputSystem;
 		std::string currentMap = "no map!";
 		std::string loadedMap = "no map loaded either!";
@@ -246,7 +247,8 @@ static glm::vec2 actionpos(0, 0);
 
 projalphaView::projalphaView(gameMain *game)
 	: gameView(),
-	  level(new levelController)
+	  level(new levelController),
+	  wfcgen(new wfcGenerator(game, DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json"))
 {
 #ifdef NO_FLOATING_FB
 	post = renderPostChain::ptr(new renderPostChain(
@@ -311,7 +313,7 @@ projalphaView::projalphaView(gameMain *game)
 
 	auto generatorSys = std::make_shared<landscapeEventSystem>();
 	game->entities->systems["landscapeEvents"] = generatorSys;
-	landscape.setEventQueue(generatorSys->queue);
+	wfcgen->setEventQueue(generatorSys->queue);
 
 	bindCookedMeshes();
 	input.bind(MODAL_ALL_MODES, resizeInputHandler(game, post));
@@ -411,8 +413,9 @@ void projalphaView::logic(gameMain *game, float delta) {
 	entity *playerEnt = findFirst(game->entities.get(), {"player"});
 
 	if (playerEnt) {
-		TRS& transform = playerEnt->getNode()->transform;
-		cam->slide(transform.position - zoom*cam->direction(), 8.f, delta);
+		TRS transform = playerEnt->getNode()->getTransformTRS();
+		cam->slide(transform.position - zoom*cam->direction(), 16.f, delta);
+		wfcgen->setPosition(game, transform.position);
 	}
 
 	game->entities->update(delta);
@@ -571,6 +574,7 @@ void projalphaView::load(gameMain *game, std::string map) {
 				game->state->rootnode = node;
 				setNode("asyncLoaded", node, std::make_shared<gameObject>());
 				setNode("entities", node, game->entities->root);
+				setNode("wfc", node, wfcgen->getNode());
 
 				return true;
 			});
@@ -693,7 +697,7 @@ int main(int argc, char *argv[]) try {
 				std::cerr << "have flag node " << name << std::endl;
 
 				auto f = new flag(game->entities.get(), game,
-								  ptr->transform.position, name);
+								  ptr->getTransformTRS().position, name);
 				game->entities->add(f);
 			});
 	});
@@ -706,7 +710,7 @@ int main(int argc, char *argv[]) try {
 				std::cerr << "have spawner node " << name << std::endl;
 
 				auto en = new enemySpawner(game->entities.get(), game,
-										   ptr->transform.position);
+										   ptr->getTransformTRS().position);
 				new team(game->entities.get(), en, "red");
 				game->entities->add(en);
 			});

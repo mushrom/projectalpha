@@ -14,7 +14,7 @@ void worldHealthbar::draw(entityManager *manager, entity *ent,
 		return;
 
 	float ticks = SDL_GetTicks() / 1000.f;
-	glm::vec3 entpos = ent->getNode()->transform.position + glm::vec3(0, 3, 0);
+	glm::vec3 entpos = ent->getNode()->getTransformTRS().position + glm::vec3(0, 3, 0);
 	glm::vec4 screenpos = cam->worldToScreenPosition(entpos);
 
 	if (entHealth->amount < 1.0 && cam->onScreen(screenpos)) {

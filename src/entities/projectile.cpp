@@ -24,12 +24,14 @@ projectile::projectile(entityManager *manager, gameMain *game, glm::vec3 positio
 	manager->registerComponent(this, "projectile", this);
 
 	// TODO: configurable projectile attributes
-	new rigidBodySphere(manager, this, position, 1.0, 0.15);
+	new rigidBodySphere(manager, this, position, 1.0, 0.25);
 	new projectileDestruct(manager, this);
 	new timedLifetime(manager, this);
 	new syncRigidBodyTransform(manager, this);
 
-	node->transform.position = position;
+	TRS transform = node->getTransformTRS();
+	transform.position = position;
+	node->setTransform(transform);
 }
 
 void projectile::update(entityManager *manager, float delta) {

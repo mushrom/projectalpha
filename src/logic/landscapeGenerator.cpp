@@ -3,16 +3,6 @@
 #include "landscapeGenerator.hpp"
 #include <grend/gameEditor.hpp>
 
-void worldGenerator::setEventQueue(generatorEventQueue::ptr q) {
-	eventQueue = q;
-}
-
-void worldGenerator::emit(generatorEvent ev) {
-	if (eventQueue) {
-		eventQueue->emit(ev);
-	}
-}
-
 static float thing(float x, float y) {
 	return sin(x) + sin(y);
 }
@@ -74,6 +64,8 @@ static const float cellsize = 24.f;
 landscapeGenerator::landscapeGenerator(unsigned seed) {
 	// TODO: do something with the seed
 }
+
+landscapeGenerator::~landscapeGenerator() { }
 
 void landscapeGenerator::generateLandscape(gameMain *game,
                                            glm::vec3 curpos,
@@ -154,7 +146,9 @@ void landscapeGenerator::generateLandscape(gameMain *game,
 					auto ptr = generateHeightmap(cellsize, cellsize, 2.0, coord.x, coord.z, landscapeThing);
 					//auto ptr = generateHeightmap(24, 24, 0.5, coord.x, coord.z, thing);
 					SDL_Log("EEEEEEE: generated model");
-					ptr->transform.position = glm::vec3(coord.x, 0, coord.z);
+					TRS transform = ptr->getTransformTRS();
+					transform.position = glm::vec3(coord.x, 0, coord.z);
+					ptr->setTransform(transform);
 
 					gameMesh::ptr mesh =
 						std::dynamic_pointer_cast<gameMesh>(ptr->getNode("mesh"));

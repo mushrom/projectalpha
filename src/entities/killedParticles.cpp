@@ -12,7 +12,7 @@ killedParticles::~killedParticles() {};
 
 void killedParticles::onEvent(entityManager *manager, entity *ent, float delta) {
 	//auto box = new player(manager, manager->engine, ent->node->transform.position + glm::vec3(0, 0, 1));
-	auto box = new boxParticles(manager, ent->node->transform.position);
+	auto box = new boxParticles(manager, ent->node->getTransformTRS().position);
 
 	manager->add(box);
 }

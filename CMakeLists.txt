@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 project(map-viewer-thing VERSION 0.1)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -9,8 +9,14 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_CXX_FLAGS         "-Wall -Wnon-virtual-dtor")
-set(CMAKE_CXX_FLAGS_DEBUG   "-DGAME_BUILD_DEBUG=1")
-set(CMAKE_CXX_FLAGS_RELEASE "-DGAME_BUILD_RELEASE=1 -O2")
+if (EMSCRIPTEN)
+	# emcc doesn't recognize -Og
+	set(CMAKE_CXX_FLAGS_DEBUG   "-DGAME_BUILD_DEBUG=1 -O2")
+	set(CMAKE_CXX_FLAGS_RELEASE "-DGAME_BUILD_RELEASE=1 -O2")
+else()
+	set(CMAKE_CXX_FLAGS_DEBUG   "-DGAME_BUILD_DEBUG=1 -Og -g")
+	set(CMAKE_CXX_FLAGS_RELEASE "-DGAME_BUILD_RELEASE=1 -O2")
+endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 option(PORTABLE_BUILD "Portable build, include all dependancies in the install" OFF)
@@ -82,10 +88,12 @@ set(LANDSCAPE_DEMO_SRC
 	src/entities/projectile.cpp
 	src/entities/killedParticles.cpp
 
-	src/logic/main.cpp
-	src/logic/landscapeGenerator.cpp
 	src/logic/UI.cpp
+	src/logic/landscapeGenerator.cpp
 	src/logic/levelController.cpp
+	src/logic/main.cpp
+	src/logic/wfcGenerator.cpp
+	src/logic/generatorEvent.cpp
 )
 
 message(STATUS "CMake host: ${CMAKE_HOST_SYSTEM_NAME}")
@@ -153,6 +161,7 @@ install(DIRECTORY assets DESTINATION ${CMAKE_INSTALL_DATADIR}/proj)
 
 target_include_directories(${TARGET_NAME} PUBLIC "${PROJECT_BINARY_DIR}")
 target_include_directories(${TARGET_NAME} PUBLIC src)
+target_include_directories(${TARGET_NAME} PUBLIC wfc/include)
 target_include_directories(${TARGET_NAME} PUBLIC Grend)
 target_link_libraries(${TARGET_NAME} ${DEMO_LINK_LIBS})
 target_link_options(${TARGET_NAME} PUBLIC ${DEMO_LINK_OPTIONS})

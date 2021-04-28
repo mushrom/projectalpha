@@ -23,7 +23,10 @@ targetArea::targetArea(entityManager *manager,
 	static gameObject::ptr areaModel = nullptr;
 	if (!areaModel) {
 		areaModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/hill-sphere.glb");
-		areaModel->transform.scale = glm::vec3(5.f);
+
+		TRS transform = areaModel->getTransformTRS();
+		transform.scale = glm::vec3(5.f);
+		areaModel->setTransform(transform);
 	}
 
 	setNode("model", node, areaModel);

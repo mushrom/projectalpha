@@ -54,7 +54,9 @@ void mouseRotationPoller::update(entityManager *manager, entity *ent) {
 	glm::vec2 diff = pos - center;
 	glm::quat rot(glm::vec3(0, atan2(diff.x, diff.y), 0));
 
-	ent->node->transform.rotation = rot;
+	TRS transform = ent->node->getTransformTRS();
+	transform.rotation = rot;
+	ent->node->setTransform(transform);
 }
 
 void touchMovementHandler::handleEvent(entityManager *manager,
@@ -109,7 +111,9 @@ void touchRotationHandler::handleEvent(entityManager *manager,
 			touchpos = -diff;
 
 			glm::quat rot(glm::vec3(0, atan2(touchpos.x, touchpos.y), 0));
-			ent->node->transform.rotation = rot;
+			TRS transform = ent->node->getTransformTRS();
+			transform.rotation = rot;
+			ent->node->setTransform(transform);
 
 			if (ticks - last_action > 500) {
 				last_action = ticks;

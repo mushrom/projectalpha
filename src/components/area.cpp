@@ -11,14 +11,15 @@ areaOutside::~areaOutside() {};
 areaSystem::~areaSystem() {};
 
 bool areaSphere::inside(entityManager *manager, entity *ent, glm::vec3 pos) {
-	return glm::distance(pos, ent->node->transform.position) < radius;
+	return glm::distance(pos, ent->node->getTransformTRS().position) < radius;
 }
 
 bool areaAABB::inside(entityManager *manager, entity *ent, glm::vec3 pos) {
 	// calculate difference between min/max positions, if the position is
 	// inside the box bounds, all vector components should be positive
-	glm::vec3 bmin = pos - ent->node->transform.position + box.min;
-	glm::vec3 bmax = ent->node->transform.position + box.max - pos;
+	glm::vec3 entpos = ent->node->getTransformTRS().position;
+	glm::vec3 bmin = pos - entpos + box.min;
+	glm::vec3 bmax = entpos + box.max - pos;
 	glm::vec3 amin = min(bmin, bmax);
 
 	return min(min(amin.x, amin.y), amin.z) > 0;
@@ -71,7 +72,7 @@ void areaSystem::update(entityManager *manager, float delta) {
 				auto& [name, comp] = *it;
 
 				if (area *ar = dynamic_cast<area*>(comp)) {
-					if (ar->inside(manager, entit, ent->node->transform.position)) {
+					if (ar->inside(manager, entit, ent->node->getTransformTRS().position)) {
 						areasIn.insert(entit);
 					}
 				}
