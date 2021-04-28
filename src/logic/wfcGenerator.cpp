@@ -101,8 +101,8 @@ void wfcGenerator::parseJson(gameMain *game, std::string filename) {
 
 wfcGenerator::~wfcGenerator() {};
 
-static constexpr int genwidth = 18;
-static constexpr int genheight = 18;
+static constexpr int genwidth = 10;
+static constexpr int genheight = 10;
 static constexpr float cellsize = genwidth*4;
 static constexpr int gridsize = 3;
 
@@ -164,6 +164,12 @@ void wfcGenerator::generate(gameMain *game,
 	static gameObject::ptr grid[gridsize][gridsize];
 	static gameObject::ptr temp[gridsize][gridsize];
 
+	using physvecPtr = std::unique_ptr<std::vector<physicsObject::ptr>>;
+
+	// XXX:
+	static physvecPtr tempobjs[gridsize][gridsize];
+	static physvecPtr gridobjs[gridsize][gridsize];
+
 	gameObject::ptr ret = std::make_shared<gameObject>();
 	std::list<std::future<bool>> futures;
 
@@ -224,6 +230,12 @@ void wfcGenerator::generate(gameMain *game,
 					ptr->setTransform(transform);
 
 					/*
+					auto probe = std::make_shared<gameIrradianceProbe>();
+					probe->setTransform((TRS) { .position = {0, 1, 0}, });
+					setNode("probe", ptr, probe);
+					*/
+
+					/*
 					gameMesh::ptr mesh =
 						std::dynamic_pointer_cast<gameMesh>(ptr->getNode("mesh"));
 					gameMesh *fug = dynamic_cast<gameMesh*>(ptr->getNode("mesh").get());
@@ -235,10 +247,13 @@ void wfcGenerator::generate(gameMain *game,
 						ptr->getNode("mesh").get(), fug, ptr->getNode("mesh")->idString().c_str(), blarg);
 						*/
 
-					auto meh = game->jobs->addDeferred([=, this] {
-						game->phys->addStaticModels(nullptr, ptr, TRS());
-						return true;
-					});
+					//auto meh = game->jobs->addDeferred([=, this] {
+						//game->phys->addStaticModels(nullptr, ptr, TRS(), objs);
+					tempobjs[x][y] = std::make_unique<std::vector<physicsObject::ptr>>();
+
+					game->phys->addStaticModels(nullptr, ptr, transform, *(tempobjs[x][y].get()));
+						//return true;
+					////});
 
 					temp[x][y] = ptr;
 					//fut.wait();
@@ -253,6 +268,7 @@ void wfcGenerator::generate(gameMain *game,
 
 			} else {
 				temp[x][y] = grid[ax][ay];
+				tempobjs[x][y] = std::move(gridobjs[ax][ay]);
 			}
 		}
 	}
@@ -262,30 +278,27 @@ void wfcGenerator::generate(gameMain *game,
 	}
 #endif
 
-#if 1
-	auto meh = game->jobs->addDeferred([&] {
-		for (int x = 0; x < gridsize; x++) {
-			for (int y = 0; y < gridsize; y++) {
+	std::future<bool> syncFutures[gridsize][gridsize];
+	for (int x = 0; x < gridsize; x++) {
+		for (int y = 0; y < gridsize; y++) {
+			syncFutures[x][y] = game->jobs->addDeferred([&, x, y] {
 				grid[x][y] = temp[x][y];
+				gridobjs[x][y] = std::move(tempobjs[x][y]);
+
 				temp[x][y] = nullptr;
 				std::string name = "gen["+std::to_string(int(x))+"]["+std::to_string(int(y))+"]";
 				setNode(name, ret, grid[x][y]);
-			}
+				return true;
+			});
 		}
+	}
 
-		return true;
-	});
-	meh.wait();
+	for (unsigned x = 0; x < gridsize; x++) {
+		for (unsigned y = 0; y < gridsize; y++) {
+			syncFutures[x][y].wait();
+		}
+	}
 
-	/*
-	auto fut = game->jobs->addDeferred([&] {
-		//bindCookedMeshes();
-		return true;
-	});
-
-	fut.wait();
-	*/
-#endif
 	returnValue = ret;
 }
 

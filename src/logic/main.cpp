@@ -235,6 +235,7 @@ class projalphaView : public gameView {
 		inputHandlerSystem::ptr inputSystem;
 		std::string currentMap = "no map!";
 		std::string loadedMap = "no map loaded either!";
+		std::vector<physicsObject::ptr> mapPhysics;
 
 	private:
 		void drawMainMenu(gameMain *game, int wx, int wy);
@@ -329,7 +330,7 @@ projalphaView::projalphaView(gameMain *game)
 #endif
 
 	input.bind(modes::Move, controller::camAngled2DFixed(cam, game, -M_PI/4.f));
-	input.bind(modes::Move, [=] (SDL_Event& ev, unsigned flags) {
+	input.bind(modes::Move, [=, this] (SDL_Event& ev, unsigned flags) {
 		inputSystem->handleEvent(game->entities.get(), ev);
 		return MODAL_NO_CHANGE;
 	});
@@ -557,17 +558,20 @@ void projalphaView::load(gameMain *game, std::string map) {
 
 		currentMap = map;
 		//game->state->rootnode = loadMapCompiled(game, map);
-		game->jobs->addAsync([=] () {
+		game->jobs->addAsync([=, this] () {
 			//auto [node, models] = loadMapData(game, map);
 			auto mapdata = loadMapData(game, map);
 			auto node = mapdata.first;
 			auto models = mapdata.second;
 
-			game->phys->addStaticModels(nullptr, // TODO: some sort of world entity
-			                            node,
-			                            staticPosition);
+			game->jobs->addDeferred([=, this] () {
+				// TODO: some sort of world entity
+				mapPhysics.clear();
+				game->phys->addStaticModels(nullptr,
+				                            node,
+				                            staticPosition,
+				                            mapPhysics);
 
-			game->jobs->addDeferred([=] () {
 				compileModels(models);
 
 				level->reset();

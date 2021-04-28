@@ -192,7 +192,9 @@ void landscapeGenerator::generateLandscape(gameMain *game,
 					float baseElevation = landscapeThing(coord.x, coord.z);
 					int randtrees = (posgrad.x + 1.0)*0.5 * 5 * (1.0 - baseElevation/50.0);
 
-					game->phys->addStaticModels(nullptr, foo, TRS());
+					// XXX: broken
+					std::vector<physicsObject::ptr> objs;
+					game->phys->addStaticModels(nullptr, foo, TRS(), objs);
 
 					gameParticles::ptr parts = std::make_shared<gameParticles>(32);
 					parts->activeInstances = randtrees;
