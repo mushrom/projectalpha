@@ -14,6 +14,7 @@ using namespace grendx::ecs;
 class boxBullet : public projectile {
 	public:
 		boxBullet(entityManager *manager, gameMain *game, glm::vec3 position);
+		virtual ~boxBullet();
 };
 
 class boxSpawner : public inputHandler {
@@ -26,6 +27,7 @@ class boxSpawner : public inputHandler {
 		{
 			manager->registerComponent(ent, "boxSpawner", this);
 		}
+		virtual ~boxSpawner();
 
 		virtual void
 		handleInput(entityManager *manager, entity *ent, inputEvent& ev);

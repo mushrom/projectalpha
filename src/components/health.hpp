@@ -21,6 +21,7 @@ class health : public component {
 		{
 			manager->registerComponent(ent, "health", this);
 		};
+		virtual ~health();
 
 		virtual float damage(float damage) {
 			amount = max(0.0, amount - damage/hp);

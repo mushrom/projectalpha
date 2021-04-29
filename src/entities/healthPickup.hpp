@@ -61,6 +61,7 @@ class healthPickup : public pickup {
 				node->setTransform(transform);
 			}
 		}
+		virtual ~healthPickup();
 
 		virtual void apply(entityManager *manager, entity *ent) const {
 			//health *enthealth = manager->getEnt
@@ -89,6 +90,7 @@ class healthPickupCollision : public collisionHandler {
 			damage = _damage;
 			manager->registerComponent(ent, "healthPickupCollision", this);
 		}
+		virtual ~healthPickupCollision();
 
 		virtual void
 		onCollision(entityManager *manager, entity *ent,

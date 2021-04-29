@@ -5,6 +5,10 @@
 using namespace grendx;
 using namespace grendx::ecs;
 
+// non-virtual destructors for rtti
+healthbar::~healthbar() {};
+worldHealthbar::~worldHealthbar() {};
+
 void worldHealthbar::draw(entityManager *manager, entity *ent,
                           vecGUI& vgui, camera::ptr cam)
 {

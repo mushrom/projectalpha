@@ -8,7 +8,7 @@ if (NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS         "-Wall -Wnon-virtual-dtor")
+set(CMAKE_CXX_FLAGS "-Wall -Wnon-virtual-dtor -Wl,--export-dynamic")
 if (EMSCRIPTEN)
 	# emcc doesn't recognize -Og
 	set(CMAKE_CXX_FLAGS_DEBUG   "-DGAME_BUILD_DEBUG=1 -O2")
@@ -74,15 +74,19 @@ else()
 endif()
 
 set(LANDSCAPE_DEMO_SRC
+	src/components/health.cpp
 	src/components/healthbar.cpp
 	src/components/area.cpp
 	src/components/inputHandler.cpp
 	src/components/boxSpawner.cpp
 	src/components/team.cpp
+	src/components/timedLifetime.cpp
 
 	src/entities/enemy.cpp
 	src/entities/enemySpawner.cpp
+	src/entities/enemyCollision.cpp
 	src/entities/flag.cpp
+	src/entities/healthPickup.cpp
 	src/entities/player.cpp
 	src/entities/targetArea.cpp
 	src/entities/projectile.cpp

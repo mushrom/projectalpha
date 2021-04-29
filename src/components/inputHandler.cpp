@@ -1,5 +1,16 @@
 #include "inputHandler.hpp"
 
+inputHandler::~inputHandler() {};
+rawEventHandler::~rawEventHandler() {};
+inputPoller::~inputPoller() {};
+inputHandlerSystem::~inputHandlerSystem() {};
+controllable::~controllable() {};
+isControlled::~isControlled() {};
+movementHandler::~movementHandler() {};
+mouseRotationPoller::~mouseRotationPoller() {};
+touchMovementHandler::~touchMovementHandler() {};
+touchRotationHandler::~touchRotationHandler() {};
+
 void inputHandlerSystem::update(entityManager *manager, float delta) {
 	auto handlers  = manager->getComponents("inputHandler");
 	// TODO: maybe have seperate system for pollers

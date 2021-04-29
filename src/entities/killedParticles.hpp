@@ -18,6 +18,7 @@ class killedParticles : public entityEventSystem {
 class boxParticles : public entity {
 	public:
 		boxParticles(entityManager *manager, glm::vec3 pos);
+		virtual ~boxParticles();
 		virtual void update(entityManager *manager, float delta);
 
 		gameBillboardParticles::ptr parts;

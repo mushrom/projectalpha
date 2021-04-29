@@ -7,6 +7,9 @@ static channelBuffers_ptr sfx = nullptr;
 
 using namespace grendx;
 
+boxBullet::~boxBullet() {};
+boxSpawner::~boxSpawner() {};
+
 boxBullet::boxBullet(entityManager *manager, gameMain *game, glm::vec3 position)
 	: projectile(manager, game, position)
 {

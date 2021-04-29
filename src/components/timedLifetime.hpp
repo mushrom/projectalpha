@@ -27,6 +27,8 @@ class timedLifetime : public component {
 			startTime = SDL_GetTicks() / 1000.f;
 		}
 
+		virtual ~timedLifetime();
+
 		virtual void
 		checkLifetime(entityManager *manager, entity *ent, float curTime) {
 			if (startTime + lifetime < curTime) {
@@ -39,6 +41,8 @@ class lifetimeSystem : public entitySystem {
 	public:
 		typedef std::shared_ptr<lifetimeSystem> ptr;
 		typedef std::weak_ptr<lifetimeSystem>   weakptr;
+
+		virtual ~lifetimeSystem();
 
 		virtual void update(entityManager *manager, float delta) {
 			float curTime = SDL_GetTicks() / 1000.f;

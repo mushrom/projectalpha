@@ -9,6 +9,7 @@
 
 // destructor for rtti
 killedParticles::~killedParticles() {};
+boxParticles::~boxParticles() {};
 
 void killedParticles::onEvent(entityManager *manager, entity *ent, float delta) {
 	//auto box = new player(manager, manager->engine, ent->node->transform.position + glm::vec3(0, 0, 1));

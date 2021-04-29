@@ -34,6 +34,7 @@ class inputHandler : public component {
 		{
 			manager->registerComponent(ent, "inputHandler", this);
 		}
+		virtual ~inputHandler();
 
 		virtual void
 		handleInput(entityManager *manager, entity *ent, inputEvent& ev) {
@@ -48,6 +49,7 @@ class rawEventHandler : public component {
 		{
 			manager->registerComponent(ent, "rawEventHandler", this);
 		}
+		virtual ~rawEventHandler();
 
 		virtual void
 		handleEvent(entityManager *manager, entity *ent, SDL_Event& ev) {
@@ -62,6 +64,7 @@ class inputPoller : public component {
 		{
 			manager->registerComponent(ent, "inputPoller", this);
 		}
+		virtual ~inputPoller();
 
 		virtual void update(entityManager *manager, entity *ent) = 0;
 };
@@ -70,6 +73,8 @@ class inputHandlerSystem : public entitySystem {
 	public:
 		typedef std::shared_ptr<inputHandlerSystem> ptr;
 		typedef std::weak_ptr<inputHandlerSystem>   weakptr;
+
+		virtual ~inputHandlerSystem();
 
 		virtual void update(entityManager *manager, float delta);
 		virtual void handleEvent(entityManager *manager, SDL_Event& ev);
@@ -84,6 +89,7 @@ class controllable : public component {
 		{
 			manager->registerComponent(ent, "controllable", this);
 		}
+		virtual ~controllable();
 
 		void handleInput(inputEvent& ev);
 };
@@ -96,6 +102,7 @@ class isControlled : public component {
 		{
 			manager->registerComponent(ent, "isControlled", this);
 		}
+		virtual ~isControlled();
 };
 
 class movementHandler : public inputHandler {
@@ -112,6 +119,7 @@ class movementHandler : public inputHandler {
 		{
 			manager->registerComponent(ent, serializedType, this);
 		}
+		virtual ~movementHandler();
 
 		virtual void
 		handleInput(entityManager *manager, entity *ent, inputEvent& ev) {
@@ -120,7 +128,7 @@ class movementHandler : public inputHandler {
 				castEntityComponent(body, manager, ent, "rigidBody");
 
 				if (body) {
-					body->phys->setVelocity(ev.data * 10.f);
+					body->phys->setVelocity(ev.data * 20.f);
 					lastvel = ev.data;
 				}
 			}
@@ -140,6 +148,7 @@ class mouseRotationPoller : public inputPoller {
 		{
 			manager->registerComponent(ent, "mouseRotationPoller", this);
 		}
+		virtual ~mouseRotationPoller();
 
 		virtual void update(entityManager *manager, entity *ent);
 };
@@ -157,7 +166,7 @@ class touchMovementHandler : public rawEventHandler {
 		{
 			manager->registerComponent(ent, "touchMovementHandler", this);
 		}
-		virtual ~touchMovementHandler() {};
+		virtual ~touchMovementHandler();
 
 		virtual void handleEvent(entityManager *manager, entity *ent, SDL_Event& ev);
 
@@ -179,7 +188,7 @@ class touchRotationHandler : public rawEventHandler {
 		{
 			manager->registerComponent(ent, "touchRotationHandler", this);
 		}
-		virtual ~touchRotationHandler() {};
+		virtual ~touchRotationHandler();
 
 		virtual void handleEvent(entityManager *manager, entity *ent, SDL_Event& ev);
 

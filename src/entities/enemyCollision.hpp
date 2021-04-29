@@ -21,6 +21,8 @@ class enemyCollision : public collisionHandler {
 			manager->registerComponent(ent, "enemyCollision", this);
 		}
 
+		virtual ~enemyCollision();
+
 		virtual void
 		onCollision(entityManager *manager, entity *ent,
 		            entity *other, collision& col)

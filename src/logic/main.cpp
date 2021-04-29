@@ -416,7 +416,7 @@ void projalphaView::logic(gameMain *game, float delta) {
 	if (playerEnt) {
 		TRS transform = playerEnt->getNode()->getTransformTRS();
 		cam->slide(transform.position - zoom*cam->direction(), 16.f, delta);
-		wfcgen->setPosition(game, transform.position);
+		//wfcgen->setPosition(game, transform.position);
 	}
 
 	game->entities->update(delta);
@@ -578,7 +578,7 @@ void projalphaView::load(gameMain *game, std::string map) {
 				game->state->rootnode = node;
 				setNode("asyncLoaded", node, std::make_shared<gameObject>());
 				setNode("entities", node, game->entities->root);
-				setNode("wfc", node, wfcgen->getNode());
+				//setNode("wfc", node, wfcgen->getNode());
 
 				return true;
 			});
