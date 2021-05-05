@@ -7,6 +7,8 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 
+using namespace wfc;
+
 wfcGenerator::wfcGenerator(gameMain *game, std::string spec, unsigned seed) {
 	//parseJson(DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json");
 	parseJson(game, spec);
@@ -43,7 +45,7 @@ void wfcGenerator::parseJson(gameMain *game, std::string filename) {
 	stateClass.states.insert(0);
 	models.push_back(nullptr);
 
-	for (unsigned i = 0; i < statedef::sockets; i++) {
+	for (unsigned i = 0; i < StateDef::Sockets; i++) {
 		// empty space, empty space can connect with itself in every direction
 		stateClass.socketmap[i][0].setState(0);
 	}
@@ -83,7 +85,7 @@ void wfcGenerator::parseJson(gameMain *game, std::string filename) {
 	}
 
 #if 1
-	for (unsigned dir = 0; dir < statedef::sockets; dir++) {
+	for (unsigned dir = 0; dir < StateDef::Sockets; dir++) {
 		for (auto& em : stateClass.states) {
 			auto& smap = stateClass.socketmap[dir];
 
@@ -103,17 +105,84 @@ wfcGenerator::~wfcGenerator() {};
 
 static constexpr int genwidth = 10;
 static constexpr int genheight = 10;
-static constexpr float cellsize = genwidth*4;
+static constexpr float cellsize = (genwidth - 1)*4;
 static constexpr int gridsize = 3;
+
+static inline void copyX(wfcGenerator::WfcImpl *a, wfcGenerator::WfcImpl *b, bool dir) {
+	std::cerr << "copying X!" << std::endl;
+
+	for (size_t x = 0; x < 10; x++) {
+		size_t lower = x;
+		size_t upper = (genheight - 1)*genwidth + x;
+
+		size_t to_idx   = dir? upper : lower;
+		size_t from_idx = dir? lower : upper;
+
+		if (b->gridState.tiles[from_idx].countStates() > 1) {
+			std::cerr << "Probably invalid! (copyX)" << std::endl;
+		}
+
+		if (b->gridState.tiles[from_idx].countStates() == 0) {
+			std::cerr << "zero tile! (copyX)" << std::endl;
+		}
+
+		a->gridState.tiles[to_idx] = b->gridState.tiles[from_idx];
+	}
+}
+
+static inline void copyZ(wfcGenerator::WfcImpl *a, wfcGenerator::WfcImpl *b, bool dir) {
+	for (size_t z = 0; z < 10; z++) {
+		size_t lower = z * genwidth;
+		size_t upper = (z * genwidth) + (genwidth - 1);
+
+		size_t to_idx   = dir? upper : lower;
+		size_t from_idx = dir? lower : upper;
+
+		a->gridState.tiles[to_idx] = b->gridState.tiles[from_idx];
+	}
+}
+
+wfcGenerator::WfcImpl *wfcGenerator::getSector(const wfcGenerator::Coord& coord) {
+	WfcImpl *ret = nullptr;
+	auto it = sectors.find(coord);
+	const auto& [cx, cy, cz] = coord;
+
+	if (it == sectors.end() || it->second == nullptr) {
+		std::cerr << "Generating new sector!" << std::endl;
+		sectors[coord].reset(new WfcImpl(stateClass));
+		//sectors[coord] = std::make_shared<WfcImpl>(stateClass);
+		sectors[coord]->backtrackDepth = 5;
+
+		for (int x = -1; x <= 1; x += 2) {
+			auto other = sectors.find({cx + x*cellsize, cy, cz});
+
+			if (other != sectors.end() && other->second != nullptr) {
+				copyZ(sectors[coord].get(), other->second.get(), x > 0);
+			}
+		}
+
+		for (int z = -1; z <= 1; z += 2) {
+			auto other = sectors.find({cx, cy, cz + z*cellsize});
+
+			if (other != sectors.end() && other->second != nullptr) {
+				copyX(sectors[coord].get(), other->second.get(), z > 0);
+			}
+		}
+	}
+
+	ret = sectors[coord].get();
+
+	return ret;
+}
 
 gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
 	gameObject::ptr ret = std::make_shared<gameObject>();
-	wfc<statedef, genwidth, genheight> wfcgrid(stateClass);
-	wfcgrid.backtrackDepth = 5;
+	WfcImpl *wfcgrid = getSector({x, y, z});
+	//WFCSolver<StateDef, genwidth, genheight> wfcgrid(stateClass);
 
 	bool valid = true;
 	for (bool running = true; running && valid;) {
-		auto [r, v] = wfcgrid.iterate();
+		auto [r, v] = wfcgrid->iterate();
 		running = r, valid = v;
 
 		if (!valid) {
@@ -122,10 +191,9 @@ gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
 	}
 
 	if (valid) {
-		for (size_t x = 0; x < genwidth; x++) {
-			for (size_t y = 0; y < genheight; y++) {
-				auto& tile = wfcgrid.gridState.tiles[y*genwidth + x];
-				auto  count = tile.countStates();
+		for (size_t gx = 0; gx < genwidth - 1; gx++) {
+			for (size_t gy = 0; gy < genheight - 1; gy++) {
+				auto& tile = wfcgrid->gridState.tiles[gy*genwidth + gx];
 
 				for (auto& em : tile) {
 					// BIG XXX: avoid accessing shared pointer from multiple
@@ -134,13 +202,13 @@ gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
 					std::lock_guard g(mtx);
 
 					std::string objname = std::string("tile")
-						+ "[" + std::to_string(x) + "]" 
-						+ "[" + std::to_string(y) + "]";
+						+ "[" + std::to_string(gx) + "]" 
+						+ "[" + std::to_string(gy) + "]";
 
 					if (em) {
 						gameObject::ptr nobj = std::make_shared<gameObject>();
 						TRS transform = nobj->getTransformTRS();
-						transform.position = glm::vec3(4*x, 0, 4*y);
+						transform.position = glm::vec3(4*gx, 0, 4*gy);
 						nobj->setTransform(transform);
 
 						setNode("model", nobj, models[em]);
@@ -216,11 +284,13 @@ void wfcGenerator::generate(gameMain *game,
 				SDL_Log("CCCCCCCC: generating coord (%g, %g)", coord.x, coord.z);
 
 				// TODO: reaaaaallly need to split this up
-				futures.push_back(game->jobs->addAsync([=] {
+				//futures.push_back(game->jobs->addAsync([=, this] {
+				{
+
 					SDL_Log("DDDDDDD: got here, from the future (%g, %g)",
 							coord.x, coord.z);
 					//auto ptr = generateHeightmap(cellsize, cellsize, 2.0, coord.x, coord.z, landscapeThing);
-					auto ptr = genCell(coord.x, coord.z, 0);
+					auto ptr = genCell(coord.x, 0, coord.z);
 
 					//auto ptr = generateHeightmap(24, 24, 0.5, coord.x, coord.z, thing);
 					SDL_Log("EEEEEEE: generated model");
@@ -257,8 +327,9 @@ void wfcGenerator::generate(gameMain *game,
 
 					temp[x][y] = ptr;
 					//fut.wait();
-					return true;
-				}));
+					//return true;
+				}
+				//}));
 
 				emit((generatorEvent) {
 					.type = generatorEvent::types::generated,
@@ -322,7 +393,7 @@ void wfcGenerator::setPosition(gameMain *game, glm::vec3 position) {
 			return true;
 		});
 		*/
-		genjob = game->jobs->addAsync([=] {
+		genjob = game->jobs->addAsync([=, this] {
 			generate(game, curpos, npos);
 			return true;
 		});
