@@ -9,9 +9,34 @@
 
 using namespace wfc;
 
+static constexpr int genwidth = 10;
+static constexpr int genheight = 10;
+static constexpr float cellsize = (genwidth - 1)*4;
+static constexpr int gridsize = 3;
+static constexpr int foo = (genwidth - 1)*4;
+
 wfcGenerator::wfcGenerator(gameMain *game, std::string spec, unsigned seed) {
 	//parseJson(DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json");
 	parseJson(game, spec);
+
+	// XXX: initialize a parameter of empty sectors around the map, to limit
+	//      the map size (should result in walls at boundary)
+	for (int i = -gridsize; i < gridsize; i++) {
+		for (auto c : {wfcGenerator::Coord { i*foo,        0,  gridsize*foo},
+		               wfcGenerator::Coord { gridsize*foo, 0,  i*foo},
+		               wfcGenerator::Coord { i*foo,        0, -gridsize*foo},
+		               wfcGenerator::Coord {-gridsize*foo, 0,  i*foo}})
+		{
+			sectors[c].reset(new WfcImpl(stateClass));
+			auto& wfcgrid = sectors[c];
+			for (unsigned x = 0; x < genwidth; x++) {
+				for (unsigned z = 0; z < genheight; z++) {
+					wfcgrid->gridState.tiles[z*genheight + x].clearStates();
+					wfcgrid->gridState.tiles[z*genheight + x].setState(0);
+				}
+			}
+		}
+	}
 }
 
 void wfcGenerator::parseJson(gameMain *game, std::string filename) {
@@ -102,11 +127,6 @@ void wfcGenerator::parseJson(gameMain *game, std::string filename) {
 }
 
 wfcGenerator::~wfcGenerator() {};
-
-static constexpr int genwidth = 10;
-static constexpr int genheight = 10;
-static constexpr float cellsize = (genwidth - 1)*4;
-static constexpr int gridsize = 3;
 
 static inline void copyX(wfcGenerator::WfcImpl *a, wfcGenerator::WfcImpl *b, bool dir) {
 	std::cerr << "copying X!" << std::endl;
