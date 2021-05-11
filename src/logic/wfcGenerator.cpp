@@ -9,16 +9,28 @@
 
 using namespace wfc;
 
-static constexpr int genwidth = 10;
-static constexpr int genheight = 10;
-static constexpr float cellsize = (genwidth - 1)*4;
+static constexpr int genwidth = wfcGenerator::genwidth;
+static constexpr int genheight = wfcGenerator::genheight;
+static constexpr float cellsize = (wfcGenerator::genwidth - 1)*4;
 static constexpr int gridsize = 3;
 static constexpr int foo = (genwidth - 1)*4;
 
-wfcGenerator::wfcGenerator(gameMain *game, std::string spec, unsigned seed) {
+wfcGenerator::wfcGenerator(gameMain *game, std::string specFilename, unsigned seed) {
 	//parseJson(DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json");
-	parseJson(game, spec);
+	spec.reset(new wfcSpec(game, specFilename));
+	generate(game, {});
+	//static std::vector<physicsObject::ptr> mapobjs;
+	//static std::unique_ptr<std::vector<physicsObject::ptr>>
+	//
+	//gameObject::ptr cell = genCell(0, 0, 0);
+	//cell->setTransform({ .position = {-genwidth * 2, 0, -genheight * 2}, });
 
+	//setNode("nodes", root, cell);
+	//TRS foo = cell->getTransformTRS();
+	//game->phys->addStaticModels(nullptr, cell, foo, mapobjs);
+	//mapobjs.clear();
+
+	/*
 	// XXX: initialize a parameter of empty sectors around the map, to limit
 	//      the map size (should result in walls at boundary)
 	for (int i = -gridsize; i < gridsize; i++) {
@@ -37,9 +49,14 @@ wfcGenerator::wfcGenerator(gameMain *game, std::string spec, unsigned seed) {
 			}
 		}
 	}
+	*/
 }
 
-void wfcGenerator::parseJson(gameMain *game, std::string filename) {
+wfcSpec::wfcSpec(gameMain *game, std::string filename) {
+	parseJson(game, filename);
+}
+
+void wfcSpec::parseJson(gameMain *game, std::string filename) {
 	nlohmann::json genspec;
 
 	std::ifstream foo(filename);
@@ -61,8 +78,8 @@ void wfcGenerator::parseJson(gameMain *game, std::string filename) {
 		throw std::logic_error("Couldn't open json wfc spec!");
 	}
 
-	std::map<std::string, size_t> keyidx;
-	std::map<size_t, std::string> idxkey;
+	//std::map<std::string, size_t> keyidx;
+	//std::map<size_t, std::string> idxkey;
 	std::map<size_t, size_t> fooidx;
 
 	auto& tiles = genspec["tiles"];
@@ -85,8 +102,8 @@ void wfcGenerator::parseJson(gameMain *game, std::string filename) {
 			<< " => " << tiles[idx]["name"]
 			<< " @ " << objfname << std::endl;
 
-		keyidx[tiles[idx]["name"]] = vecidx;
-		idxkey[vecidx] = tiles[idx]["name"];
+		nameToState[tiles[idx]["name"]] = vecidx;
+		stateToName[vecidx] = tiles[idx]["name"];
 		fooidx[vecidx] = idx;
 
 		std::string objpath = dirnameStr(filename) + "/" + objfname;
@@ -95,17 +112,17 @@ void wfcGenerator::parseJson(gameMain *game, std::string filename) {
 		models.push_back(loadSceneAsyncCompiled(game, objpath));
 	}
 
-	for (auto& [idx, key] : idxkey) {
+	for (auto& [idx, key] : stateToName) {
 		for (auto& ent : tiles[fooidx[idx]]["adjacent"]) {
 			int dir = ent[0];
 			std::string name = ent[1];
-			unsigned neighbor = keyidx[name];
+			unsigned neighbor = nameToState[name];
 
 			std::cerr << idx << " -> [" << dir << ", " << name
 				<< " (" << neighbor << ")" << "]" << std::endl;
 
-			stateClass.socketmap[dir][idx].setState(keyidx[name]);
-			stateClass.socketmap[(dir + 2)%4][keyidx[name]].setState(idx);
+			stateClass.socketmap[dir][idx].setState(nameToState[name]);
+			stateClass.socketmap[(dir + 2)%4][nameToState[name]].setState(idx);
 		}
 	}
 
@@ -162,47 +179,50 @@ static inline void copyZ(wfcGenerator::WfcImpl *a, wfcGenerator::WfcImpl *b, boo
 	}
 }
 
-wfcGenerator::WfcImpl *wfcGenerator::getSector(const wfcGenerator::Coord& coord) {
-	WfcImpl *ret = nullptr;
-	auto it = sectors.find(coord);
-	const auto& [cx, cy, cz] = coord;
+#include <logic/bspGenerator.hpp>
 
-	if (it == sectors.end() || it->second == nullptr) {
-		std::cerr << "Generating new sector!" << std::endl;
-		sectors[coord].reset(new WfcImpl(stateClass));
-		//sectors[coord] = std::make_shared<WfcImpl>(stateClass);
-		sectors[coord]->backtrackDepth = 5;
+gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
+	gameObject::ptr ret = std::make_shared<gameObject>();
+	//WfcImpl *wfcgrid = getSector({x, y, z});
+	WFCSolver<StateDef, genwidth, genheight> wfcgrid(spec->stateClass);
 
-		for (int x = -1; x <= 1; x += 2) {
-			auto other = sectors.find({cx + x*cellsize, cy, cz});
+	bool valid = true;
+	unsigned attempts = 0;
 
-			if (other != sectors.end() && other->second != nullptr) {
-				copyZ(sectors[coord].get(), other->second.get(), x > 0);
-			}
-		}
+	srand(time(NULL));
 
-		for (int z = -1; z <= 1; z += 2) {
-			auto other = sectors.find({cx, cy, cz + z*cellsize});
 
-			if (other != sectors.end() && other->second != nullptr) {
-				copyX(sectors[coord].get(), other->second.get(), z > 0);
+retry:
+	bsp::bspGen<genwidth, genheight> mapskel;
+	uint8_t mapdata[genwidth * genheight];
+
+	memset(mapdata, 0, sizeof(mapdata));
+	mapskel.genSplits(7);
+	mapskel.connectNodes(mapskel.root, mapdata, 24);
+
+	for (size_t bx = 0; bx < genwidth; bx++) {
+		for (size_t by = 0; by < genheight; by++) {
+			if (mapdata[by*genwidth + bx]) {
+				//wfcgrid.gridState.tiles[by*genwidth + bx].clearStates();
+				//wfcgrid.gridState.tiles[by*genwidth + bx].setState(spec->nameToState["floor-tile-empty"]);
+				wfcgrid.setTile(bx, by, spec->nameToState["floor-tile-empty"]);
 			}
 		}
 	}
 
-	ret = sectors[coord].get();
+	for (unsigned idx = 0; idx < genwidth && idx < genheight; idx++) {
+		for (auto c : { idx,
+		                idx*genwidth,
+		                idx*genwidth + (genwidth - 1),
+		                genheight*(genwidth - 1) + idx })
+		{
+			wfcgrid.gridState.tiles[c].clearStates();
+			wfcgrid.gridState.tiles[c].setState(0);
+		}
+	}
 
-	return ret;
-}
-
-gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
-	gameObject::ptr ret = std::make_shared<gameObject>();
-	WfcImpl *wfcgrid = getSector({x, y, z});
-	//WFCSolver<StateDef, genwidth, genheight> wfcgrid(stateClass);
-
-	bool valid = true;
 	for (bool running = true; running && valid;) {
-		auto [r, v] = wfcgrid->iterate();
+		auto [r, v] = wfcgrid.iterate();
 		running = r, valid = v;
 
 		if (!valid) {
@@ -210,190 +230,64 @@ gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
 		}
 	}
 
-	if (valid) {
+	if (!valid && attempts < 50) {
+		wfcgrid.reset();
+		attempts++;
+		valid = true;
+		goto retry;
+
+	} else {
+		static std::mutex mtx;
+		std::lock_guard g(mtx);
+
 		for (size_t gx = 0; gx < genwidth - 1; gx++) {
 			for (size_t gy = 0; gy < genheight - 1; gy++) {
-				auto& tile = wfcgrid->gridState.tiles[gy*genwidth + gx];
+				auto& tile = wfcgrid.gridState.tiles[gy*genwidth + gx];
 
 				for (auto& em : tile) {
 					// BIG XXX: avoid accessing shared pointer from multiple
 					//          threads (assignment increases use count)
-					static std::mutex mtx;
-					std::lock_guard g(mtx);
-
-					std::string objname = std::string("tile")
-						+ "[" + std::to_string(gx) + "]" 
-						+ "[" + std::to_string(gy) + "]";
-
 					if (em) {
+						std::string objname = std::string("tile")
+							+ "[" + std::to_string(gx) + "]" 
+							+ "[" + std::to_string(gy) + "]";
+
 						gameObject::ptr nobj = std::make_shared<gameObject>();
 						TRS transform = nobj->getTransformTRS();
 						transform.position = glm::vec3(4*gx, 0, 4*gy);
 						nobj->setTransform(transform);
 
-						setNode("model", nobj, models[em]);
+						setNode("model", nobj, spec->models[em]);
 						setNode(objname, ret, nobj);
+						break;
 					}
 				}
 			}
 		}
-
-	} else {
-		SDL_Log("Couldn't generate new tile!");
 	}
 
 	return ret;
 }
 
 void wfcGenerator::generate(gameMain *game,
-                            glm::vec3 curpos,
-                            glm::vec3 lastpos)
+                            std::vector<glm::vec3> entries)
 {
-	static gameObject::ptr grid[gridsize][gridsize];
-	static gameObject::ptr temp[gridsize][gridsize];
-
-	using physvecPtr = std::unique_ptr<std::vector<physicsObject::ptr>>;
-
-	// XXX:
-	static physvecPtr tempobjs[gridsize][gridsize];
-	static physvecPtr gridobjs[gridsize][gridsize];
-
-	gameObject::ptr ret = std::make_shared<gameObject>();
-	std::list<std::future<bool>> futures;
-
-	glm::vec3 diff = curpos - lastpos;
-	float off = cellsize * (gridsize / 2);
-	SDL_Log("curpos != genpos, diff: (%g, %g, %g)", diff.x, diff.y, diff.z);
-
-#if 1
-	for (int x = 0; x < gridsize; x++) {
-		for (int y = 0; y < gridsize; y++) {
-			int ax = x + diff.x;
-			int ay = y + diff.z;
-
-			if (grid[x][y] == nullptr
-			    || ax >= gridsize || ax < 0
-			    || ay >= gridsize || ay < 0)
-			{
-				glm::vec3 coord =
-					(curpos * cellsize)
-					- glm::vec3(off, 0, off)
-					+ glm::vec3(x*cellsize, 0, y*cellsize);
-
-				glm::vec3 prev =
-					(lastpos * cellsize)
-					- glm::vec3(off, 0, off)
-					+ glm::vec3(x*cellsize, 0, y*cellsize);
-
-				if (grid[x][y]) {
-					// don't emit delete if there's no model there
-					// (ie. on startup)
-					emit((generatorEvent) {
-							.type = generatorEvent::types::deleted,
-							.position = prev + glm::vec3(cellsize*0.5, 0, cellsize*0.5),
-							.extent = glm::vec3(cellsize * 0.5f, HUGE_VALF, cellsize*0.5f),
-					});
-				}
-
-				emit((generatorEvent) {
-					.type = generatorEvent::types::generatorStarted,
-					.position = coord + glm::vec3(cellsize*0.5, 0, cellsize*0.5),
-					.extent = glm::vec3(cellsize * 0.5f, HUGE_VALF, cellsize*0.5f),
-				});
-
-				SDL_Log("CCCCCCCC: generating coord (%g, %g)", coord.x, coord.z);
-
-				// TODO: reaaaaallly need to split this up
-				//futures.push_back(game->jobs->addAsync([=, this] {
-				{
-
-					SDL_Log("DDDDDDD: got here, from the future (%g, %g)",
-							coord.x, coord.z);
-					//auto ptr = generateHeightmap(cellsize, cellsize, 2.0, coord.x, coord.z, landscapeThing);
-					auto ptr = genCell(coord.x, 0, coord.z);
-
-					//auto ptr = generateHeightmap(24, 24, 0.5, coord.x, coord.z, thing);
-					SDL_Log("EEEEEEE: generated model");
-					//ptr->getTransformTRS().position = glm::vec3(coord.x, 0, coord.z);
-					TRS transform = ptr->getTransformTRS();
-					transform.position = glm::vec3(coord.x, 0, coord.z);
-					ptr->setTransform(transform);
-
-					/*
-					auto probe = std::make_shared<gameIrradianceProbe>();
-					probe->setTransform((TRS) { .position = {0, 1, 0}, });
-					setNode("probe", ptr, probe);
-					*/
-
-					/*
-					gameMesh::ptr mesh =
-						std::dynamic_pointer_cast<gameMesh>(ptr->getNode("mesh"));
-					gameMesh *fug = dynamic_cast<gameMesh*>(ptr->getNode("mesh").get());
-
-					gameMesh *blarg = (gameMesh*)ptr->getNode("mesh").get();
-
-					SDL_Log("EEEEEEE.v2: has node: %d, mesh ptr: %p, source ptr: %p, other? %p, id: %s, blarg: %p",
-						ptr->hasNode("mesh"), mesh.get(),
-						ptr->getNode("mesh").get(), fug, ptr->getNode("mesh")->idString().c_str(), blarg);
-						*/
-
-					//auto meh = game->jobs->addDeferred([=, this] {
-						//game->phys->addStaticModels(nullptr, ptr, TRS(), objs);
-					tempobjs[x][y] = std::make_unique<std::vector<physicsObject::ptr>>();
-
-					game->phys->addStaticModels(nullptr, ptr, transform, *(tempobjs[x][y].get()));
-						//return true;
-					////});
-
-					temp[x][y] = ptr;
-					//fut.wait();
-					//return true;
-				}
-				//}));
-
-				emit((generatorEvent) {
-					.type = generatorEvent::types::generated,
-					.position = coord + glm::vec3(cellsize*0.5, 0, cellsize*0.5),
-					.extent = glm::vec3(cellsize*0.5f, HUGE_VALF, cellsize*0.5f),
-				});
-
-			} else {
-				temp[x][y] = grid[ax][ay];
-				tempobjs[x][y] = std::move(gridobjs[ax][ay]);
-			}
-		}
-	}
-
-	for (auto& fut : futures) {
-		fut.wait();
-	}
-#endif
-
-	std::future<bool> syncFutures[gridsize][gridsize];
-	for (int x = 0; x < gridsize; x++) {
-		for (int y = 0; y < gridsize; y++) {
-			syncFutures[x][y] = game->jobs->addDeferred([&, x, y] {
-				grid[x][y] = temp[x][y];
-				gridobjs[x][y] = std::move(tempobjs[x][y]);
-
-				temp[x][y] = nullptr;
-				std::string name = "gen["+std::to_string(int(x))+"]["+std::to_string(int(y))+"]";
-				setNode(name, ret, grid[x][y]);
-				return true;
-			});
-		}
-	}
-
-	for (unsigned x = 0; x < gridsize; x++) {
-		for (unsigned y = 0; y < gridsize; y++) {
-			syncFutures[x][y].wait();
-		}
-	}
-
-	returnValue = ret;
+	auto cell = genCell(0, 0, 0);
+	cell->setTransform({ .position = {-genwidth * 2, 0, -genheight * 2}, });
+	setNode("nodes", root, cell);
 }
 
 void wfcGenerator::setPosition(gameMain *game, glm::vec3 position) {
+	static bool food = false;
+
+	if (!food) {
+		static std::vector<physicsObject::ptr> *mapobjs;
+		mapobjs = new std::vector<physicsObject::ptr>();
+		game->phys->addStaticModels(nullptr, root, root->getTransformTRS(), *mapobjs);
+		food = true;
+	}
+
+#if 0
 	glm::vec3 curpos = glm::floor((glm::vec3(1, 0, 1)*position)/cellsize);
 
 	if (genjob.valid() && genjob.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
@@ -418,4 +312,5 @@ void wfcGenerator::setPosition(gameMain *game, glm::vec3 position) {
 			return true;
 		});
 	}
+#endif
 }

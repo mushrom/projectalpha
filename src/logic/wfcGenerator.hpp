@@ -21,25 +21,39 @@ using namespace grendx;
 using namespace grendx::ecs;
 using namespace wfc;
 
+using StateDef = stateDefinition2D<staticStateSet<256>>;
+
+class wfcSpec {
+	public:
+		wfcSpec(gameMain *game, std::string filename);
+		void parseJson(gameMain *game, std::string filename);
+
+		StateDef stateClass;
+		std::vector<gameObject::ptr> models;
+
+		std::map<std::string, size_t> nameToState;
+		std::map<size_t, std::string> stateToName;
+		std::map<std::string, std::set<size_t>> tags;
+};
+
 class wfcGenerator : public worldGenerator {
 	public:
+		static constexpr int genwidth  = 32;
+		static constexpr int genheight = 32;
+
 		wfcGenerator(gameMain *game, std::string spec, unsigned seed = 0xcafebabe);
 		virtual ~wfcGenerator();
 		virtual void setPosition(gameMain *game, glm::vec3 position);
 
-		using StateDef = stateDefinition2D<staticStateSet<256>>;
-		using WfcImpl = WFCSolver<StateDef, 10, 10>;
+		using WfcImpl = WFCSolver<StateDef, genwidth, genheight>;
 		using WfcPtr = std::unique_ptr<WfcImpl>;
 		using Coord  = std::tuple<int, int, int>;
 
 	private:
-		StateDef stateClass;
-		std::vector<gameObject::ptr> models;
 		std::map<Coord, WfcPtr> sectors;
+		std::unique_ptr<wfcSpec> spec;
 
-		WfcImpl *getSector(const Coord& coord);
-
-		void generate(gameMain *game, glm::vec3 curpos, glm::vec3 lastpos);
+		void generate(gameMain *game, std::vector<glm::vec3> entries);
 		gameObject::ptr genCell(int x, int y, int z);
 		void parseJson(gameMain *game, std::string filename);
 		std::future<bool> genjob;
