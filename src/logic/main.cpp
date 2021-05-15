@@ -692,6 +692,7 @@ int main(int argc, char *argv[]) try {
 	game->setView(view);
 	game->rend->lightThreshold = 0.2;
 
+	/*
 	// JS flashbacks
 	view->level->addInit([=] () {
 		gameObject::ptr flagnodes = game->state->rootnode->getNode("flags");
@@ -719,11 +720,26 @@ int main(int argc, char *argv[]) try {
 				game->entities->add(en);
 			});
 	});
+	*/
+
+	view->level->addInit([=] () {
+		view->wfcgen->generate(game, {});
+	});
 
 	view->level->addInit([=] () {
 		entity *playerEnt;
+		glm::vec3 pos(-5, 20, -5);
+		gameObject::ptr wfcroot = view->wfcgen->getNode()->getNode("nodes");
 
-		playerEnt = new player(game->entities.get(), game, glm::vec3(-5, 20, -5));
+		if (wfcroot->hasNode("entry")) {
+			TRS transform = wfcroot->getNode("entry")->getTransformTRS();
+			// TODO: need a way to calculate the transform from this node
+			//pos = transform.position + glm::vec3(0, 20, 0) - glm::vec3(64, 0, 64);
+			pos = transform.position + glm::vec3(0, 2, 0);
+			//pos = transform.position;
+		}
+
+		playerEnt = new player(game->entities.get(), game, pos);
 		game->entities->add(playerEnt);
 		new generatorEventHandler(game->entities.get(), playerEnt);
 		new health(game->entities.get(), playerEnt);
@@ -749,6 +765,23 @@ int main(int argc, char *argv[]) try {
 #endif
 	});
 
+	view->level->addInit([=] () {
+		gameObject::ptr wfcroot = view->wfcgen->getNode()->getNode("nodes");
+
+		if (wfcroot && wfcroot->hasNode("leaves")) {
+			gameObject::ptr leafroot = wfcroot->getNode("leaves");
+
+			for (const auto& [name, ptr] : leafroot->nodes) {
+				auto en = new enemy(game->entities.get(),
+				                    game,
+				                    ptr->getTransformTRS().position + glm::vec3(0, 2, 0));
+
+				new team(game->entities.get(), en, "red");
+				game->entities->add(en);
+			}
+		}
+	});
+
 	view->level->addDestructor([=] () {
 		// TODO: should just have reset function in entity manager
 		for (auto& ent : game->entities->entities) {
@@ -758,6 +791,24 @@ int main(int argc, char *argv[]) try {
 		game->entities->clearFreedEntities();
 	});
 
+	view->level->addObjective("Reach exit",
+		[=] () {
+			gameObject::ptr wfcroot = view->wfcgen->getNode()->getNode("nodes");
+			entity *playerEnt = findFirst(game->entities.get(), {"player"});
+
+			if (wfcroot->hasNode("exit") && playerEnt) {
+				TRS exitTrans = wfcroot->getNode("exit")->getTransformTRS();
+				TRS playerTrans = playerEnt->getNode()->getTransformTRS();
+				// TODO: need a way to calculate the transform from this node
+				//glm::vec3 pos = exitTrans.position - glm::vec3(64, 0, 64);
+				//glm::vec3 pos = exitTrans.position - glm::vec3(64, 0, 64);
+				glm::vec3 pos = exitTrans.position;
+				return glm::distance(pos, playerTrans.position) < 3;
+			}
+
+		});
+
+	/*
 	view->level->addObjective("Destroy all robospawners",
 		[=] () {
 			std::set<entity*> spawners
@@ -781,6 +832,7 @@ int main(int argc, char *argv[]) try {
 
 			return std::pair<bool, std::string>(players.size() == 0, "lol u died");
 		});
+		*/
 
 	SDL_Log("Got to game->run()!");
 

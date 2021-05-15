@@ -15,10 +15,17 @@ static constexpr float cellsize = (wfcGenerator::genwidth - 1)*4;
 static constexpr int gridsize = 3;
 static constexpr int foo = (genwidth - 1)*4;
 
+static gameObject::ptr portalModel = nullptr;
+
 wfcGenerator::wfcGenerator(gameMain *game, std::string specFilename, unsigned seed) {
+	if (!portalModel) {
+		portalModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/ld48/portal.glb");
+	}
+
 	//parseJson(DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json");
 	spec.reset(new wfcSpec(game, specFilename));
 	generate(game, {});
+
 	//static std::vector<physicsObject::ptr> mapobjs;
 	//static std::unique_ptr<std::vector<physicsObject::ptr>>
 	//
@@ -106,6 +113,12 @@ void wfcSpec::parseJson(gameMain *game, std::string filename) {
 		stateToName[vecidx] = tiles[idx]["name"];
 		fooidx[vecidx] = idx;
 
+		if (tiles[idx].count("tags")) {
+			for (auto& em : tiles[idx]["tags"]) {
+				tags[em].insert(vecidx);
+			}
+		}
+
 		std::string objpath = dirnameStr(filename) + "/" + objfname;
 		//gameObject::ptr objModel = loadSceneAsyncCompiled(game, objpath);
 		//models.push_back(objModel);
@@ -181,34 +194,97 @@ static inline void copyZ(wfcGenerator::WfcImpl *a, wfcGenerator::WfcImpl *b, boo
 
 #include <logic/bspGenerator.hpp>
 
+static void floodfill(uint8_t *data,
+		int width, int height,
+		int x, int y,
+		uint8_t target, uint8_t replace)
+{
+	if (x >= width || x < 0 || y >= height || y < 0) {
+		return;
+	}
+
+	uint8_t *cur = data + y*width + x;
+
+	if (*cur == target) {
+		*cur = replace;
+
+		floodfill(data, width, height, x + 1, y, target, replace);
+		floodfill(data, width, height, x - 1, y, target, replace);
+		floodfill(data, width, height, x, y + 1, target, replace);
+		floodfill(data, width, height, x, y - 1, target, replace);
+	}
+}
+
 gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
 	gameObject::ptr ret = std::make_shared<gameObject>();
 	//WfcImpl *wfcgrid = getSector({x, y, z});
-	WFCSolver<StateDef, genwidth, genheight> wfcgrid(spec->stateClass);
 
 	bool valid = true;
 	unsigned attempts = 0;
+	std::random_device rd;
+	std::mt19937 g(rd());
 
 	srand(time(NULL));
 
 
 retry:
+	WFCSolver<StateDef, genwidth, genheight> wfcgrid(spec->stateClass);
 	bsp::bspGen<genwidth, genheight> mapskel;
 	uint8_t mapdata[genwidth * genheight];
 
 	memset(mapdata, 0, sizeof(mapdata));
 	mapskel.genSplits(7);
-	mapskel.connectNodes(mapskel.root, mapdata, 24);
+	mapskel.connectNodes(mapskel.root, mapdata, 20);
 
-	for (size_t bx = 0; bx < genwidth; bx++) {
-		for (size_t by = 0; by < genheight; by++) {
-			if (mapdata[by*genwidth + bx]) {
-				//wfcgrid.gridState.tiles[by*genwidth + bx].clearStates();
-				//wfcgrid.gridState.tiles[by*genwidth + bx].setState(spec->nameToState["floor-tile-empty"]);
-				wfcgrid.setTile(bx, by, spec->nameToState["floor-tile-empty"]);
+	auto leaves = mapskel.getLeafCenters();
+
+	std::shuffle(leaves.begin(), leaves.end(), g);
+
+	auto& entry = leaves[0];
+
+	//mapdata[entry.second*genwidth + entry.first] = 0xe0;
+	floodfill(mapdata, genwidth, genheight, entry.first, entry.second, 0xff, 0xe0);
+
+	auto exitpoint = entry;
+	bool connects = false;
+
+	for (unsigned i = 1; i < leaves.size(); i++) {
+		auto& leaf = leaves[i];
+		auto dist = [] (auto& a, auto& b) {
+			return abs(a.first - b.first) + abs(a.second - b.second);
+		};
+
+		if (mapdata[leaf.second*genwidth + leaf.first] == 0xe0) {
+			int curdist = dist(exitpoint, entry);
+			int leafdist = dist(leaf, entry);
+
+			// look for maximally distant point
+			if (leafdist > curdist) {
+				exitpoint = leaf;
+				connects = true;
+				std::cerr << "got here" << std::endl;
 			}
 		}
 	}
+
+	if (!connects) {
+		std::cerr << "BSP doesn't connect from entry point" << std::endl;
+		goto retry;
+
+	} else {
+		std::cerr << "Connected, continuing to WFC generation..." << std::endl;
+	}
+
+	for (size_t bx = 0; bx < genwidth; bx++) {
+		for (size_t by = 0; by < genheight; by++) {
+			//if (mapdata[by*genwidth + bx] == 0xff) {
+			if (mapdata[by*genwidth + bx]) {
+				wfcgrid.setTile(bx, by, spec->tags["traversable"]);
+			}
+		}
+	}
+
+	std::cerr << "Set traversable paths" << std::endl;
 
 	for (unsigned idx = 0; idx < genwidth && idx < genheight; idx++) {
 		for (auto c : { idx,
@@ -221,6 +297,8 @@ retry:
 		}
 	}
 
+	std::cerr << "Set empty parameter" << std::endl;
+
 	for (bool running = true; running && valid;) {
 		auto [r, v] = wfcgrid.iterate();
 		running = r, valid = v;
@@ -229,6 +307,8 @@ retry:
 			break;
 		}
 	}
+
+	std::cerr << "Generated WFC (valid: " << valid << ")" << std::endl;
 
 	if (!valid && attempts < 50) {
 		wfcgrid.reset();
@@ -266,6 +346,32 @@ retry:
 		}
 	}
 
+	gameObject::ptr entryObj = std::make_shared<gameObject>();
+	gameObject::ptr exitObj  = std::make_shared<gameObject>();
+
+	entryObj->setTransform({.position = {4*entry.first, 0, 4*entry.second} });
+	exitObj->setTransform({.position = {4*exitpoint.first, 0, 4*exitpoint.second} });
+
+	setNode("model", entryObj, portalModel);
+	setNode("model", exitObj, portalModel);
+
+	setNode("entry", ret, entryObj);
+	setNode("exit", ret, exitObj);
+
+	gameObject::ptr bspLeaves = std::make_shared<gameObject>();
+	bspLeaves->visible = false;
+
+	for (size_t i = 1; i < leaves.size(); i++) {
+		std::string name = "node" + std::to_string(i);
+		gameObject::ptr leaf = std::make_shared<gameObject>();
+		leaf->setTransform({
+			.position = {4*leaves[i].first, 0, 4*leaves[i].second}
+		});
+		setNode(name, bspLeaves, leaf);
+	}
+
+	setNode("leaves", ret, bspLeaves);
+
 	return ret;
 }
 
@@ -273,18 +379,20 @@ void wfcGenerator::generate(gameMain *game,
                             std::vector<glm::vec3> entries)
 {
 	auto cell = genCell(0, 0, 0);
-	cell->setTransform({ .position = {-genwidth * 2, 0, -genheight * 2}, });
+	//cell->setTransform({ .position = {-genwidth * 2, 0, -genheight * 2}, });
 	setNode("nodes", root, cell);
+
+	// TODO: need to find a way to generate physics here
+	mapobjs.clear();
+	havePhysics = false;
 }
 
 void wfcGenerator::setPosition(gameMain *game, glm::vec3 position) {
 	static bool food = false;
 
-	if (!food) {
-		static std::vector<physicsObject::ptr> *mapobjs;
-		mapobjs = new std::vector<physicsObject::ptr>();
-		game->phys->addStaticModels(nullptr, root, root->getTransformTRS(), *mapobjs);
-		food = true;
+	if (!havePhysics) {
+		game->phys->addStaticModels(nullptr, root, root->getTransformTRS(), mapobjs);
+		havePhysics = true;
 	}
 
 #if 0

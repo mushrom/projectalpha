@@ -31,9 +31,9 @@ class wfcSpec {
 		StateDef stateClass;
 		std::vector<gameObject::ptr> models;
 
-		std::map<std::string, size_t> nameToState;
-		std::map<size_t, std::string> stateToName;
-		std::map<std::string, std::set<size_t>> tags;
+		std::map<std::string, unsigned> nameToState;
+		std::map<unsigned, std::string> stateToName;
+		std::map<std::string, std::set<unsigned>> tags;
 };
 
 class wfcGenerator : public worldGenerator {
@@ -43,6 +43,7 @@ class wfcGenerator : public worldGenerator {
 
 		wfcGenerator(gameMain *game, std::string spec, unsigned seed = 0xcafebabe);
 		virtual ~wfcGenerator();
+		void generate(gameMain *game, std::vector<glm::vec3> entries);
 		virtual void setPosition(gameMain *game, glm::vec3 position);
 
 		using WfcImpl = WFCSolver<StateDef, genwidth, genheight>;
@@ -53,11 +54,13 @@ class wfcGenerator : public worldGenerator {
 		std::map<Coord, WfcPtr> sectors;
 		std::unique_ptr<wfcSpec> spec;
 
-		void generate(gameMain *game, std::vector<glm::vec3> entries);
 		gameObject::ptr genCell(int x, int y, int z);
 		void parseJson(gameMain *game, std::string filename);
 		std::future<bool> genjob;
 		gameObject::ptr returnValue;
+
+		bool havePhysics = false;
+		std::vector<physicsObject::ptr> mapobjs;
 };
 
 // XXX: global variable, TODO: something else

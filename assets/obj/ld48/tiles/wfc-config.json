@@ -3,6 +3,7 @@
 		{
 			"name" : "floor-tile-empty",
 			"file" : "floor-tile-empty.gltf",
+			"tags" : ["traversable", "floor"],
 			"comment" : "left, up, right, down (0, 1, 2, 3)",
 			"adjacent" : [
 				[0, "floor-tile-empty"],

@@ -28,7 +28,9 @@ enemy::enemy(entityManager *manager, gameMain *game, glm::vec3 position)
 	// TODO:
 	if (!enemyModel) {
 		//enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/test-enemy.glb");
-		enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/ld48/enemy-cube.glb");
+		enemyModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/test-enemy.glb");
+		//enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/ld48/enemy-cube.glb");
+		//enemyModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/ld48/enemy-cube.glb");
 		//enemyModel->transform.scale = glm::vec3(0.25);
 	}
 
