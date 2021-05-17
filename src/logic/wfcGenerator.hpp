@@ -25,14 +25,17 @@ using StateDef = stateDefinition2D<staticStateSet<256>>;
 
 class wfcSpec {
 	public:
+		using Name = std::pair<std::string, int>; /* name, rotation */
+
 		wfcSpec(gameMain *game, std::string filename);
 		void parseJson(gameMain *game, std::string filename);
 
 		StateDef stateClass;
-		std::vector<gameObject::ptr> models;
+		std::map<std::string, gameObject::ptr> models;
 
-		std::map<std::string, unsigned> nameToState;
-		std::map<unsigned, std::string> stateToName;
+		std::map<Name, unsigned> nameToState;
+		std::map<unsigned, gameObject::ptr> stateModels;
+		std::map<unsigned, Name> stateToName;
 		std::map<std::string, std::set<unsigned>> tags;
 };
 

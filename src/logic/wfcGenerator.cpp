@@ -85,61 +85,116 @@ void wfcSpec::parseJson(gameMain *game, std::string filename) {
 		throw std::logic_error("Couldn't open json wfc spec!");
 	}
 
-	//std::map<std::string, size_t> keyidx;
-	//std::map<size_t, std::string> idxkey;
+
+	auto modelconf = genspec["models"];
+
+	for (auto& [name, file] : modelconf.items()) {
+		std::string objpath = dirnameStr(filename) + "/" + file.get<std::string>();
+		models[name] = loadSceneAsyncCompiled(game, objpath);
+	}
+
 	std::map<size_t, size_t> fooidx;
 
 	auto& tiles = genspec["tiles"];
 	//TODO: don't want to do this if there might be multiple spec files loaded...
 	stateClass.states.insert(0);
-	models.push_back(nullptr);
 
 	for (unsigned i = 0; i < StateDef::Sockets; i++) {
 		// empty space, empty space can connect with itself in every direction
 		stateClass.socketmap[i][0].setState(0);
 	}
 
-	for (size_t idx = 0; idx < tiles.size(); idx++) {
-		std::string objfname = tiles[idx]["file"];
-		//size_t vecidx = models.size();
-		size_t vecidx = idx + 1;
+	for (size_t idx = 0, vecidx = 1; idx < tiles.size(); idx++) {
+		for (auto& em : tiles[idx]["rotations"]) {
+			stateClass.states.insert(vecidx);
 
-		stateClass.states.insert(vecidx);
-		std::cerr << vecidx << "(" << idx << ")"
-			<< " => " << tiles[idx]["name"]
-			<< " @ " << objfname << std::endl;
+			std::string foo = tiles[idx]["name"].get<std::string>();
+			int rot = em.get<int>();
+			gameObject::ptr model = std::make_shared<gameObject>();
+			model->setTransform({
+				.rotation = glm::quat(glm::vec3(0, -M_PI/2 * rot, 0))
+			});
 
-		nameToState[tiles[idx]["name"]] = vecidx;
-		stateToName[vecidx] = tiles[idx]["name"];
-		fooidx[vecidx] = idx;
+			std::cerr << vecidx << "(" << idx << ")"
+				<< " => " << tiles[idx]["name"]
+				<< ", rotation " << foo << ":" << rot << std::endl;
 
-		if (tiles[idx].count("tags")) {
-			for (auto& em : tiles[idx]["tags"]) {
-				tags[em].insert(vecidx);
+			Name n = {foo, rot};
+			nameToState[n] = vecidx;
+			stateToName[vecidx] = n;
+			fooidx[vecidx] = idx;
+
+			setNode("model", model, models[tiles[idx]["model"]]);
+			stateModels[vecidx] = model;
+
+			if (tiles[idx].count("tags")) {
+				for (auto& em : tiles[idx]["tags"]) {
+					tags[em].insert(vecidx);
+				}
 			}
-		}
 
-		std::string objpath = dirnameStr(filename) + "/" + objfname;
-		//gameObject::ptr objModel = loadSceneAsyncCompiled(game, objpath);
-		//models.push_back(objModel);
-		models.push_back(loadSceneAsyncCompiled(game, objpath));
+			vecidx++;
+		}
 	}
 
 	for (auto& [idx, key] : stateToName) {
 		for (auto& ent : tiles[fooidx[idx]]["adjacent"]) {
-			int dir = ent[0];
-			std::string name = ent[1];
-			unsigned neighbor = nameToState[name];
+			int dir = ent[0].get<int>();
+			std::string tilename = ent[1].get<std::string>();
+			int rot = ent[2].get<int>();
+			unsigned neighbor;
 
-			std::cerr << idx << " -> [" << dir << ", " << name
-				<< " (" << neighbor << ")" << "]" << std::endl;
+			auto& [ownname, ownrot] = key;
 
-			stateClass.socketmap[dir][idx].setState(nameToState[name]);
-			stateClass.socketmap[(dir + 2)%4][nameToState[name]].setState(idx);
+			if (rot < 0) {
+				for (unsigned i = 0; i < StateDef::Sockets; i++) {
+					int adjrot = (ownrot + i) % StateDef::Sockets;
+					int adjdir = (dir + ownrot) % StateDef::Sockets;
+					int oppdir = (adjdir + StateDef::Sockets/2) % StateDef::Sockets;
+
+					Name neighborName = {tilename, adjrot};
+					auto it = nameToState.find(neighborName);
+
+					if (it == nameToState.end()) {
+						std::cerr << "NOTE: state for ["
+							<< neighborName.first
+							<< ":" << neighborName.second
+							<< "]" << "\n";
+						continue;
+					}
+
+					neighbor = it->second;
+					std::cerr << idx << " *> [" << adjdir << ", " << tilename
+						<< " (" << neighbor << ":" << adjrot << ")" << "]"
+						<< std::endl;
+
+					stateClass.socketmap[adjdir][idx].setState(neighbor);
+					stateClass.socketmap[oppdir][neighbor].setState(idx);
+				}
+
+			} else {
+				int adjrot = (ownrot + rot) % StateDef::Sockets;
+				int adjdir = (dir + ownrot) % StateDef::Sockets;
+				int oppdir = (adjdir + StateDef::Sockets/2) % StateDef::Sockets;
+
+				Name neighborName = {tilename, adjrot};
+				auto it = nameToState.find(neighborName);
+
+				if (it == nameToState.end()) {
+					std::cerr << "Depends on invalid rotation state!\n";
+					throw std::logic_error("Depends on invalid rotation state!");
+				}
+
+				neighbor = it->second;
+				std::cerr << idx << " -> [" << adjdir << ":" << adjrot << ", " << tilename
+					<< " (" << neighbor << ")" << "]" << std::endl;
+
+				stateClass.socketmap[adjdir][idx].setState(neighbor);
+				stateClass.socketmap[oppdir][neighbor].setState(idx);
+			}
 		}
 	}
 
-#if 1
 	for (unsigned dir = 0; dir < StateDef::Sockets; dir++) {
 		for (auto& em : stateClass.states) {
 			auto& smap = stateClass.socketmap[dir];
@@ -151,7 +206,6 @@ void wfcSpec::parseJson(gameMain *game, std::string filename) {
 			}
 		}
 	}
-#endif
 
 	// TODO: do something with the seed
 }
@@ -337,7 +391,7 @@ retry:
 						transform.position = glm::vec3(4*gx, 0, 4*gy);
 						nobj->setTransform(transform);
 
-						setNode("model", nobj, spec->models[em]);
+						setNode("model", nobj, spec->stateModels[em]);
 						setNode(objname, ret, nobj);
 						break;
 					}
