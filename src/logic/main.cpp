@@ -329,7 +329,9 @@ projalphaView::projalphaView(gameMain *game)
 	input.bind(modes::Move, inputMapper(inputSystem->inputs, cam));
 #endif
 
-	input.bind(modes::Move, controller::camAngled2DFixed(cam, game, -M_PI/4.f));
+	//input.bind(modes::Move, controller::camAngled2DFixed(cam, game, -M_PI/4.f));
+	input.bind(modes::Move,
+			controller::camAngled2DRotatable(cam, game, -M_PI/4.f, -M_PI/2.f, -M_PI/4.f));
 	input.bind(modes::Move, [=, this] (SDL_Event& ev, unsigned flags) {
 		inputSystem->handleEvent(game->entities.get(), ev);
 		return MODAL_NO_CHANGE;
