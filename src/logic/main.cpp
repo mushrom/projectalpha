@@ -227,6 +227,7 @@ class projalphaView : public gameView {
 		//modalSDLInput input;
 		vecGUI vgui;
 		int menuSelect = 0;
+		int currentFloor = 0;
 		float zoom = 20.f;
 
 		std::unique_ptr<levelController> level;
@@ -236,10 +237,14 @@ class projalphaView : public gameView {
 		std::string currentMap = "no map!";
 		std::string loadedMap = "no map loaded either!";
 		std::vector<physicsObject::ptr> mapPhysics;
+		std::vector<entity*> levelEntities;
+
+		void nextFloor(gameMain *game);
+		void prevFloor(gameMain *game);
+		bool nearNode(gameMain *game, const std::string& name, float thresh = 3.f);
 
 	private:
 		void drawMainMenu(gameMain *game, int wx, int wy);
-
 };
 
 // XXX
@@ -382,6 +387,76 @@ projalphaView::projalphaView(gameMain *game)
 	input.setMode(modes::MainMenu);
 };
 
+void projalphaView::nextFloor(gameMain *game) {
+	gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
+	currentFloor++;
+
+	for (auto& ent : levelEntities) {
+		game->entities->remove(ent);
+	}
+
+	levelEntities.clear();
+	wfcgen->generate(game, {});
+
+	if (wfcroot && wfcroot->hasNode("leaves")) {
+		gameObject::ptr leafroot = wfcroot->getNode("leaves");
+
+		for (const auto& [name, ptr] : leafroot->nodes) {
+			auto en = new enemy(game->entities.get(),
+					game,
+					ptr->getTransformTRS().position + glm::vec3(4, 2, 0));
+
+			new team(game->entities.get(), en, "red");
+			game->entities->add(en);
+			levelEntities.push_back(en);
+		}
+	}
+}
+
+void projalphaView::prevFloor(gameMain *game) {
+	gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
+	currentFloor--;
+
+	for (auto& ent : levelEntities) {
+		game->entities->remove(ent);
+	}
+
+	levelEntities.clear();
+	wfcgen->generate(game, {});
+
+	if (wfcroot && wfcroot->hasNode("leaves")) {
+		gameObject::ptr leafroot = wfcroot->getNode("leaves");
+
+		for (const auto& [name, ptr] : leafroot->nodes) {
+			auto en = new enemy(game->entities.get(),
+					game,
+					ptr->getTransformTRS().position + glm::vec3(4, 2, 0));
+
+			new team(game->entities.get(), en, "red");
+			game->entities->add(en);
+			levelEntities.push_back(en);
+		}
+	}
+}
+
+bool projalphaView::nearNode(gameMain *game, const std::string& name, float thresh)
+{
+	gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
+	entity *playerEnt = findFirst(game->entities.get(), {"player"});
+
+	if (wfcroot->hasNode("exit") && playerEnt) {
+		TRS nodeTrans = wfcroot->getNode(name)->getTransformTRS();
+		TRS playerTrans = playerEnt->getNode()->getTransformTRS();
+		// TODO: need a way to calculate the transform from this node
+		//glm::vec3 pos = nodeTrans.position - glm::vec3(64, 0, 64);
+		//glm::vec3 pos = nodeTrans.position - glm::vec3(64, 0, 64);
+		glm::vec3 pos = nodeTrans.position;
+		return glm::distance(pos, playerTrans.position) < 3;
+	}
+
+	return false;
+}
+
 void projalphaView::logic(gameMain *game, float delta) {
 	if (input.mode == modes::MainMenu || input.mode == modes::Pause) {
 		// XXX:
@@ -432,6 +507,14 @@ void projalphaView::logic(gameMain *game, float delta) {
 	if (lost.first) {
 		SDL_Log("lol u died: %s", lost.second.c_str());
 		input.setMode(modes::MainMenu);
+	}
+
+	if (nearNode(game, "exit")) {
+		nextFloor(game);
+	}
+
+	if (nearNode(game, "entry")) {
+		prevFloor(game);
 	}
 }
 
@@ -503,8 +586,20 @@ void projalphaView::render(gameMain *game) {
 		nvgSave(vgui.nvg);
 
 		renderHealthbars(game->entities.get(), vgui, cam);
-		renderObjectives(game->entities.get(), level.get(), vgui);
+		//renderObjectives(game->entities.get(), level.get(), vgui);
 		renderControls(game, vgui);
+
+		int wx = game->rend->screen_x;
+		int wy = game->rend->screen_y;
+		float ticks = SDL_GetTicks() / 1000.f;
+
+		nvgFontSize(vgui.nvg, 16.f);
+		nvgFontFace(vgui.nvg, "sans-bold");
+		nvgFontBlur(vgui.nvg, 0);
+		nvgTextAlign(vgui.nvg, NVG_ALIGN_LEFT);
+		nvgFillColor(vgui.nvg, nvgRGBA(0xf0, 0x60, 0x60, 160));
+		std::string txt = "Current floor: " + std::to_string(currentFloor);
+		nvgText(vgui.nvg, wx / 2 - 48, wy / 2 - 48*cos(ticks), txt.c_str(), NULL);
 
 		nvgRestore(vgui.nvg);
 		nvgEndFrame(vgui.nvg);
@@ -767,22 +862,7 @@ int main(int argc, char *argv[]) try {
 #endif
 	});
 
-	view->level->addInit([=] () {
-		gameObject::ptr wfcroot = view->wfcgen->getNode()->getNode("nodes");
-
-		if (wfcroot && wfcroot->hasNode("leaves")) {
-			gameObject::ptr leafroot = wfcroot->getNode("leaves");
-
-			for (const auto& [name, ptr] : leafroot->nodes) {
-				auto en = new enemy(game->entities.get(),
-				                    game,
-				                    ptr->getTransformTRS().position + glm::vec3(0, 2, 0));
-
-				new team(game->entities.get(), en, "red");
-				game->entities->add(en);
-			}
-		}
-	});
+	view->level->addInit([=] () { view->nextFloor(game); });
 
 	view->level->addDestructor([=] () {
 		// TODO: should just have reset function in entity manager
@@ -795,36 +875,8 @@ int main(int argc, char *argv[]) try {
 
 	view->level->addObjective("Reach exit",
 		[=] () {
-			gameObject::ptr wfcroot = view->wfcgen->getNode()->getNode("nodes");
-			entity *playerEnt = findFirst(game->entities.get(), {"player"});
-
-			if (wfcroot->hasNode("exit") && playerEnt) {
-				TRS exitTrans = wfcroot->getNode("exit")->getTransformTRS();
-				TRS playerTrans = playerEnt->getNode()->getTransformTRS();
-				// TODO: need a way to calculate the transform from this node
-				//glm::vec3 pos = exitTrans.position - glm::vec3(64, 0, 64);
-				//glm::vec3 pos = exitTrans.position - glm::vec3(64, 0, 64);
-				glm::vec3 pos = exitTrans.position;
-				return glm::distance(pos, playerTrans.position) < 3;
-			}
-
-		});
-
-	/*
-	view->level->addObjective("Destroy all robospawners",
-		[=] () {
-			std::set<entity*> spawners
-				= searchEntities(game->entities.get(), {"enemySpawner"});
-
-			return spawners.size() == 0;
-		});
-
-	view->level->addObjective("Destroy all enemy robots",
-		[=] () {
-			std::set<entity*> enemies
-				= searchEntities(game->entities.get(), {"enemy"});
-
-			return enemies.size() == 0;
+			// TODO: check for goal item (amulet?) and current floor == 0 (exit)
+			return false;
 		});
 
 	view->level->addLoseCondition(
@@ -834,7 +886,6 @@ int main(int argc, char *argv[]) try {
 
 			return std::pair<bool, std::string>(players.size() == 0, "lol u died");
 		});
-		*/
 
 	SDL_Log("Got to game->run()!");
 
