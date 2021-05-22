@@ -15,11 +15,24 @@ static constexpr float cellsize = (wfcGenerator::genwidth - 1)*4;
 static constexpr int gridsize = 3;
 static constexpr int foo = (genwidth - 1)*4;
 
-static gameObject::ptr portalModel = nullptr;
+static gameObject::ptr ladderModel = nullptr;
+static gameObject::ptr coverModel = nullptr;
 
 wfcGenerator::wfcGenerator(gameMain *game, std::string specFilename, unsigned seed) {
-	if (!portalModel) {
-		portalModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/ld48/portal.glb");
+	if (!ladderModel || !coverModel) {
+		ladderModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder.glb");
+		coverModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder-cover.glb");
+
+		auto redlit = std::make_shared<gameLightPoint>();
+		auto greenlit = std::make_shared<gameLightPoint>();
+
+		redlit->diffuse   = glm::vec4(1.0, 0.3, 0.01, 1.0);
+		greenlit->diffuse = glm::vec4(0.3, 1.0, 0.01, 1.0);
+		redlit->setTransform({ .position = glm::vec3(0, 2, 0) });
+		greenlit->setTransform({ .position = glm::vec3(0, 2, 0) });
+
+		setNode("lit", coverModel, redlit);
+		setNode("lit", ladderModel, greenlit);
 	}
 
 	//parseJson(DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json");
@@ -406,8 +419,8 @@ retry:
 	entryObj->setTransform({.position = {4*entry.first, 0, 4*entry.second} });
 	exitObj->setTransform({.position = {4*exitpoint.first, 0, 4*exitpoint.second} });
 
-	setNode("model", entryObj, portalModel);
-	setNode("model", exitObj, portalModel);
+	setNode("model", entryObj, ladderModel);
+	setNode("model", exitObj, coverModel);
 
 	setNode("entry", ret, entryObj);
 	setNode("exit", ret, exitObj);

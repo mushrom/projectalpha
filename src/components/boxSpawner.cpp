@@ -26,6 +26,11 @@ boxBullet::boxBullet(entityManager *manager, gameMain *game, glm::vec3 position)
 		model = std::make_shared<gameObject>();
 		compileModel("boxProjectile", mod);
 		setNode("model", model, mod);
+
+		auto lit = std::make_shared<gameLightPoint>();
+		lit->diffuse = glm::vec4(1.0, 0.2, 0.05, 1.0);
+
+		setNode("lit", model, lit);
 	}
 
 	setNode("model", node, model);
@@ -41,7 +46,7 @@ void boxSpawner::handleInput(entityManager *manager, entity *ent, inputEvent& ev
 		glm::vec3 playerrot = noderot*glm::vec3(0, 0, 1);
 
 		//auto box = new boxBullet(manager, manager->engine, ent->node->transform.position + 3.f*ev.data);
-		for (unsigned i = 0; i < 10; i++) {
+		for (unsigned i = 0; i < 1; i++) {
 			auto box = new boxBullet(manager, manager->engine, transform.position + (2.f + i)*playerrot);
 
 			rigidBody *body;

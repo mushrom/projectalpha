@@ -81,6 +81,7 @@ set(LANDSCAPE_DEMO_SRC
 	src/components/boxSpawner.cpp
 	src/components/team.cpp
 	src/components/timedLifetime.cpp
+	src/components/itemPickup.cpp
 
 	src/entities/enemy.cpp
 	src/entities/enemySpawner.cpp
@@ -91,6 +92,7 @@ set(LANDSCAPE_DEMO_SRC
 	src/entities/targetArea.cpp
 	src/entities/projectile.cpp
 	src/entities/killedParticles.cpp
+	src/entities/amulet.cpp
 
 	src/logic/UI.cpp
 	src/logic/landscapeGenerator.cpp

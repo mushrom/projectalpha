@@ -38,6 +38,7 @@ using namespace grendx::ecs;
 #include <components/healthbar.hpp>
 #include <components/timedLifetime.hpp>
 #include <components/team.hpp>
+#include <components/itemPickup.hpp>
 
 #include <entities/player.hpp>
 #include <entities/enemy.hpp>
@@ -48,6 +49,7 @@ using namespace grendx::ecs;
 #include <entities/enemySpawner.hpp>
 #include <entities/killedParticles.hpp>
 #include <entities/targetArea.hpp>
+#include <entities/amulet.hpp>
 
 #include <logic/wfcGenerator.hpp>
 #include <logic/UI.hpp>
@@ -221,6 +223,7 @@ class projalphaView : public gameView {
 			Move,
 			Pause,
 			Loading,
+			Won,
 		};
 
 		renderPostChain::ptr post = nullptr;
@@ -245,6 +248,7 @@ class projalphaView : public gameView {
 
 	private:
 		void drawMainMenu(gameMain *game, int wx, int wy);
+		void drawWinScreen(gameMain *game, int wx, int wy);
 };
 
 // XXX
@@ -254,7 +258,8 @@ static glm::vec2 actionpos(0, 0);
 projalphaView::projalphaView(gameMain *game)
 	: gameView(),
 	  level(new levelController),
-	  wfcgen(new wfcGenerator(game, DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json"))
+	  //wfcgen(new wfcGenerator(game, DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json"))
+	  wfcgen(new wfcGenerator(game, DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"))
 {
 #ifdef NO_FLOATING_FB
 	post = renderPostChain::ptr(new renderPostChain(
@@ -400,15 +405,22 @@ void projalphaView::nextFloor(gameMain *game) {
 
 	if (wfcroot && wfcroot->hasNode("leaves")) {
 		gameObject::ptr leafroot = wfcroot->getNode("leaves");
+		glm::vec3 amuletPos;
 
 		for (const auto& [name, ptr] : leafroot->nodes) {
 			auto en = new enemy(game->entities.get(),
 					game,
 					ptr->getTransformTRS().position + glm::vec3(4, 2, 0));
+			amuletPos = ptr->getTransformTRS().position + glm::vec3(2);
 
 			new team(game->entities.get(), en, "red");
 			game->entities->add(en);
 			levelEntities.push_back(en);
+		}
+
+		if (currentFloor == 5) {
+			auto en = new amuletPickup(game->entities.get(), game, amuletPos);
+			game->entities->add(en);
 		}
 	}
 }
@@ -458,7 +470,10 @@ bool projalphaView::nearNode(gameMain *game, const std::string& name, float thre
 }
 
 void projalphaView::logic(gameMain *game, float delta) {
-	if (input.mode == modes::MainMenu || input.mode == modes::Pause) {
+	if (input.mode == modes::MainMenu
+		|| input.mode == modes::Pause
+		|| input.mode == modes::Won)
+	{
 		// XXX:
 		return;
 	}
@@ -501,6 +516,7 @@ void projalphaView::logic(gameMain *game, float delta) {
 	if (level->won()) {
 		SDL_Log("winner winner, a dinner of chicken!");
 		level->reset();
+		input.setMode(modes::Won);
 	} 
 
 	auto lost = level->lost();
@@ -535,6 +551,19 @@ void projalphaView::render(gameMain *game) {
 
 		// TODO: function to do this
 		drawMainMenu(game, winsize_x, winsize_y);
+
+	} else if (input.mode == modes::Won) {
+		renderWorld(game, cam, flags);
+
+		// TODO: need to set post size on resize event..
+		//post->setSize(winsize_x, winsize_y);
+		post->setUniform("exposure", game->rend->exposure);
+		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
+		post->draw(game->rend->framebuffer);
+		//input.setMode(modes::Move);
+
+		// TODO: function to do this
+		drawWinScreen(game, winsize_x, winsize_y);
 
 	} else if (input.mode == modes::Loading) {
 		// render loading screen
@@ -726,6 +755,37 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	}
 }
 
+void projalphaView::drawWinScreen(gameMain *game, int wx, int wy) {
+	static int selected;
+	bool reset = false;
+
+	vgui.newFrame(wx, wy);
+	vgui.menuBegin(wx / 2 - 100, wy / 2 - 100, 200, "You are winnar!");
+
+	if (vgui.menuEntry("New game", &selected)) {
+		if (vgui.clicked()) {
+			//reset = true; // XXX:
+			input.setMode(modes::Move);
+			level->reset();
+
+		} else if (vgui.hovered()) {
+			selected = vgui.menuCount();
+		}
+	}
+
+	if (vgui.menuEntry("Quit to menu", &selected)) {
+		if (vgui.clicked()) {
+			SDL_Log("Quiterino");
+
+		} else if (vgui.hovered()) {
+			selected = vgui.menuCount();
+		}
+	}
+
+	vgui.menuEnd();
+	vgui.endFrame();
+}
+
 void initEntitiesFromNodes(gameObject::ptr node,
                            std::function<void(const std::string&, gameObject::ptr&)> init)
 {
@@ -845,6 +905,7 @@ int main(int argc, char *argv[]) try {
 		new flagPickup(game->entities.get(), playerEnt);
 		new team(game->entities.get(), playerEnt, "blue");
 		new areaAddScore(game->entities.get(), playerEnt, {});
+		new itemPickup(game->entities.get(), playerEnt, {"amuletPickup"});
 
 #if defined(__ANDROID__)
 		int wx = game->rend->screen_x;
@@ -862,7 +923,10 @@ int main(int argc, char *argv[]) try {
 #endif
 	});
 
-	view->level->addInit([=] () { view->nextFloor(game); });
+	view->level->addInit([=] () {
+		view->currentFloor = 1;
+		view->nextFloor(game);
+	});
 
 	view->level->addDestructor([=] () {
 		// TODO: should just have reset function in entity manager
@@ -875,8 +939,10 @@ int main(int argc, char *argv[]) try {
 
 	view->level->addObjective("Reach exit",
 		[=] () {
+			auto players
+				= searchEntities(game->entities.get(), {"player", "hasItem:amuletPickup"});
 			// TODO: check for goal item (amulet?) and current floor == 0 (exit)
-			return false;
+			return view->currentFloor == 0 && players.size() != 0;
 		});
 
 	view->level->addLoseCondition(
