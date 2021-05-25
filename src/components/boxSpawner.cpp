@@ -31,6 +31,7 @@ boxBullet::boxBullet(entityManager *manager, gameMain *game, glm::vec3 position)
 		lit->diffuse = glm::vec4(1.0, 0.2, 0.05, 1.0);
 
 		setNode("lit", model, lit);
+		sfx = openAudio(DEMO_PREFIX "assets/sfx/meh/shoot.wav.ogg");
 	}
 
 	setNode("model", node, model);
@@ -58,9 +59,9 @@ void boxSpawner::handleInput(entityManager *manager, entity *ent, inputEvent& ev
 			}
 		}
 
-		//auto ch = std::make_shared<stereoAudioChannel>(sfx);
-		//ch->worldPosition = position;
-		//manager->engine->audio->add(ch);
+		auto ch = std::make_shared<spatialAudioChannel>(sfx);
+		ch->worldPosition = transform.position;
+		manager->engine->audio->add(ch);
 	}
 }
 

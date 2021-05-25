@@ -6,6 +6,9 @@
 #include <entities/projectile.hpp>
 #include "enemy.hpp"
 
+static channelBuffers_ptr sfx = nullptr;
+static uint32_t counter = 0;
+
 enemy::~enemy() {};
 
 enemy::enemy(entityManager *manager, gameMain *game, glm::vec3 position)
@@ -28,15 +31,21 @@ enemy::enemy(entityManager *manager, gameMain *game, glm::vec3 position)
 	// TODO:
 	if (!enemyModel) {
 		//enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/test-enemy.glb");
-		enemyModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/test-enemy.glb");
+		//enemyModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/test-enemy.glb");
+		enemyModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/noodler.glb");
 		//enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/ld48/enemy-cube.glb");
 		//enemyModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/ld48/enemy-cube.glb");
 		//enemyModel->transform.scale = glm::vec3(0.25);
+		sfx = openAudio(DEMO_PREFIX "assets/sfx/meh/emeny.wav.ogg");
 	}
 
 	setNode("model", node, enemyModel);
 	body->registerCollisionQueue(manager->collisions);
 	body->phys->setAngularFactor(0.0);
+
+	xxxid = counter++;
+
+	//lastSound = 100*node->id;
 }
 
 enemy::enemy(entityManager *manager, entity *ent, nlohmann::json properties)
@@ -87,6 +96,14 @@ void enemy::update(entityManager *manager, float delta) {
 
 	if (body) {
 		body->phys->setAcceleration(10.f*vel);
+	}
+
+	uint32_t k = SDL_GetTicks();
+	if (k - lastSound > 3000 + 50*xxxid) {
+		auto ch = std::make_shared<spatialAudioChannel>(sfx);
+		ch->worldPosition = node->getTransformTRS().position;
+		manager->engine->audio->add(ch);
+		lastSound = k;
 	}
 }
 

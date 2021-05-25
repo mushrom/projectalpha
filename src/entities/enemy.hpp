@@ -28,5 +28,8 @@ class enemy : public entity {
 
 		virtual const char *typeString(void) const { return serializedType; };
 		virtual nlohmann::json serialize(entityManager *manager); 
+
+		uint32_t lastSound = 0;
+		uint32_t xxxid = 0;
 };
 
