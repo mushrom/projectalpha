@@ -61,9 +61,10 @@ void mouseRotationPoller::update(entityManager *manager, entity *ent) {
 	SDL_GetWindowSize(manager->engine->ctx.window, &win_x, &win_y);
 
 	glm::vec2 pos(x * 1.f/win_x, y * 1.f/win_y);
+	glm::vec2 meh = glm::normalize(glm::vec2(cam->direction().x, cam->direction().z));
 	glm::vec2 center(0.5);
 	glm::vec2 diff = pos - center;
-	glm::quat rot(glm::vec3(0, atan2(diff.x, diff.y), 0));
+	glm::quat rot(glm::vec3(0, atan2(diff.x, diff.y) - atan2(meh.x, -meh.y), 0));
 
 	TRS transform = ent->node->getTransformTRS();
 	transform.rotation = rot;

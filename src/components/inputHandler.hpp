@@ -143,14 +143,18 @@ class movementHandler : public inputHandler {
 
 class mouseRotationPoller : public inputPoller {
 	public:
-		mouseRotationPoller(entityManager *manager, entity *ent)
-			: inputPoller(manager, ent)
+		mouseRotationPoller(entityManager *manager, entity *ent, camera::ptr _cam)
+			: inputPoller(manager, ent),
+			  cam(_cam)
 		{
 			manager->registerComponent(ent, "mouseRotationPoller", this);
 		}
 		virtual ~mouseRotationPoller();
 
 		virtual void update(entityManager *manager, entity *ent);
+
+	private:
+		camera::ptr cam;
 };
 
 class touchMovementHandler : public rawEventHandler {

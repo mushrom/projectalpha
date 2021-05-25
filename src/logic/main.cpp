@@ -834,6 +834,7 @@ int main(int argc, char *argv[]) try {
 		game->audio->add(foo);
 		return true;
 	});
+	*/
 
 	game->jobs->addAsync([=] {
 		auto bar = openSpatialLoop(GR_PREFIX "assets/sfx/Meditating Beat.ogg");
@@ -841,7 +842,6 @@ int main(int argc, char *argv[]) try {
 		game->audio->add(bar);
 		return true;
 	});
-	*/
 
 	projalphaView::ptr view = std::make_shared<projalphaView>(game);
 	view->cam->setFar(1000.0);
@@ -919,7 +919,7 @@ int main(int argc, char *argv[]) try {
 								 view->inputSystem->inputs, actionpad, 150.f);
 
 #else
-		new mouseRotationPoller(game->entities.get(), playerEnt);
+		new mouseRotationPoller(game->entities.get(), playerEnt, view->cam);
 #endif
 	});
 
