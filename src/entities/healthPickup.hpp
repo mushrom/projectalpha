@@ -5,36 +5,38 @@
 #include <grend/ecs/ecs.hpp>
 #include <grend/ecs/collision.hpp>
 #include <grend/ecs/rigidBody.hpp>
+
 #include <components/health.hpp>
+#include <components/itemPickup.hpp>
 
 using namespace grendx;
 using namespace grendx::ecs;
 
-class pickup : public entity {
-	public:
-		pickup(entityManager *manager)
-			: entity(manager)
-		{
-			manager->registerComponent(this, "pickup", this);
-		}
-
-		virtual void apply(entityManager *manager, entity *ent) const = 0;
-		virtual void update(entityManager *manager, float delta) {};
-};
+template <class T>
+static inline nlohmann::json setSerializedPosition(glm::vec3 position) {
+	nlohmann::json asdf = T::defaultProperties();
+	asdf["node"]["position"] = { position[0], position[1], position[2] };
+	return asdf;
+}
 
 class healthPickup : public pickup {
 	float heals = 30.f;
 
 	public:
+		// TODO: creating a json object just for initialization might not
+		//       be the best for performance...
+		//       might be worth looking into other strategies for serialization,
+		//       but this is probably the simplest
 		healthPickup(entityManager *manager, glm::vec3 position)
-			: pickup(manager)
+			: healthPickup(manager, this, 
+			               setSerializedPosition<healthPickup>(position)) {};
+
+		healthPickup(entityManager *manager, entity *ent, nlohmann::json properties)
+			: pickup(manager, ent, properties)
 		{
 			gameLightPoint::ptr lit = std::make_shared<gameLightPoint>();
 
 			manager->registerComponent(this, "healthPickup", this);
-			// 0 mass, static position
-			new rigidBodySphere(manager, this, position, 0.5, 0.5);
-			new syncRigidBodyTransform(manager, this);
 
 			static gameModel::ptr model = nullptr;
 			// XXX: really need resource manager
@@ -54,13 +56,8 @@ class healthPickup : public pickup {
 
 			setNode("model", node, model);
 			setNode("light", node, lit);
-
-			{
-				TRS transform = model->getTransformTRS();
-				transform.position = position;
-				node->setTransform(transform);
-			}
 		}
+
 		virtual ~healthPickup();
 
 		virtual void apply(entityManager *manager, entity *ent) const {

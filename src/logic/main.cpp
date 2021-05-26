@@ -39,6 +39,7 @@ using namespace grendx::ecs;
 #include <components/timedLifetime.hpp>
 #include <components/team.hpp>
 #include <components/itemPickup.hpp>
+#include <components/inventory.hpp>
 
 #include <entities/player.hpp>
 #include <entities/enemy.hpp>
@@ -224,6 +225,7 @@ class projalphaView : public gameView {
 			Pause,
 			Loading,
 			Won,
+			Inventory,
 		};
 
 		renderPostChain::ptr post = nullptr;
@@ -248,6 +250,7 @@ class projalphaView : public gameView {
 
 	private:
 		void drawMainMenu(gameMain *game, int wx, int wy);
+		void drawInventory(gameMain *game, int wx, int wy);
 		void drawWinScreen(gameMain *game, int wx, int wy);
 };
 
@@ -347,6 +350,22 @@ projalphaView::projalphaView(gameMain *game)
 		return MODAL_NO_CHANGE;
 	});
 
+	input.bind(modes::Inventory, [=, this] (SDL_Event& ev, unsigned flags) {
+		if (ev.type == SDL_KEYUP && ev.key.keysym.sym == SDLK_TAB) {
+			return (int)modes::Move;
+		}
+
+		return MODAL_NO_CHANGE;
+	});
+
+	input.bind(modes::Move, [=, this] (SDL_Event& ev, unsigned flags) {
+		if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB) {
+			return (int)modes::Inventory;
+		}
+
+		return MODAL_NO_CHANGE;
+	});
+
 	static nlohmann::json testthing = {};
 
 	input.bind(MODAL_ALL_MODES,
@@ -416,6 +435,15 @@ void projalphaView::nextFloor(gameMain *game) {
 			new team(game->entities.get(), en, "red");
 			game->entities->add(en);
 			levelEntities.push_back(en);
+
+			if (rand() & 1) {
+				auto hen = new healthPickup(game->entities.get(),
+				                            ptr->getTransformTRS().position + glm::vec3(0, 2, 0));
+
+				
+				game->entities->add(hen);
+				levelEntities.push_back(hen);
+			}
 		}
 
 		if (currentFloor == 5) {
@@ -597,6 +625,20 @@ void projalphaView::render(gameMain *game) {
 		nvgRestore(vgui.nvg);
 		nvgEndFrame(vgui.nvg);
 
+	} else if (input.mode == modes::Inventory) {
+		renderWorld(game, cam, flags);
+
+		// TODO: need to set post size on resize event..
+		//post->setSize(winsize_x, winsize_y);
+		post->setUniform("exposure", game->rend->exposure);
+		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
+		post->draw(game->rend->framebuffer);
+		//input.setMode(modes::Move);
+
+		// TODO: function to do this
+		//drawMainMenu(game, winsize_x, winsize_y);
+		drawInventory(game, winsize_x, winsize_y);
+
 	} else {
 		// main game mode
 		renderWorld(game, cam, flags);
@@ -755,6 +797,55 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	}
 }
 
+void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
+	static int selected;
+	bool reset = false;
+
+	vgui.newFrame(wx, wy);
+	vgui.menuBegin(wx / 2 - 100, wy / 2 - 100, 200, "Player inventory");
+
+	entity *playerEnt = findFirst(game->entities.get(), {"player", "inventory"});
+	if (!playerEnt) return;
+
+	auto inv = castEntityComponent<inventory*>(game->entities.get(), playerEnt, "inventory");
+
+	if (!inv) return;
+
+	static auto maps = listdir(DEMO_PREFIX "assets/maps/");
+	std::vector<std::string> itemStrs;
+
+	for (auto& thing : inv->items) {
+		std::string name = thing.dump();
+		itemStrs.push_back(name);
+	}
+
+	for (auto& name : itemStrs) {
+		if (vgui.menuEntry(name.c_str(), &selected)) {
+			if (vgui.clicked()) {
+				SDL_Log("clicked %s", name.c_str());
+				//input.setMode(modes::Loading);
+
+			} else if (vgui.hovered()) {
+				selected = vgui.menuCount();
+			}
+		}
+	}
+
+	/*
+	if (vgui.menuEntry("Quit", &selected)) {
+		if (vgui.clicked()) {
+			SDL_Log("Quiterino");
+
+		} else if (vgui.hovered()) {
+			selected = vgui.menuCount();
+		}
+	}
+	*/
+
+	vgui.menuEnd();
+	vgui.endFrame();
+}
+
 void projalphaView::drawWinScreen(gameMain *game, int wx, int wy) {
 	static int selected;
 	bool reset = false;
@@ -905,7 +996,9 @@ int main(int argc, char *argv[]) try {
 		new flagPickup(game->entities.get(), playerEnt);
 		new team(game->entities.get(), playerEnt, "blue");
 		new areaAddScore(game->entities.get(), playerEnt, {});
-		new itemPickup(game->entities.get(), playerEnt, {"amuletPickup"});
+		new inventory(game->entities.get(), playerEnt, {});
+		new pickupAction(game->entities.get(), playerEnt, {"amuletPickup"});
+		new pickupAction(game->entities.get(), playerEnt, {"healthPickup"});
 
 #if defined(__ANDROID__)
 		int wx = game->rend->screen_x;

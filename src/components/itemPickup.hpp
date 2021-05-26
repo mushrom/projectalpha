@@ -7,16 +7,16 @@
 using namespace grendx;
 using namespace grendx::ecs;
 
-class itemPickup : public areaEnter {
+class pickupAction : public areaEnter {
 	public:
-		itemPickup(entityManager *manager, entity *ent,
+		pickupAction(entityManager *manager, entity *ent,
 		           std::vector<std::string> _tags)
 			: areaEnter(manager, ent, _tags)
 		{
-			manager->registerComponent(ent, "itemPickup", this);
+			manager->registerComponent(ent, "pickupAction", this);
 		}
 
-		virtual ~itemPickup();
+		virtual ~pickupAction();
 		virtual void onEvent(entityManager *manager, entity *ent, entity *other);
 };
 
@@ -40,3 +40,14 @@ class hasItem : public component {
 		virtual ~hasItem();
 		std::vector<std::string> tags;
 };
+
+class pickup : public entity {
+	public:
+		pickup(entityManager *manager, glm::vec3 position);
+		pickup(entityManager *manager, entity *ent, nlohmann::json properties);
+		virtual ~pickup();
+
+		virtual void apply(entityManager *manager, entity *ent) const = 0;
+		virtual void update(entityManager *manager, float delta) {};
+};
+
