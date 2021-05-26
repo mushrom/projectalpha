@@ -17,10 +17,9 @@ void pickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
 		inv->insert(manager, other);
 	}
 
-	manager->remove(other);
+	//manager->remove(other);
 	new hasItem(manager, ent, tags);
 }
-
 
 template <class T>
 static inline nlohmann::json setSerializedPosition(glm::vec3 position) {

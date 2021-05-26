@@ -19,5 +19,5 @@ class inventory : public component {
 		void insert(entityManager *manager, entity *ent);
 		entity *remove(entityManager *manager, size_t idx);
 
-		std::vector<nlohmann::json> items;
+		std::vector<entity*> items;
 };

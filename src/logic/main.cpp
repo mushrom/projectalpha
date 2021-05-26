@@ -416,7 +416,12 @@ void projalphaView::nextFloor(gameMain *game) {
 	currentFloor++;
 
 	for (auto& ent : levelEntities) {
-		game->entities->remove(ent);
+		if (ent->active) {
+			// XXX: items in the inventory are deactivated, and so
+			//      won't be removed here...
+			//      bit of a hack, but probably ok performance-wise
+			game->entities->remove(ent);
+		}
 	}
 
 	levelEntities.clear();
@@ -439,7 +444,6 @@ void projalphaView::nextFloor(gameMain *game) {
 			if (rand() & 1) {
 				auto hen = new healthPickup(game->entities.get(),
 				                            ptr->getTransformTRS().position + glm::vec3(0, 2, 0));
-
 				
 				game->entities->add(hen);
 				levelEntities.push_back(hen);
@@ -811,22 +815,26 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 
 	if (!inv) return;
 
-	static auto maps = listdir(DEMO_PREFIX "assets/maps/");
-	std::vector<std::string> itemStrs;
+	for (auto it = inv->items.begin(); it != inv->items.end();) {
+		entity *ent = *it;
+		const char *name = ent->typeString();
 
-	for (auto& thing : inv->items) {
-		std::string name = thing.dump();
-		itemStrs.push_back(name);
-	}
-
-	for (auto& name : itemStrs) {
-		if (vgui.menuEntry(name.c_str(), &selected)) {
+		if (vgui.menuEntry(name, &selected)) {
 			if (vgui.clicked()) {
-				SDL_Log("clicked %s", name.c_str());
-				//input.setMode(modes::Loading);
+				SDL_Log("clicked %s", name);
+				game->entities->activate(ent);
+
+				TRS newtrans = playerEnt->node->getTransformTRS();
+				newtrans.position += glm::vec3(3, 0, 3);
+				ent->node->setTransform(newtrans);
+				it = inv->items.erase(it);
 
 			} else if (vgui.hovered()) {
 				selected = vgui.menuCount();
+				it++;
+
+			} else {
+				it++;
 			}
 		}
 	}
