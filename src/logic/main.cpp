@@ -447,6 +447,13 @@ void projalphaView::nextFloor(gameMain *game) {
 				
 				game->entities->add(hen);
 				levelEntities.push_back(hen);
+
+			} else {
+				auto xen = new coinPickup(game->entities.get(),
+				                          ptr->getTransformTRS().position + glm::vec3(0, 0, 0));
+				
+				game->entities->add(xen);
+				levelEntities.push_back(xen);
 			}
 		}
 
@@ -1005,8 +1012,9 @@ int main(int argc, char *argv[]) try {
 		new team(game->entities.get(), playerEnt, "blue");
 		new areaAddScore(game->entities.get(), playerEnt, {});
 		new inventory(game->entities.get(), playerEnt, {});
+
 		new pickupAction(game->entities.get(), playerEnt, {"amuletPickup"});
-		new pickupAction(game->entities.get(), playerEnt, {"healthPickup"});
+		new pickupAction(game->entities.get(), playerEnt, {"pickup"});
 
 #if defined(__ANDROID__)
 		int wx = game->rend->screen_x;

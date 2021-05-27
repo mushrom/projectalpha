@@ -2,3 +2,4 @@
 
 healthPickup::~healthPickup() {};
 healthPickupCollision::~healthPickupCollision() {};
+coinPickup::~coinPickup() {};
