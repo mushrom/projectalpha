@@ -822,9 +822,19 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 
 	if (!inv) return;
 
+	std::vector<std::string> names;
+
 	for (auto it = inv->items.begin(); it != inv->items.end();) {
 		entity *ent = *it;
-		const char *name = ent->typeString();
+
+		std::string foo = std::string(ent->typeString()) + ": ";
+		auto comps = game->entities->getEntityComponents(ent);
+
+		for (auto& [name, _] : comps) {
+			foo += name + ", ";
+		}
+		names.push_back(foo);
+		const char *name = names.back().c_str();
 
 		if (vgui.menuEntry(name, &selected)) {
 			if (vgui.clicked()) {

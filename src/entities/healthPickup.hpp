@@ -20,6 +20,72 @@ static inline nlohmann::json setSerializedPosition(glm::vec3 position) {
 	return asdf;
 }
 
+class Action /*lawsuit :O*/ : public component {
+	public:
+		Action(entityManager *manager, entity *ent)
+			: component(manager, ent)
+		{
+			manager->registerComponent(ent, "Action", this);
+		};
+
+		virtual ~Action();
+		virtual void action(entityManager *manager, entity *ent) const = 0;
+		// TODO: maybe a tester to see if the entity can currently do this action
+};
+
+class Consumable : public Action {
+	public:
+		Consumable(entityManager *manager, entity *ent)
+			: Action(manager, ent)
+		{
+			manager->registerComponent(ent, "Consumable", this);
+		}
+
+		virtual ~Consumable();
+};
+
+class Throwable : public Action {
+	public:
+		Throwable(entityManager *manager, entity *ent)
+			: Action(manager, ent)
+		{
+			manager->registerComponent(ent, "Throwable", this);
+		}
+		virtual ~Throwable();
+
+		virtual void action(entityManager *manager, entity *ent) {
+
+		}
+};
+
+class healingConsumable : public Consumable {
+	float heals;
+
+	public:
+		healingConsumable(entityManager *manager, entity *ent, float amount = 30.f)
+			: Consumable(manager, ent),
+			  heals(amount)
+		{
+			manager->registerComponent(ent, "healingConsumable", this);
+		}
+		virtual ~healingConsumable();
+
+		virtual void action(entityManager *manager, entity *ent) const {
+			//health *enthealth = manager->getEnt
+			auto comps = manager->getEntityComponents(ent);
+			auto range = comps.equal_range("health");
+
+			for (auto it = range.first; it != range.second; it++) {
+				auto& [key, comp] = *it;
+				health *entHealth = dynamic_cast<health*>(comp);
+
+				if (entHealth) {
+					entHealth->heal(heals);
+				}
+			}
+		}
+};
+
 class healthPickup : public pickup {
 	float heals = 30.f;
 
@@ -39,6 +105,7 @@ class healthPickup : public pickup {
 		{
 			gameLightPoint::ptr lit = std::make_shared<gameLightPoint>();
 
+			new healingConsumable(manager, ent);
 			manager->registerComponent(this, "healthPickup", this);
 
 			static gameModel::ptr model = nullptr;
@@ -63,21 +130,6 @@ class healthPickup : public pickup {
 
 		virtual ~healthPickup();
 		virtual const char *typeString() const { return serializedType; };
-
-		virtual void apply(entityManager *manager, entity *ent) const {
-			//health *enthealth = manager->getEnt
-			auto comps = manager->getEntityComponents(ent);
-			auto range = comps.equal_range("health");
-
-			for (auto it = range.first; it != range.second; it++) {
-				auto& [key, comp] = *it;
-				health *entHealth = dynamic_cast<health*>(comp);
-
-				if (entHealth) {
-					entHealth->heal(heals);
-				}
-			}
-		}
 };
 
 class coinPickup : public pickup {
@@ -90,7 +142,7 @@ class coinPickup : public pickup {
 		//       but this is probably the simplest
 		coinPickup(entityManager *manager, glm::vec3 position)
 			: coinPickup(manager, this, 
-			               setSerializedPosition<coinPickup>(position)) {};
+			             setSerializedPosition<coinPickup>(position)) {};
 
 		coinPickup(entityManager *manager, entity *ent, nlohmann::json properties)
 			: pickup(manager, ent, properties)
@@ -120,27 +172,7 @@ class coinPickup : public pickup {
 
 		virtual ~coinPickup();
 		virtual const char *typeString() const { return serializedType; };
-
-		virtual void apply(entityManager *manager, entity *ent) const { }
-
-		/*
-		virtual void apply(entityManager *manager, entity *ent) const {
-			//health *enthealth = manager->getEnt
-			auto comps = manager->getEntityComponents(ent);
-			auto range = comps.equal_range("health");
-
-			for (auto it = range.first; it != range.second; it++) {
-				auto& [key, comp] = *it;
-				health *entHealth = dynamic_cast<health*>(comp);
-
-				if (entHealth) {
-					entHealth->heal(heals);
-				}
-			}
-		}
-		*/
 };
-
 
 class healthPickupCollision : public collisionHandler {
 	float damage;
@@ -159,6 +191,7 @@ class healthPickupCollision : public collisionHandler {
 		onCollision(entityManager *manager, entity *ent,
 		            entity *other, collision& col)
 		{
+			/*
 			std::cerr << "health pickup collision!" << std::endl;
 			healthPickup *pickup = dynamic_cast<healthPickup*>(other);
 
@@ -166,5 +199,6 @@ class healthPickupCollision : public collisionHandler {
 				pickup->apply(manager, ent);
 				manager->remove(pickup);
 			}
+			*/
 		};
 };
