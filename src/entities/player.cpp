@@ -66,13 +66,14 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 		// TODO: resource cache
 		//playerModel = loadScene(GR_PREFIX "assets/obj/TestGuy/rigged-lowpolyguy.glb");
 		SDL_Log("Loading player model...");
-		//playerModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/buff-dude-testanim.glb");
-		playerModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/ld48/player-cursor.glb");
+		playerModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/buff-dude-testanim.glb");
+		//playerModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/ld48/player-cursor.glb");
 		//playerModel = loadSceneCompiled("/home/flux/blender/objects/lowpoly-cc0-guy/low-poly-cc0-guy-fixedimport.gltf");
 
 		TRS transform = playerModel->getTransformTRS();
 		transform.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0));
 		//transform.scale = glm::vec3(0.16f);
+		//transform.scale = glm::vec3(2.0f);
 		transform.position = glm::vec3(0, -0.5, 0);
 		playerModel->setTransform(transform);
 
@@ -109,7 +110,7 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 
 	setNode("spotlight", node, lit);
 	setNode("pointlight", node, plit);
-	//character = std::make_shared<animatedCharacter>(playerModel);
+	character = std::make_shared<animatedCharacter>(playerModel);
 	//character->setAnimation("idle");
 
 	body->registerCollisionQueue(manager->collisions);
@@ -165,12 +166,10 @@ void player::update(entityManager *manager, float delta) {
 	rigidBody *body = castEntityComponent<rigidBody*>(manager, this, "rigidBody");
 	if (!body) return;
 
-	/*
 	glm::vec3 vel = body->phys->getVelocity();
 	if (glm::length(vel) < 2.0) {
 		character->setAnimation("idle");
 	} else {
 		character->setAnimation("walking");
 	}
-	*/
 }

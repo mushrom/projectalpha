@@ -443,7 +443,7 @@ void projalphaView::nextFloor(gameMain *game) {
 
 			if (rand() & 1) {
 				auto hen = new healthPickup(game->entities.get(),
-				                            ptr->getTransformTRS().position + glm::vec3(0, 2, 0));
+				                            ptr->getTransformTRS().position + glm::vec3(0, 0.75, 0));
 				
 				game->entities->add(hen);
 				levelEntities.push_back(hen);
@@ -524,7 +524,9 @@ void projalphaView::logic(gameMain *game, float delta) {
 	}
 
 	if (input.mode == modes::Loading) {
-		if (!game->state->rootnode->hasNode("asyncLoaded")) {
+		gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
+		//if (!game->state->rootnode->hasNode("wfc")) {
+		if (!wfcroot || !wfcroot->hasNode("leaves")) {
 			return;
 
 		} else {
@@ -648,6 +650,7 @@ void projalphaView::render(gameMain *game) {
 
 		// TODO: function to do this
 		//drawMainMenu(game, winsize_x, winsize_y);
+		renderHealthbars(game->entities.get(), vgui, cam);
 		drawInventory(game, winsize_x, winsize_y);
 
 	} else {
@@ -675,6 +678,22 @@ void projalphaView::render(gameMain *game) {
 		int wy = game->rend->screen_y;
 		float ticks = SDL_GetTicks() / 1000.f;
 
+		nvgBeginPath(vgui.nvg);
+		nvgRoundedRect(vgui.nvg, wx - 250, 50, 200, 100, 10);
+		nvgFillColor(vgui.nvg, nvgRGBA(28, 30, 34, 192));
+		nvgFill(vgui.nvg);
+
+		std::string txt = "Current floor: " + std::to_string(currentFloor);
+		nvgFontSize(vgui.nvg, 16.f);
+		nvgFontFace(vgui.nvg, "sans-bold");
+		nvgFontBlur(vgui.nvg, 0);
+		nvgTextAlign(vgui.nvg, NVG_ALIGN_LEFT);
+		nvgFillColor(vgui.nvg, nvgRGBA(0xf0, 0x60, 0x60, 160));
+		nvgText(vgui.nvg, wx - 82, 80, "❎", NULL);
+		nvgFillColor(vgui.nvg, nvgRGBA(220, 220, 220, 160));
+		nvgText(vgui.nvg, wx - 235, 80, txt.c_str(), NULL);
+
+		/*
 		nvgFontSize(vgui.nvg, 16.f);
 		nvgFontFace(vgui.nvg, "sans-bold");
 		nvgFontBlur(vgui.nvg, 0);
@@ -682,6 +701,7 @@ void projalphaView::render(gameMain *game) {
 		nvgFillColor(vgui.nvg, nvgRGBA(0xf0, 0x60, 0x60, 160));
 		std::string txt = "Current floor: " + std::to_string(currentFloor);
 		nvgText(vgui.nvg, wx / 2 - 48, wy / 2 - 48*cos(ticks), txt.c_str(), NULL);
+		*/
 
 		nvgRestore(vgui.nvg);
 		nvgEndFrame(vgui.nvg);
@@ -772,8 +792,9 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	bool reset = false;
 
 	vgui.newFrame(wx, wy);
-	vgui.menuBegin(wx / 2 - 100, wy / 2 - 100, 200, "Level select");
+	vgui.menuBegin(wx / 2 - 100, wy / 2 - 100, 200, "Main menu");
 
+	/*
 	static auto maps = listdir(DEMO_PREFIX "assets/maps/");
 
 	for (auto& [name, is_file] : maps) {
@@ -790,6 +811,17 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 			}
 		}
 	}
+	*/
+
+	if (vgui.menuEntry("New game", &selected)) {
+		if (vgui.clicked()) {
+			input.setMode(modes::Loading);
+			reset = true;
+
+		} else if (vgui.hovered()) {
+			selected = vgui.menuCount();
+		}
+	}
 
 	if (vgui.menuEntry("Quit", &selected)) {
 		if (vgui.clicked()) {
@@ -803,6 +835,7 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	vgui.menuEnd();
 	vgui.endFrame();
 
+
 	if (reset) {
 		level->reset();
 	}
@@ -813,7 +846,7 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 	bool reset = false;
 
 	vgui.newFrame(wx, wy);
-	vgui.menuBegin(wx / 2 - 100, wy / 2 - 100, 200, "Player inventory");
+	vgui.menuBegin(90, 180, 1100, "Player inventory");
 
 	entity *playerEnt = findFirst(game->entities.get(), {"player", "inventory"});
 	if (!playerEnt) return;
@@ -839,12 +872,32 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 		if (vgui.menuEntry(name, &selected)) {
 			if (vgui.clicked()) {
 				SDL_Log("clicked %s", name);
-				game->entities->activate(ent);
 
+				/*
+				// drop item
+				game->entities->activate(ent);
 				TRS newtrans = playerEnt->node->getTransformTRS();
 				newtrans.position += glm::vec3(3, 0, 3);
 				ent->node->setTransform(newtrans);
-				it = inv->items.erase(it);
+				*/
+
+				Wieldable *w;
+				castEntityComponent(w, game->entities.get(), ent, "Wieldable");
+
+				// TODO: need a way to safely observe entity pointers in cases
+				//       where they may be deleted... don't want to use shared_ptr
+				//       here because the entity manager has sole ownership
+				//       over the lifetime of the entity, shared_ptr would
+				//       result in lingering invalid entities
+				if (w) {
+					game->entities->activate(ent);
+					w->action(game->entities.get(), playerEnt);
+					it = inv->items.erase(it);
+					//game->entities->remove(ent);
+
+				} else {
+					it++;
+				}
 
 			} else if (vgui.hovered()) {
 				selected = vgui.menuCount();

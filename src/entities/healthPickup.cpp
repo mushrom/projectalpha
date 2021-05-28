@@ -8,3 +8,4 @@ Action::~Action() {};
 Consumable::~Consumable() {};
 Throwable::~Throwable() {};
 healingConsumable::~healingConsumable() {};
+Wieldable::~Wieldable() {};

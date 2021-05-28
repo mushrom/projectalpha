@@ -53,8 +53,52 @@ class Throwable : public Action {
 		}
 		virtual ~Throwable();
 
-		virtual void action(entityManager *manager, entity *ent) {
+		virtual void action(entityManager *manager, entity *ent) const {
+			entity *self = manager->getEntity((component*)this);
 
+			TRS transform = ent->node->getTransformTRS();
+			glm::vec3 dir = glm::mat3_cast(transform.rotation) * glm::vec3(1, 0, 0);
+			glm::vec3 pos = transform.position + dir*3.f;
+
+			self->node->setTransform({
+				.position = pos,
+				.rotation = transform.rotation,
+			});
+
+			rigidBody *body = new rigidBodySphere(manager, self, pos, 5.0, 0.5);
+			new syncRigidBodyPosition(manager, self);
+			// TODO: component to remove rigid bodies after a collision, or some
+			//       number of collisions
+
+			body->phys->setVelocity(dir*5.f);
+		}
+};
+
+class Wieldable : public Action {
+	// name of the action component to use when this thing is wielded
+	std::string wieldAction;
+
+	public:
+		Wieldable(entityManager *manager, entity *ent, std::string action)
+			: Action(manager, ent),
+			  wieldAction(action)
+		{
+			manager->registerComponent(ent, "Wieldable", this);
+		}
+		virtual ~Wieldable();
+
+		virtual void action(entityManager *manager, entity *ent) const {
+			SDL_Log("Got here, at Wieldable::action()!");
+			entity *self = manager->getEntity((component*)this);
+			Action *act = castEntityComponent<Action*>(manager, self, wieldAction);
+
+			if (act) {
+				SDL_Log("Wieldable::action() calling subaction %s...", wieldAction.c_str());
+				act->action(manager, ent);
+
+			} else {
+				SDL_Log("Wieldable::action(): couldn't find action %s", wieldAction.c_str());
+			}
 		}
 };
 
@@ -71,6 +115,7 @@ class healingConsumable : public Consumable {
 		virtual ~healingConsumable();
 
 		virtual void action(entityManager *manager, entity *ent) const {
+			SDL_Log("Got here, at healingConsumable::action()!");
 			//health *enthealth = manager->getEnt
 			auto comps = manager->getEntityComponents(ent);
 			auto range = comps.equal_range("health");
@@ -83,6 +128,10 @@ class healingConsumable : public Consumable {
 					entHealth->heal(heals);
 				}
 			}
+
+			// single-use consumable
+			entity *self = manager->getEntity((component*)this);
+			manager->remove(self);
 		}
 };
 
@@ -106,6 +155,7 @@ class healthPickup : public pickup {
 			gameLightPoint::ptr lit = std::make_shared<gameLightPoint>();
 
 			new healingConsumable(manager, ent);
+			new Wieldable(manager, ent, "healingConsumable");
 			manager->registerComponent(this, "healthPickup", this);
 
 			static gameModel::ptr model = nullptr;
@@ -147,6 +197,8 @@ class coinPickup : public pickup {
 		coinPickup(entityManager *manager, entity *ent, nlohmann::json properties)
 			: pickup(manager, ent, properties)
 		{
+			new Throwable(manager, ent);
+			new Wieldable(manager, ent, "Throwable");
 			manager->registerComponent(this, "coinPickup", this);
 
 			static gameObject::ptr model = nullptr;
