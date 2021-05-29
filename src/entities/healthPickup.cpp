@@ -9,3 +9,4 @@ Consumable::~Consumable() {};
 Throwable::~Throwable() {};
 healingConsumable::~healingConsumable() {};
 Wieldable::~Wieldable() {};
+removeBodiesOnWorldCollision::~removeBodiesOnWorldCollision() {};

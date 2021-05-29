@@ -44,6 +44,50 @@ class Consumable : public Action {
 		virtual ~Consumable();
 };
 
+class removeBodiesOnWorldCollision : public collisionHandler {
+	public:
+		removeBodiesOnWorldCollision(entityManager *manager, entity *ent)
+			: collisionHandler(manager, ent, {})
+		{
+			manager->registerComponent(ent, "removeBodiesOnWorldCollision", this);
+		}
+		virtual ~removeBodiesOnWorldCollision();
+
+		virtual void
+		onCollision(entityManager *manager, entity *ent,
+		            entity *other, collision& col)
+		{
+			if (other != nullptr) {
+				// world bodies have no attached entity, for now
+				return;
+			}
+
+			if (glm::dot(col.normal, glm::vec3(0, -1, 0)) < 0.9) {
+				return;
+			}
+
+			SDL_Log("Got here, at removeBodiesOnWorldCollision::action()!");
+
+			auto comps = manager->getEntityComponents(ent);
+			auto bodies = comps.equal_range("rigidBody");
+			auto syncs = comps.equal_range("syncRigidBody");
+			auto rms = comps.equal_range("removeBodiesOnWorldCollision");
+
+			std::set<component*> toRemove;
+
+			for (auto& range : {bodies, syncs, rms}) {
+				for (auto it = range.first; it != range.second; it++) {
+					auto& [_, comp] = *it;
+					toRemove.insert(comp);
+				}
+			}
+
+			for (auto& comp : toRemove) {
+				manager->unregisterComponent(ent, comp);
+			}
+		};
+};
+
 class Throwable : public Action {
 	public:
 		Throwable(entityManager *manager, entity *ent)
@@ -57,7 +101,10 @@ class Throwable : public Action {
 			entity *self = manager->getEntity((component*)this);
 
 			TRS transform = ent->node->getTransformTRS();
-			glm::vec3 dir = glm::mat3_cast(transform.rotation) * glm::vec3(1, 0, 0);
+			glm::vec3 dir;
+			dir = glm::mat3_cast(transform.rotation) * glm::vec3(1, 0, 0);
+			dir = glm::normalize(dir + glm::vec3(0, 1, 0));
+
 			glm::vec3 pos = transform.position + dir*3.f;
 
 			self->node->setTransform({
@@ -67,10 +114,12 @@ class Throwable : public Action {
 
 			rigidBody *body = new rigidBodySphere(manager, self, pos, 5.0, 0.5);
 			new syncRigidBodyPosition(manager, self);
+			new removeBodiesOnWorldCollision(manager, self);
 			// TODO: component to remove rigid bodies after a collision, or some
 			//       number of collisions
 
-			body->phys->setVelocity(dir*5.f);
+			body->phys->setVelocity(dir*10.f);
+			body->registerCollisionQueue(manager->collisions);
 		}
 };
 
