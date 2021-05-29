@@ -230,7 +230,7 @@ class projalphaView : public gameView {
 
 		renderPostChain::ptr post = nullptr;
 		//modalSDLInput input;
-		vecGUI vgui;
+		//vecGUI vgui;
 		int menuSelect = 0;
 		int currentFloor = 0;
 		float zoom = 20.f;
@@ -615,6 +615,7 @@ void projalphaView::render(gameMain *game) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 
+		/*
 		nvgBeginFrame(vgui.nvg, game->rend->screen_x, game->rend->screen_y, 1.0);
 		nvgSave(vgui.nvg);
 
@@ -637,6 +638,7 @@ void projalphaView::render(gameMain *game) {
 
 		nvgRestore(vgui.nvg);
 		nvgEndFrame(vgui.nvg);
+		*/
 
 	} else if (input.mode == modes::Inventory) {
 		renderWorld(game, cam, flags);
@@ -650,7 +652,7 @@ void projalphaView::render(gameMain *game) {
 
 		// TODO: function to do this
 		//drawMainMenu(game, winsize_x, winsize_y);
-		renderHealthbars(game->entities.get(), vgui, cam);
+		//renderHealthbars(game->entities.get(), vgui, cam);
 		drawInventory(game, winsize_x, winsize_y);
 
 	} else {
@@ -667,6 +669,7 @@ void projalphaView::render(gameMain *game) {
 		disable(GL_SCISSOR_TEST);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+		/*
 		nvgBeginFrame(vgui.nvg, game->rend->screen_x, game->rend->screen_y, 1.0);
 		nvgSave(vgui.nvg);
 
@@ -693,18 +696,9 @@ void projalphaView::render(gameMain *game) {
 		nvgFillColor(vgui.nvg, nvgRGBA(220, 220, 220, 160));
 		nvgText(vgui.nvg, wx - 235, 80, txt.c_str(), NULL);
 
-		/*
-		nvgFontSize(vgui.nvg, 16.f);
-		nvgFontFace(vgui.nvg, "sans-bold");
-		nvgFontBlur(vgui.nvg, 0);
-		nvgTextAlign(vgui.nvg, NVG_ALIGN_LEFT);
-		nvgFillColor(vgui.nvg, nvgRGBA(0xf0, 0x60, 0x60, 160));
-		std::string txt = "Current floor: " + std::to_string(currentFloor);
-		nvgText(vgui.nvg, wx / 2 - 48, wy / 2 - 48*cos(ticks), txt.c_str(), NULL);
-		*/
-
 		nvgRestore(vgui.nvg);
 		nvgEndFrame(vgui.nvg);
+		*/
 	}
 }
 
@@ -791,27 +785,11 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	static int selected;
 	bool reset = false;
 
+	input.setMode(modes::Loading);
+	reset = true;
+	/*
 	vgui.newFrame(wx, wy);
 	vgui.menuBegin(wx / 2 - 100, wy / 2 - 100, 200, "Main menu");
-
-	/*
-	static auto maps = listdir(DEMO_PREFIX "assets/maps/");
-
-	for (auto& [name, is_file] : maps) {
-		if (is_file && vgui.menuEntry(name.c_str(), &selected)) {
-			if (vgui.clicked()) {
-				SDL_Log("clicked %s", name.c_str());
-				currentMap = DEMO_PREFIX "assets/maps/" + name;
-				//load(game, name);
-				//reset = true; // XXX:
-				input.setMode(modes::Loading);
-
-			} else if (vgui.hovered()) {
-				selected = vgui.menuCount();
-			}
-		}
-	}
-	*/
 
 	if (vgui.menuEntry("New game", &selected)) {
 		if (vgui.clicked()) {
@@ -834,7 +812,7 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 
 	vgui.menuEnd();
 	vgui.endFrame();
-
+	*/
 
 	if (reset) {
 		level->reset();
@@ -845,6 +823,7 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 	static int selected;
 	bool reset = false;
 
+	/*
 	vgui.newFrame(wx, wy);
 	vgui.menuBegin(90, 180, 1100, "Player inventory");
 
@@ -873,13 +852,11 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 			if (vgui.clicked()) {
 				SDL_Log("clicked %s", name);
 
-				/*
 				// drop item
-				game->entities->activate(ent);
-				TRS newtrans = playerEnt->node->getTransformTRS();
-				newtrans.position += glm::vec3(3, 0, 3);
-				ent->node->setTransform(newtrans);
-				*/
+				//game->entities->activate(ent);
+				//TRS newtrans = playerEnt->node->getTransformTRS();
+				//newtrans.position += glm::vec3(3, 0, 3);
+				//ent->node->setTransform(newtrans);
 
 				Wieldable *w;
 				castEntityComponent(w, game->entities.get(), ent, "Wieldable");
@@ -909,25 +886,16 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 		}
 	}
 
-	/*
-	if (vgui.menuEntry("Quit", &selected)) {
-		if (vgui.clicked()) {
-			SDL_Log("Quiterino");
-
-		} else if (vgui.hovered()) {
-			selected = vgui.menuCount();
-		}
-	}
-	*/
-
 	vgui.menuEnd();
 	vgui.endFrame();
+	*/
 }
 
 void projalphaView::drawWinScreen(gameMain *game, int wx, int wy) {
 	static int selected;
 	bool reset = false;
 
+	/*
 	vgui.newFrame(wx, wy);
 	vgui.menuBegin(wx / 2 - 100, wy / 2 - 100, 200, "You are winnar!");
 
@@ -953,6 +921,7 @@ void projalphaView::drawWinScreen(gameMain *game, int wx, int wy) {
 
 	vgui.menuEnd();
 	vgui.endFrame();
+	*/
 }
 
 void initEntitiesFromNodes(gameObject::ptr node,

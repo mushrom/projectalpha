@@ -3,6 +3,7 @@
 #include <components/healthbar.hpp>
 #include <grend/interpolation.hpp>
 
+/*
 void drawPlayerHealthbar(entityManager *manager,
                          vecGUI&vgui,
                          health *playerHealth)
@@ -55,7 +56,9 @@ void drawPlayerHealthbar(entityManager *manager,
 	nvgFillColor(vgui.nvg, nvgRGBA(0xf0, 0x60, 0x60, 0xff));
 	nvgText(vgui.nvg, wx/2, 80 + 32, fpsstr.c_str(), NULL);
 }
+*/
 
+	/*
 void renderObjectives(entityManager *manager,
                       levelController *level,
                       vecGUI& vgui)
@@ -76,10 +79,6 @@ void renderObjectives(entityManager *manager,
 	nvgText(vgui.nvg, wx - 82, 80, "❎", NULL);
 	nvgFillColor(vgui.nvg, nvgRGBA(220, 220, 220, 160));
 	nvgText(vgui.nvg, wx - 235, 80, "💚 Objectives: ", NULL);
-	/*
-	nvgText(vgui.nvg, wx - 235, 80 + 16, "Go forward ➡", NULL);
-	nvgText(vgui.nvg, wx - 235, 80 + 32, "⬅ Go back", NULL);
-	*/
 
 	unsigned i = 1;
 	for (auto& [desc, completed] : level->objectivesCompleted) {
@@ -88,7 +87,9 @@ void renderObjectives(entityManager *manager,
 		nvgText(vgui.nvg, wx - 235, 80 + (i++ * 16), foo.c_str(), NULL);
 	}
 }
+*/
 
+/*
 void renderHealthbars(entityManager *manager,
                       vecGUI& vgui,
                       camera::ptr cam)
@@ -116,7 +117,9 @@ void renderHealthbars(entityManager *manager,
 		}
 	}
 }
+*/
 
+/*
 void renderControls(gameMain *game, vecGUI& vgui) {
 	// TODO: should have a generic "pad" component
 	// assume first instances of these components are the ones we want,
@@ -167,3 +170,4 @@ void renderControls(gameMain *game, vecGUI& vgui) {
 	nvgStrokeColor(vgui.nvg, nvgRGBA(0x60, 0x60, 0x60, 0x40));
 	nvgStroke(vgui.nvg);
 }
+*/

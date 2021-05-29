@@ -5,10 +5,10 @@
 
 #include <grend/ecs/ecs.hpp>
 #include <grend/camera.hpp>
-#include <grend/vecGUI.hpp>
 
 using namespace grendx;
 
+/*
 void drawPlayerHealthbar(entityManager *manager,
                          vecGUI&vgui,
                          health *playerHealth);
@@ -19,3 +19,4 @@ void renderObjectives(entityManager *manager,
                       levelController *level,
                       vecGUI& vgui);
 void renderControls(gameMain *game, vecGUI& vgui);
+*/
