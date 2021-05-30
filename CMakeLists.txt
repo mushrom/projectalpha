@@ -101,6 +101,8 @@ set(LANDSCAPE_DEMO_SRC
 	src/logic/main.cpp
 	src/logic/wfcGenerator.cpp
 	src/logic/generatorEvent.cpp
+
+	src/nuklear/impl/nuklear.c
 )
 
 message(STATUS "CMake host: ${CMAKE_HOST_SYSTEM_NAME}")

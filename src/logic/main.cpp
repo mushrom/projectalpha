@@ -56,6 +56,8 @@ using namespace grendx::ecs;
 #include <logic/UI.hpp>
 #include <logic/levelController.hpp>
 
+#include <nuklear/nuklear.h>
+
 class landscapeEventSystem : public entitySystem {
 	public:
 		virtual void update(entityManager *manager, float delta);
@@ -231,6 +233,8 @@ class projalphaView : public gameView {
 		renderPostChain::ptr post = nullptr;
 		//modalSDLInput input;
 		//vecGUI vgui;
+		struct nk_context *nk_ctx;
+
 		int menuSelect = 0;
 		int currentFloor = 0;
 		float zoom = 20.f;
@@ -264,6 +268,27 @@ projalphaView::projalphaView(gameMain *game)
 	  //wfcgen(new wfcGenerator(game, DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json"))
 	  wfcgen(new wfcGenerator(game, DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"))
 {
+    //ctx = nk_sdl_init(win);
+    nk_ctx = nk_sdl_init(game->ctx.window);
+
+	if (!nk_ctx) {
+		throw std::logic_error("Couldn't initialize nk_ctx!");
+	}
+
+    /* Load Fonts: if none of these are loaded a default font will be used  */
+    /* Load Cursor: if you uncomment cursor loading please hide the cursor */
+    {struct nk_font_atlas *atlas;
+    nk_sdl_font_stash_begin(&atlas);
+    /*struct nk_font *droid = nk_font_atlas_add_from_file(atlas, "../../../extra_font/DroidSans.ttf", 14, 0);*/
+    /*struct nk_font *roboto = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Roboto-Regular.ttf", 16, 0);*/
+    /*struct nk_font *future = nk_font_atlas_add_from_file(atlas, "../../../extra_font/kenvector_future_thin.ttf", 13, 0);*/
+    /*struct nk_font *clean = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyClean.ttf", 12, 0);*/
+    /*struct nk_font *tiny = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyTiny.ttf", 10, 0);*/
+    /*struct nk_font *cousine = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Cousine-Regular.ttf", 13, 0);*/
+    nk_sdl_font_stash_end();
+    /*nk_style_load_all_cursors(ctx, atlas->cursors);*/
+    /*nk_style_set_font(ctx, &roboto->handle);*/}
+
 #ifdef NO_FLOATING_FB
 	post = renderPostChain::ptr(new renderPostChain(
 		{loadPostShader(GR_PREFIX "shaders/baked/texpresent.frag",
@@ -331,6 +356,10 @@ projalphaView::projalphaView(gameMain *game)
 
 	bindCookedMeshes();
 	input.bind(MODAL_ALL_MODES, resizeInputHandler(game, post));
+	input.bind(MODAL_ALL_MODES, [=, this] (SDL_Event& ev, unsigned flags) {
+		nk_sdl_handle_event(&ev);
+		return MODAL_NO_CHANGE;
+	});
 
 #if !defined(__ANDROID__)
 	//input.bind(modes::Move, controller::camMovement(cam, 30.f));
@@ -509,6 +538,10 @@ bool projalphaView::nearNode(gameMain *game, const std::string& name, float thre
 }
 
 void projalphaView::logic(gameMain *game, float delta) {
+	// XXX: handle input from end of frame at render() to logic() here
+	//      on the next frame... should probably override handleInput()
+	nk_input_end(nk_ctx);
+
 	if (input.mode == modes::MainMenu
 		|| input.mode == modes::Pause
 		|| input.mode == modes::Won)
@@ -700,6 +733,11 @@ void projalphaView::render(gameMain *game) {
 		nvgEndFrame(vgui.nvg);
 		*/
 	}
+
+	nk_sdl_render(NK_ANTI_ALIASING_ON, 512*1024, 128*1024);
+	// XXX: handle input from end of frame here to beginning of logic()
+	//      on the next frame... should probably override handleInput()
+	nk_input_begin(nk_ctx);
 }
 
 static std::vector<std::pair<std::string, bool>> listdir(std::string path) {
@@ -785,34 +823,26 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	static int selected;
 	bool reset = false;
 
-	input.setMode(modes::Loading);
-	reset = true;
-	/*
-	vgui.newFrame(wx, wy);
-	vgui.menuBegin(wx / 2 - 100, wy / 2 - 100, 200, "Main menu");
-
-	if (vgui.menuEntry("New game", &selected)) {
-		if (vgui.clicked()) {
+	//input.setMode(modes::Loading);
+	if (nk_begin(nk_ctx, "Main menu", nk_rect(50, 50, 220, 220),
+	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
+	{
+		nk_layout_row_static(nk_ctx, 30, 80, 1);
+		if (nk_button_label(nk_ctx, "New game")) {
+			SDL_Log("New game!");
 			input.setMode(modes::Loading);
 			reset = true;
-
-		} else if (vgui.hovered()) {
-			selected = vgui.menuCount();
 		}
-	}
+		
+		if (nk_button_label(nk_ctx, "Settings")) {
+			SDL_Log("Settings");
+		}
 
-	if (vgui.menuEntry("Quit", &selected)) {
-		if (vgui.clicked()) {
+		if (nk_button_label(nk_ctx, "Quit")) {
 			SDL_Log("Quiterino");
-
-		} else if (vgui.hovered()) {
-			selected = vgui.menuCount();
 		}
 	}
-
-	vgui.menuEnd();
-	vgui.endFrame();
-	*/
+	nk_end(nk_ctx);
 
 	if (reset) {
 		level->reset();
@@ -820,9 +850,74 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 }
 
 void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
-	static int selected;
-	bool reset = false;
+	entity *playerEnt = findFirst(game->entities.get(), {"player", "inventory"});
+	if (!playerEnt) return;
 
+	auto inv = castEntityComponent<inventory*>(game->entities.get(), playerEnt, "inventory");
+
+	if (!inv) return;
+
+	static std::map<entity*, std::string> names;
+
+	if (nk_begin(nk_ctx, "Player inventory", nk_rect(50, 50, 220, 220),
+	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
+	{
+		nk_layout_row_static(nk_ctx, 30, 80, 1);
+		if (nk_button_label(nk_ctx, "a button")) {
+			// asdf
+			SDL_Log("clicked a button");
+		}
+
+		for (auto it = inv->items.begin(); it != inv->items.end();) {
+			entity *ent = *it;
+
+			if (names.count(ent) == 0) {
+				std::string foo = std::string(ent->typeString()) + ": ";
+				auto comps = game->entities->getEntityComponents(ent);
+
+				for (auto& [name, _] : comps) {
+					foo += name + ", ";
+				}
+
+				names[ent] = foo;
+			}
+
+			const char *name = names[ent].c_str();
+
+			//nk_layout_row_dynamic(nk_ctx, 20, 1);
+			if (nk_button_label(nk_ctx, name)) {
+				SDL_Log("clicked %s", name);
+
+				Wieldable *w;
+				castEntityComponent(w, game->entities.get(), ent, "Wieldable");
+
+				// TODO: need a way to safely observe entity pointers in cases
+				//       where they may be deleted... don't want to use shared_ptr
+				//       here because the entity manager has sole ownership
+				//       over the lifetime of the entity, shared_ptr would
+				//       result in lingering invalid entities
+				if (w) {
+					game->entities->activate(ent);
+					w->action(game->entities.get(), playerEnt);
+					it = inv->items.erase(it);
+					//game->entities->remove(ent);
+
+				} else {
+					it++;
+				}
+
+				// drop item
+				//game->entities->activate(ent);
+				//TRS newtrans = playerEnt->node->getTransformTRS();
+				//newtrans.position += glm::vec3(3, 0, 3);
+				//ent->node->setTransform(newtrans);
+
+			} else {
+				it++;
+			}
+		}
+	}
+	nk_end(nk_ctx);
 	/*
 	vgui.newFrame(wx, wy);
 	vgui.menuBegin(90, 180, 1100, "Player inventory");

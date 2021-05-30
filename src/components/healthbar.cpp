@@ -9,6 +9,7 @@ using namespace grendx::ecs;
 healthbar::~healthbar() {};
 worldHealthbar::~worldHealthbar() {};
 
+#if 0
 void worldHealthbar::draw(entityManager *manager, entity *ent,
                           vecGUI& vgui, camera::ptr cam)
 {
@@ -76,3 +77,4 @@ void worldHealthbar::draw(entityManager *manager, entity *ent,
 		*/
 	}
 }
+#endif

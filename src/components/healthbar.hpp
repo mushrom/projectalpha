@@ -16,8 +16,10 @@ class healthbar : public component {
 		};
 		virtual ~healthbar();
 
+		/*
 		virtual void draw(entityManager *manager, entity *ent,
 		                  vecGUI& vgui, camera::ptr cam) = 0;
+						  */
 };
 
 // health bar drawn aligned and scaled with the 3D world position of
@@ -33,6 +35,8 @@ class worldHealthbar : public healthbar {
 		virtual ~worldHealthbar();
 
 		float lastAmount = 1.0;
+		/*
 		virtual void draw(entityManager *manager, entity *ent,
 		                  vecGUI& vgui, camera::ptr cam);
+						  */
 };
