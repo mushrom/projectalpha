@@ -3,9 +3,10 @@
 #include <components/healthbar.hpp>
 #include <grend/interpolation.hpp>
 
-/*
+#include <nuklear/canvas.h>
+
 void drawPlayerHealthbar(entityManager *manager,
-                         vecGUI&vgui,
+                         struct nk_context *nk_ctx,
                          health *playerHealth)
 {
 	static float slowAmount = 0.0;
@@ -17,46 +18,34 @@ void drawPlayerHealthbar(entityManager *manager,
 	int wx = manager->engine->rend->screen_x;
 	int wy = manager->engine->rend->screen_y;
 
-	nvgBeginPath(vgui.nvg);
-	nvgRoundedRect(vgui.nvg, 48, 35, 16, 42, 3);
-	nvgRoundedRect(vgui.nvg, 35, 48, 42, 16, 3);
-	nvgFillColor(vgui.nvg, nvgRGBA(172, 16, 16, 192));
-	nvgFill(vgui.nvg);
-
-	//nvgRotate(vgui.nvg, 0.1*cos(ticks));
-	nvgBeginPath(vgui.nvg);
-	nvgRect(vgui.nvg, 90, 48, 256, 16);
-	nvgFillColor(vgui.nvg, nvgRGBA(30, 30, 30, 127));
-	nvgFill(vgui.nvg);
-
-	nvgBeginPath(vgui.nvg);
-	nvgRect(vgui.nvg, 93, 50, 252*fastAmount, 12);
-	nvgFillColor(vgui.nvg, nvgRGBA(192, 32, 32, 196));
-	nvgFill(vgui.nvg);
-	//nvgRotate(vgui.nvg, -0.1*cos(ticks));
-
-	if (diff > 0.001) {
+	struct nk_canvas canvas;
+	if (nk_canvas_begin(nk_ctx, &canvas, "player healthbar", 0, 90, 48, 256, 16,
+	                    nk_rgba(32, 32, 32, 127)))
+	{
 		float k = 252*fastAmount;
+		struct nk_rect rect  = nk_rect(93, 50, k, 12);
+		struct nk_rect extra = nk_rect(93 + k, 50, (252 - k)*diff, 12);
 
-		nvgBeginPath(vgui.nvg);
-		nvgRect(vgui.nvg, 93 + k, 50, (252 - k)*diff, 12);
-		nvgFillColor(vgui.nvg, nvgRGBA(192, 64, 32, 196));
-		nvgFill(vgui.nvg);
+		nk_fill_rect(canvas.painter, rect, 0, nk_rgb(192, 64, 32));
+
+		if (diff > 0.001) {
+			float k = 252*fastAmount;
+
+			//nk_fill_rect(canvas.painter, extra, 0, nk_rgb(160, 84, 48));
+			nk_fill_rect(canvas.painter, extra, 0, nk_rgb(48, 85, 160));
+		}
 	}
-	//nvgRotate(vgui.nvg, -0.1*cos(ticks));
+	nk_canvas_end(nk_ctx, &canvas);
 
+	if (nk_begin(nk_ctx, "FPS", nk_rect(wx - 144, 48, 112, 32), 0)) {
+		double fps = manager->engine->frame_timer.average();
+		std::string fpsstr = std::to_string(fps) + "fps";
 
-	nvgFontSize(vgui.nvg, 16.f);
-	nvgFontFace(vgui.nvg, "sans-bold");
-	nvgFontBlur(vgui.nvg, 0);
-	nvgTextAlign(vgui.nvg, NVG_ALIGN_LEFT);
-
-	double fps = manager->engine->frame_timer.average();
-	std::string fpsstr = std::to_string(fps) + "fps";
-	nvgFillColor(vgui.nvg, nvgRGBA(0xf0, 0x60, 0x60, 0xff));
-	nvgText(vgui.nvg, wx/2, 80 + 32, fpsstr.c_str(), NULL);
+		nk_layout_row_dynamic(nk_ctx, 14, 1);
+		nk_label(nk_ctx, fpsstr.c_str(), NK_TEXT_LEFT);
+	}
+	nk_end(nk_ctx);
 }
-*/
 
 	/*
 void renderObjectives(entityManager *manager,
@@ -89,9 +78,8 @@ void renderObjectives(entityManager *manager,
 }
 */
 
-/*
 void renderHealthbars(entityManager *manager,
-                      vecGUI& vgui,
+                      struct nk_context *nk_ctx,
                       camera::ptr cam)
 {
 	std::set<entity*> ents = searchEntities(manager, {"health", "healthbar"});
@@ -102,7 +90,7 @@ void renderHealthbars(entityManager *manager,
 		castEntityComponent(bar, manager, ent, "healthbar");
 
 		if (bar) {
-			bar->draw(manager, ent, vgui, cam);
+			bar->draw(manager, ent, nk_ctx, cam);
 		}
 	}
 
@@ -113,11 +101,10 @@ void renderHealthbars(entityManager *manager,
 		castEntityComponent(playerHealth, manager, ent, "health");
 
 		if (playerHealth) {
-			drawPlayerHealthbar(manager, vgui, playerHealth);
+			drawPlayerHealthbar(manager, nk_ctx, playerHealth);
 		}
 	}
 }
-*/
 
 /*
 void renderControls(gameMain *game, vecGUI& vgui) {

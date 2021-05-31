@@ -277,17 +277,22 @@ projalphaView::projalphaView(gameMain *game)
 
     /* Load Fonts: if none of these are loaded a default font will be used  */
     /* Load Cursor: if you uncomment cursor loading please hide the cursor */
-    {struct nk_font_atlas *atlas;
-    nk_sdl_font_stash_begin(&atlas);
-    /*struct nk_font *droid = nk_font_atlas_add_from_file(atlas, "../../../extra_font/DroidSans.ttf", 14, 0);*/
-    /*struct nk_font *roboto = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Roboto-Regular.ttf", 16, 0);*/
-    /*struct nk_font *future = nk_font_atlas_add_from_file(atlas, "../../../extra_font/kenvector_future_thin.ttf", 13, 0);*/
-    /*struct nk_font *clean = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyClean.ttf", 12, 0);*/
-    /*struct nk_font *tiny = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyTiny.ttf", 10, 0);*/
-    /*struct nk_font *cousine = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Cousine-Regular.ttf", 13, 0);*/
-    nk_sdl_font_stash_end();
-    /*nk_style_load_all_cursors(ctx, atlas->cursors);*/
-    /*nk_style_set_font(ctx, &roboto->handle);*/}
+	{
+		struct nk_font_atlas *atlas;
+		nk_sdl_font_stash_begin(&atlas);
+		struct nk_font *roboto = nk_font_atlas_add_from_file(atlas, GR_PREFIX "assets/fonts/Roboto-Regular.ttf", 16, 0);
+		/*struct nk_font *droid = nk_font_atlas_add_from_file(atlas, "../../../extra_font/DroidSans.ttf", 14, 0);*/
+		/*struct nk_font *roboto = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Roboto-Regular.ttf", 16, 0);*/
+		/*struct nk_font *future = nk_font_atlas_add_from_file(atlas, "../../../extra_font/kenvector_future_thin.ttf", 13, 0);*/
+		/*struct nk_font *clean = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyClean.ttf", 12, 0);*/
+		/*struct nk_font *tiny = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyTiny.ttf", 10, 0);*/
+		/*struct nk_font *cousine = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Cousine-Regular.ttf", 13, 0);*/
+		nk_sdl_font_stash_end();
+		/*nk_style_load_all_cursors(ctx, atlas->cursors);*/
+		if (roboto) {
+			nk_style_set_font(nk_ctx, &roboto->handle);
+		}
+	}
 
 #ifdef NO_FLOATING_FB
 	post = renderPostChain::ptr(new renderPostChain(
@@ -373,7 +378,8 @@ projalphaView::projalphaView(gameMain *game)
 
 	//input.bind(modes::Move, controller::camAngled2DFixed(cam, game, -M_PI/4.f));
 	input.bind(modes::Move,
-			controller::camAngled2DRotatable(cam, game, -M_PI/4.f, -M_PI/2.f, -M_PI/4.f));
+		controller::camAngled2DRotatable(cam, game,
+		                                 -M_PI/4.f, -M_PI/2.f, 0.f));
 	input.bind(modes::Move, [=, this] (SDL_Event& ev, unsigned flags) {
 		inputSystem->handleEvent(game->entities.get(), ev);
 		return MODAL_NO_CHANGE;
@@ -634,7 +640,6 @@ void projalphaView::render(gameMain *game) {
 		post->setUniform("exposure", game->rend->exposure);
 		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
-		//input.setMode(modes::Move);
 
 		// TODO: function to do this
 		drawWinScreen(game, winsize_x, winsize_y);
@@ -646,32 +651,6 @@ void projalphaView::render(gameMain *game) {
 		disable(GL_DEPTH_TEST);
 		disable(GL_SCISSOR_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-
-		/*
-		nvgBeginFrame(vgui.nvg, game->rend->screen_x, game->rend->screen_y, 1.0);
-		nvgSave(vgui.nvg);
-
-		int wx = game->rend->screen_x;
-		int wy = game->rend->screen_y;
-		float ticks = SDL_GetTicks() / 1000.f;
-
-		nvgFontSize(vgui.nvg, 48.f);
-		nvgFontFace(vgui.nvg, "sans-bold");
-		nvgFontBlur(vgui.nvg, 0);
-		nvgTextAlign(vgui.nvg, NVG_ALIGN_LEFT);
-		nvgFillColor(vgui.nvg, nvgRGBA(0xf0, 0x60, 0x60, 160));
-		nvgText(vgui.nvg, wx / 2 - 48, wy / 2 - 48*cos(ticks), "Loading!", NULL);
-
-		nvgBeginPath(vgui.nvg);
-		nvgRect(vgui.nvg, wx / 2 - 64*cos(ticks), wy / 2 - 64*sin(ticks), 48, 48);
-		nvgFillColor(vgui.nvg, nvgRGBA(30, 30, 0xff, 0xff));
-		nvgRotate(vgui.nvg, cos(ticks));
-		nvgFill(vgui.nvg);
-
-		nvgRestore(vgui.nvg);
-		nvgEndFrame(vgui.nvg);
-		*/
 
 	} else if (input.mode == modes::Inventory) {
 		renderWorld(game, cam, flags);
@@ -685,7 +664,7 @@ void projalphaView::render(gameMain *game) {
 
 		// TODO: function to do this
 		//drawMainMenu(game, winsize_x, winsize_y);
-		//renderHealthbars(game->entities.get(), vgui, cam);
+		renderHealthbars(game->entities.get(), nk_ctx, cam);
 		drawInventory(game, winsize_x, winsize_y);
 
 	} else {
@@ -702,36 +681,7 @@ void projalphaView::render(gameMain *game) {
 		disable(GL_SCISSOR_TEST);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		/*
-		nvgBeginFrame(vgui.nvg, game->rend->screen_x, game->rend->screen_y, 1.0);
-		nvgSave(vgui.nvg);
-
-		renderHealthbars(game->entities.get(), vgui, cam);
-		//renderObjectives(game->entities.get(), level.get(), vgui);
-		renderControls(game, vgui);
-
-		int wx = game->rend->screen_x;
-		int wy = game->rend->screen_y;
-		float ticks = SDL_GetTicks() / 1000.f;
-
-		nvgBeginPath(vgui.nvg);
-		nvgRoundedRect(vgui.nvg, wx - 250, 50, 200, 100, 10);
-		nvgFillColor(vgui.nvg, nvgRGBA(28, 30, 34, 192));
-		nvgFill(vgui.nvg);
-
-		std::string txt = "Current floor: " + std::to_string(currentFloor);
-		nvgFontSize(vgui.nvg, 16.f);
-		nvgFontFace(vgui.nvg, "sans-bold");
-		nvgFontBlur(vgui.nvg, 0);
-		nvgTextAlign(vgui.nvg, NVG_ALIGN_LEFT);
-		nvgFillColor(vgui.nvg, nvgRGBA(0xf0, 0x60, 0x60, 160));
-		nvgText(vgui.nvg, wx - 82, 80, "❎", NULL);
-		nvgFillColor(vgui.nvg, nvgRGBA(220, 220, 220, 160));
-		nvgText(vgui.nvg, wx - 235, 80, txt.c_str(), NULL);
-
-		nvgRestore(vgui.nvg);
-		nvgEndFrame(vgui.nvg);
-		*/
+		renderHealthbars(game->entities.get(), nk_ctx, cam);
 	}
 
 	nk_sdl_render(NK_ANTI_ALIASING_ON, 512*1024, 128*1024);
@@ -918,105 +868,34 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 		}
 	}
 	nk_end(nk_ctx);
-	/*
-	vgui.newFrame(wx, wy);
-	vgui.menuBegin(90, 180, 1100, "Player inventory");
-
-	entity *playerEnt = findFirst(game->entities.get(), {"player", "inventory"});
-	if (!playerEnt) return;
-
-	auto inv = castEntityComponent<inventory*>(game->entities.get(), playerEnt, "inventory");
-
-	if (!inv) return;
-
-	std::vector<std::string> names;
-
-	for (auto it = inv->items.begin(); it != inv->items.end();) {
-		entity *ent = *it;
-
-		std::string foo = std::string(ent->typeString()) + ": ";
-		auto comps = game->entities->getEntityComponents(ent);
-
-		for (auto& [name, _] : comps) {
-			foo += name + ", ";
-		}
-		names.push_back(foo);
-		const char *name = names.back().c_str();
-
-		if (vgui.menuEntry(name, &selected)) {
-			if (vgui.clicked()) {
-				SDL_Log("clicked %s", name);
-
-				// drop item
-				//game->entities->activate(ent);
-				//TRS newtrans = playerEnt->node->getTransformTRS();
-				//newtrans.position += glm::vec3(3, 0, 3);
-				//ent->node->setTransform(newtrans);
-
-				Wieldable *w;
-				castEntityComponent(w, game->entities.get(), ent, "Wieldable");
-
-				// TODO: need a way to safely observe entity pointers in cases
-				//       where they may be deleted... don't want to use shared_ptr
-				//       here because the entity manager has sole ownership
-				//       over the lifetime of the entity, shared_ptr would
-				//       result in lingering invalid entities
-				if (w) {
-					game->entities->activate(ent);
-					w->action(game->entities.get(), playerEnt);
-					it = inv->items.erase(it);
-					//game->entities->remove(ent);
-
-				} else {
-					it++;
-				}
-
-			} else if (vgui.hovered()) {
-				selected = vgui.menuCount();
-				it++;
-
-			} else {
-				it++;
-			}
-		}
-	}
-
-	vgui.menuEnd();
-	vgui.endFrame();
-	*/
 }
 
 void projalphaView::drawWinScreen(gameMain *game, int wx, int wy) {
 	static int selected;
 	bool reset = false;
 
-	/*
-	vgui.newFrame(wx, wy);
-	vgui.menuBegin(wx / 2 - 100, wy / 2 - 100, 200, "You are winnar!");
-
-	if (vgui.menuEntry("New game", &selected)) {
-		if (vgui.clicked()) {
-			//reset = true; // XXX:
+	if (nk_begin(nk_ctx, "You are winnar!", nk_rect(wx/2, wy/2, 220, 220),
+	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
+	{
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
+		if (nk_button_label(nk_ctx, "New game")) {
+			SDL_Log("Starting new game");
 			input.setMode(modes::Move);
 			level->reset();
-
-		} else if (vgui.hovered()) {
-			selected = vgui.menuCount();
 		}
-	}
 
-	if (vgui.menuEntry("Quit to menu", &selected)) {
-		if (vgui.clicked()) {
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
+		if (nk_button_label(nk_ctx, "Main menu")) {
+			SDL_Log("Going to main menu");
+			input.setMode(modes::MainMenu);
+		}
+
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
+		if (nk_button_label(nk_ctx, "Quit")) {
 			SDL_Log("Quiterino");
-
-		} else if (vgui.hovered()) {
-			selected = vgui.menuCount();
 		}
 	}
-
-	vgui.menuEnd();
-	vgui.endFrame();
-	*/
+	nk_end(nk_ctx);
 }
 
 void initEntitiesFromNodes(gameObject::ptr node,
