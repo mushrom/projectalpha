@@ -256,6 +256,7 @@ class projalphaView : public gameView {
 		void drawMainMenu(gameMain *game, int wx, int wy);
 		void drawInventory(gameMain *game, int wx, int wy);
 		void drawWinScreen(gameMain *game, int wx, int wy);
+		void drawPauseMenu(gameMain *game, int wx, int wy);
 };
 
 // XXX
@@ -393,6 +394,7 @@ projalphaView::projalphaView(gameMain *game)
 		return MODAL_NO_CHANGE;
 	});
 
+	// TODO: configurable keybinds
 	input.bind(modes::Move, [=, this] (SDL_Event& ev, unsigned flags) {
 		if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB) {
 			return (int)modes::Inventory;
@@ -400,6 +402,23 @@ projalphaView::projalphaView(gameMain *game)
 
 		return MODAL_NO_CHANGE;
 	});
+
+	input.bind(modes::Move, [=, this] (SDL_Event& ev, unsigned flags) {
+		if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE) {
+			return (int)modes::Pause;
+		}
+
+		return MODAL_NO_CHANGE;
+	});
+
+	input.bind(modes::Move, [=, this] (SDL_Event& ev, unsigned flags) {
+		if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB) {
+			return (int)modes::Inventory;
+		}
+
+		return MODAL_NO_CHANGE;
+	});
+
 
 	static nlohmann::json testthing = {};
 
@@ -632,6 +651,18 @@ void projalphaView::render(gameMain *game) {
 		// TODO: function to do this
 		drawMainMenu(game, winsize_x, winsize_y);
 
+	} else if (input.mode == modes::Pause) {
+		renderWorld(game, cam, flags);
+
+		// TODO: need to set post size on resize event..
+		//post->setSize(winsize_x, winsize_y);
+		post->setUniform("exposure", game->rend->exposure);
+		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
+		post->draw(game->rend->framebuffer);
+
+		// TODO: function to do this
+		drawPauseMenu(game, winsize_x, winsize_y);
+
 	} else if (input.mode == modes::Won) {
 		renderWorld(game, cam, flags);
 
@@ -777,17 +808,19 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	if (nk_begin(nk_ctx, "Main menu", nk_rect(50, 50, 220, 220),
 	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
 	{
-		nk_layout_row_static(nk_ctx, 30, 80, 1);
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
 		if (nk_button_label(nk_ctx, "New game")) {
 			SDL_Log("New game!");
 			input.setMode(modes::Loading);
 			reset = true;
 		}
 		
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
 		if (nk_button_label(nk_ctx, "Settings")) {
 			SDL_Log("Settings");
 		}
 
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
 		if (nk_button_label(nk_ctx, "Quit")) {
 			SDL_Log("Quiterino");
 		}
@@ -797,6 +830,34 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	if (reset) {
 		level->reset();
 	}
+}
+
+void projalphaView::drawPauseMenu(gameMain *game, int wx, int wy) {
+	if (nk_begin(nk_ctx, "Pause", nk_rect(50, 50, 220, 220),
+	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
+		if (nk_button_label(nk_ctx, "Resume")) {
+			SDL_Log("Resuming");
+			input.setMode(modes::Move);
+		}
+
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
+		if (nk_button_label(nk_ctx, "Settings")) {
+			SDL_Log("Settings");
+		}
+
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
+		if (nk_button_label(nk_ctx, "Abandon run")) {
+			SDL_Log("Abandon run");
+			input.setMode(modes::MainMenu);
+		}
+
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
+		if (nk_button_label(nk_ctx, "Quit")) {
+			SDL_Log("Quiterino");
+		}
+	}
+	nk_end(nk_ctx);
 }
 
 void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
@@ -812,7 +873,7 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 	if (nk_begin(nk_ctx, "Player inventory", nk_rect(50, 50, 220, 220),
 	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
 	{
-		nk_layout_row_static(nk_ctx, 30, 80, 1);
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
 		if (nk_button_label(nk_ctx, "a button")) {
 			// asdf
 			SDL_Log("clicked a button");
@@ -835,6 +896,7 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 			const char *name = names[ent].c_str();
 
 			//nk_layout_row_dynamic(nk_ctx, 20, 1);
+			nk_layout_row_dynamic(nk_ctx, 0, 1);
 			if (nk_button_label(nk_ctx, name)) {
 				SDL_Log("clicked %s", name);
 
