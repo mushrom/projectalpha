@@ -3,6 +3,7 @@
 healthPickup::~healthPickup() {};
 healthPickupCollision::~healthPickupCollision() {};
 coinPickup::~coinPickup() {};
+flareItem::~flareItem() {};
 
 Action::~Action() {};
 Consumable::~Consumable() {};

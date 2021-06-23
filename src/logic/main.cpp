@@ -302,7 +302,10 @@ projalphaView::projalphaView(gameMain *game)
 		SCREEN_SIZE_X, SCREEN_SIZE_Y));
 #else
 	post = renderPostChain::ptr(new renderPostChain(
-		{game->rend->postShaders["psaa"]},
+		{
+			game->rend->postShaders["fog-depth"],
+			//game->rend->postShaders["psaa"],
+		},
 		//{game->rend->postShaders["tonemap"], game->rend->postShaders["psaa"]},
 		SCREEN_SIZE_X, SCREEN_SIZE_Y));
 #endif
@@ -870,7 +873,7 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 
 	static std::map<entity*, std::string> names;
 
-	if (nk_begin(nk_ctx, "Player inventory", nk_rect(50, 50, 220, 220),
+	if (nk_begin(nk_ctx, "Player inventory", nk_rect(50, 50, 270, 270),
 	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
 	{
 		nk_layout_row_dynamic(nk_ctx, 0, 1);
@@ -879,9 +882,16 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 			SDL_Log("clicked a button");
 		}
 
-		for (auto it = inv->items.begin(); it != inv->items.end();) {
-			entity *ent = *it;
+		for (auto& [key, items] : inv->items) {
+			if (items.size() == 0) {
+				// no items of this type, nothing to do
+				continue;
+			}
 
+			const char *name = key.c_str();
+			entity *ent = *items.begin();
+
+			/*
 			if (names.count(ent) == 0) {
 				std::string foo = std::string(ent->typeString()) + ": ";
 				auto comps = game->entities->getEntityComponents(ent);
@@ -894,11 +904,13 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 			}
 
 			const char *name = names[ent].c_str();
+			*/
 
-			//nk_layout_row_dynamic(nk_ctx, 20, 1);
-			nk_layout_row_dynamic(nk_ctx, 0, 1);
-			if (nk_button_label(nk_ctx, name)) {
-				SDL_Log("clicked %s", name);
+			nk_layout_row_dynamic(nk_ctx, 0, 3);
+			nk_labelf(nk_ctx, NK_TEXT_ALIGN_LEFT, "%lu : %s", items.size(), name);
+
+			if (nk_button_label(nk_ctx, "Use")) {
+				SDL_Log("Using %s", name);
 
 				Wieldable *w;
 				castEntityComponent(w, game->entities.get(), ent, "Wieldable");
@@ -909,23 +921,18 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 				//       over the lifetime of the entity, shared_ptr would
 				//       result in lingering invalid entities
 				if (w) {
+					inv->remove(game->entities.get(), ent);
 					game->entities->activate(ent);
 					w->action(game->entities.get(), playerEnt);
-					it = inv->items.erase(it);
-					//game->entities->remove(ent);
-
-				} else {
-					it++;
 				}
+			}
 
-				// drop item
-				//game->entities->activate(ent);
-				//TRS newtrans = playerEnt->node->getTransformTRS();
-				//newtrans.position += glm::vec3(3, 0, 3);
-				//ent->node->setTransform(newtrans);
-
-			} else {
-				it++;
+			if (nk_button_label(nk_ctx, "Drop")) {
+				inv->remove(game->entities.get(), ent);
+				game->entities->activate(ent);
+				TRS newtrans = playerEnt->node->getTransformTRS();
+				newtrans.position += glm::vec3(3, 0, 3);
+				ent->node->setTransform(newtrans);
 			}
 		}
 	}
@@ -1079,7 +1086,14 @@ int main(int argc, char *argv[]) try {
 		new flagPickup(game->entities.get(), playerEnt);
 		new team(game->entities.get(), playerEnt, "blue");
 		new areaAddScore(game->entities.get(), playerEnt, {});
-		new inventory(game->entities.get(), playerEnt, {});
+		inventory *inv = new inventory(game->entities.get(), playerEnt, {});
+
+		// start with 5 flares
+		for (int i = 0; i < 5; i++) {
+			entity *flare = new flareItem(game->entities.get(), glm::vec3(0));
+			game->entities->add(flare);
+			inv->insert(game->entities.get(), flare);
+		}
 
 		new pickupAction(game->entities.get(), playerEnt, {"amuletPickup"});
 		new pickupAction(game->entities.get(), playerEnt, {"pickup"});
@@ -1131,6 +1145,9 @@ int main(int argc, char *argv[]) try {
 		});
 
 	SDL_Log("Got to game->run()!");
+	//view->load(game, mapfile);
+	auto mapdata = loadMapCompiled(game, mapfile);
+	game->state->rootnode = mapdata;
 
 	if (char *target = getenv("GREND_TEST_TARGET")) {
 		SDL_Log("Got a test target!");

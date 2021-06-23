@@ -1,7 +1,6 @@
 #pragma once
 
 #include <grend/ecs/ecs.hpp>
-#include <grend/vecGUI.hpp>
 #include <grend/camera.hpp>
 
 #include <nuklear/nuklear.h>

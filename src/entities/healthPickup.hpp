@@ -195,7 +195,7 @@ class healthPickup : public pickup {
 		//       might be worth looking into other strategies for serialization,
 		//       but this is probably the simplest
 		healthPickup(entityManager *manager, glm::vec3 position)
-			: healthPickup(manager, this, 
+			: healthPickup(manager, this,
 			               setSerializedPosition<healthPickup>(position)) {};
 
 		healthPickup(entityManager *manager, entity *ent, nlohmann::json properties)
@@ -240,7 +240,7 @@ class coinPickup : public pickup {
 		//       might be worth looking into other strategies for serialization,
 		//       but this is probably the simplest
 		coinPickup(entityManager *manager, glm::vec3 position)
-			: coinPickup(manager, this, 
+			: coinPickup(manager, this,
 			             setSerializedPosition<coinPickup>(position)) {};
 
 		coinPickup(entityManager *manager, entity *ent, nlohmann::json properties)
@@ -272,6 +272,50 @@ class coinPickup : public pickup {
 		}
 
 		virtual ~coinPickup();
+		virtual const char *typeString() const { return serializedType; };
+};
+
+class flareItem : public pickup {
+	public:
+		constexpr static const char *serializedType = "flareItem";
+
+		// TODO: creating a json object just for initialization might not
+		//       be the best for performance...
+		//       might be worth looking into other strategies for serialization,
+		//       but this is probably the simplest
+		flareItem(entityManager *manager, glm::vec3 position)
+			: flareItem(manager, this,
+			             setSerializedPosition<flareItem>(position)) {};
+
+		flareItem(entityManager *manager, entity *ent, nlohmann::json properties)
+			: pickup(manager, ent, properties)
+		{
+			new Throwable(manager, ent);
+			new Wieldable(manager, ent, "Throwable");
+			manager->registerComponent(this, "flareItem", this);
+
+			static gameObject::ptr model = nullptr;
+			// XXX: really need resource manager
+			if (model == nullptr) {
+				model = loadSceneCompiled(DEMO_PREFIX "assets/obj/flare.glb");
+			}
+
+			{
+				TRS transform = model->getTransformTRS();
+				transform.scale = glm::vec3(2.0);
+				model->setTransform(transform);
+			}
+
+			setNode("model", node, model);
+
+			gameLightPoint::ptr lit = std::make_shared<gameLightPoint>();
+
+			lit->diffuse = glm::vec4(1.0, 0.3, 0.1, 1); // bright red
+			lit->setTransform({ .position = {0, 1, 0} });
+			setNode("light", node, lit);
+		}
+
+		virtual ~flareItem();
 		virtual const char *typeString() const { return serializedType; };
 };
 

@@ -17,7 +17,7 @@ class inventory : public component {
 		virtual ~inventory();
 
 		void insert(entityManager *manager, entity *ent);
-		entity *remove(entityManager *manager, size_t idx);
+		entity *remove(entityManager *manager, entity *ent);
 
-		std::vector<entity*> items;
+		std::map<std::string, std::set<entity*>> items;
 };
