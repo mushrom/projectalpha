@@ -318,6 +318,8 @@ projalphaView::projalphaView(gameMain *game)
 	SERIALIZABLE(rigidBody);
 	SERIALIZABLE(rigidBodySphere);
 	SERIALIZABLE(rigidBodyBox);
+	SERIALIZABLE(rigidBodyCylinder);
+	SERIALIZABLE(rigidBodyCapsule);
 	SERIALIZABLE(syncRigidBodyTransform);
 	SERIALIZABLE(syncRigidBodyPosition);
 	SERIALIZABLE(syncRigidBodyXZVelocity);

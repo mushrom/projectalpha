@@ -24,7 +24,8 @@ enemy::enemy(entityManager *manager, gameMain *game, glm::vec3 position)
 	new worldHealthbar(manager, this);
 	new projectileCollision(manager, this);
 	new syncRigidBodyXZVelocity(manager, this);
-	auto body = new rigidBodySphere(manager, this, transform.position, 1.0, 0.5);
+	//auto body = new rigidBodySphere(manager, this, transform.position, 1.0, 0.5);
+	auto body = new rigidBodyCapsule(manager, this, transform.position, 1.0, 1.0, 2.0);
 
 	manager->registerComponent(this, "enemy", this);
 
@@ -57,9 +58,12 @@ enemy::enemy(entityManager *manager, entity *ent, nlohmann::json properties)
 	new worldHealthbar(manager, this);
 	new projectileCollision(manager, this);
 	new syncRigidBodyXZVelocity(manager, this);
+	auto body = new rigidBodyCapsule(manager, this, node->getTransformTRS().position, 1.0, 1.0, 2.0);
+	/*
 	auto body = new rigidBodySphere(manager, this,
 	                                node->getTransformTRS().position,
 	                                1.0, 0.5);
+									*/
 
 	manager->registerComponent(this, "enemy", this);
 
