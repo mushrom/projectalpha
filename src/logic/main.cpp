@@ -391,6 +391,20 @@ projalphaView::projalphaView(gameMain *game)
 		return MODAL_NO_CHANGE;
 	});
 
+	input.bind(modes::Move, [=, this] (SDL_Event& ev, unsigned flags) {
+		if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_SPACE) {
+			if (nearNode(game, "exit")) {
+				nextFloor(game);
+			}
+
+			if (nearNode(game, "entry")) {
+				prevFloor(game);
+			}
+		}
+
+		return MODAL_NO_CHANGE;
+	});
+
 	input.bind(modes::Inventory, [=, this] (SDL_Event& ev, unsigned flags) {
 		if (ev.type == SDL_KEYUP && ev.key.keysym.sym == SDLK_TAB) {
 			return (int)modes::Move;
@@ -627,14 +641,6 @@ void projalphaView::logic(gameMain *game, float delta) {
 	if (lost.first) {
 		SDL_Log("lol u died: %s", lost.second.c_str());
 		input.setMode(modes::MainMenu);
-	}
-
-	if (nearNode(game, "exit")) {
-		nextFloor(game);
-	}
-
-	if (nearNode(game, "entry")) {
-		prevFloor(game);
 	}
 }
 
