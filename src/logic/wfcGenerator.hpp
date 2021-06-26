@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 
 #include "generatorEvent.hpp"
+#include "array2D.hpp"
 
 #include <thread>
 #include <map>
@@ -52,6 +53,14 @@ class wfcGenerator : public worldGenerator {
 		using WfcImpl = WFCSolver<StateDef, genwidth, genheight>;
 		using WfcPtr = std::unique_ptr<WfcImpl>;
 		using Coord  = std::tuple<int, int, int>;
+		using Array  = array2D<int, genwidth, genheight>;
+
+		Array mapdata;
+		Array hotpathDistance;
+		array2D<bool, genwidth, genheight> traversableMask;
+		// TODO
+		array2D<Array*, genwidth, genheight> omnidijkstra;
+		//std::array<Array*, genwidth*genheight>
 
 	private:
 		std::map<Coord, WfcPtr> sectors;

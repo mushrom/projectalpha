@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <assert.h>
 
+#include "array2D.hpp"
+
 namespace bsp {
 
 struct bspNode {
@@ -70,6 +72,8 @@ static inline void splitY(bspNode *node, size_t y) {
 template <size_t X, size_t Y>
 class bspGen {
 	public:
+		using Coord = std::pair<int, int>;
+		using Array = array2D<int, X, Y>;
 		bspNode *root = nullptr;
 
 		bspGen() {
@@ -119,17 +123,23 @@ class bspGen {
 			}
 		}
 
-		size_t dumpGreyscale(bspNode *node, uint8_t *px, size_t idx, size_t x, size_t y) {
+		size_t dumpGreyscale(bspNode *node,
+		                     Array& arr,
+		                     size_t idx,
+		                     size_t x,
+		                     size_t y)
+		{
 			if (!node) return idx;
 
 			if (hasSplit(node)) {
-				size_t next = dumpGreyscale(node->left, px, idx, x, y);
-				return dumpGreyscale(node->right, px, next, x + node->relX, y + node->relY);
+				size_t next = dumpGreyscale(node->left, arr, idx, x, y);
+				return dumpGreyscale(node->right, arr, next, x + node->relX, y + node->relY);
 
 			} else {
 				for (size_t ix = 0; ix < node->width /*- 1*/; ix++) {
 					for (size_t iy = 0; iy < node->height /*- 1*/; iy++) {
-						px[(y + iy)*X + (x + ix)] = idx;
+						//px[(y + iy)*X + (x + ix)] = idx;
+						arr.set(x+ix, y+iy, idx);
 					}
 				}
 
@@ -139,7 +149,6 @@ class bspGen {
 			}
 		}
 
-		using Coord = std::pair<int, int>;
 		void getCenterIter(bspNode *node, std::vector<Coord>& vec, size_t x, size_t y) {
 			if (hasSplit(node)) {
 				getCenterIter(node->left,  vec, x, y);
@@ -156,7 +165,7 @@ class bspGen {
 			return ret;
 		}
 
-		void connectNodes(bspNode *node, uint8_t *px, size_t maxDist) {
+		void connectNodes(bspNode *node, Array& arr, size_t maxDist) {
 			auto nodes = getLeafCenters();
 
 			for (auto& em : nodes) {
@@ -188,7 +197,8 @@ class bspGen {
 
 					auto incx = [&] () {
 						for (int x = em.first;; x += (em.first < coord.first)? 1 : -1) {
-							px[em.second*X + x] = 0xff;
+							//px[em.second*X + x] = 0xff;
+							arr.set(x, em.second, 0xff);
 
 							if (x == coord.first)
 								break;
@@ -197,7 +207,8 @@ class bspGen {
 
 					auto incy = [&] () {
 						for (int y = em.second;; y += (em.second < coord.second)? 1 : -1) {
-							px[y*X + em.first] = 0xff;
+							//px[y*X + em.first] = 0xff;
+							arr.set(em.first, y, 0xff);
 
 							if (y == coord.second)
 								break;

@@ -261,6 +261,7 @@ static inline void copyZ(wfcGenerator::WfcImpl *a, wfcGenerator::WfcImpl *b, boo
 
 #include <logic/bspGenerator.hpp>
 
+/*
 static void floodfill(uint8_t *data,
 		int width, int height,
 		int x, int y,
@@ -282,6 +283,100 @@ static void floodfill(uint8_t *data,
 	}
 }
 
+static void clearUnreachable(uint8_t *data,
+                             int width, int height,
+                             uint8_t target, uint8_t replace)
+{
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			uint8_t *cur = data + y*width + x;
+
+			if (*cur != target) {
+				*cur = replace;
+			}
+		}
+	}
+}
+*/
+
+using Coord = std::pair<int, int>;
+template <int X, int Y>
+static int markShortestPath(array2D<int, X, Y>& arr,
+                            Coord start, Coord end,
+                            uint8_t replace)
+{
+	std::set<Coord> unvisited;
+	std::set<Coord> visited;
+	int distances[X][Y];
+	Coord previous[X][Y];
+
+	int ret = INT_MAX;
+
+	for (int x = 0; x < X; x++) {
+		for (int y = 0; y < Y; y++) {
+			distances[x][y] = INT_MAX;
+			previous[x][y] = {-1, -1};
+		}
+	}
+
+	unvisited.insert(start);
+	distances[start.first][start.second] = 0;
+
+	while (!unvisited.empty()) {
+		Coord current = *unvisited.begin();
+		unvisited.erase(current);
+
+		if (distances[current.first][current.second] == INT_MAX) {
+			// no path to end point
+			break;
+		}
+
+		for (auto [x, y] : {Coord {-1, 0},
+		                    Coord {0, -1},
+		                    Coord {1, 0},
+		                    Coord {0, 1}})
+		{
+			Coord coord = {current.first + x, current.second + y};
+
+			if (arr.valid(coord.first, coord.second)
+				&& arr.get(coord.first, coord.second)
+				&& !visited.count(coord))
+			{
+				int  dist = distances[current.first][current.second] + 1;
+				int& other = distances[coord.first][coord.second];
+
+				if (dist < other) {
+					other = dist;
+					previous[coord.first][coord.second] = current;
+				}
+
+				unvisited.insert(coord);
+			}
+		}
+
+		visited.insert(current);
+		if (current == end) {
+			// end point reached, no point in continuing
+			ret = distances[current.first][current.second];
+			break;
+		}
+	}
+
+	if (ret < INT_MAX) {
+		Coord c = end;
+
+		while (c != start && c != Coord{-1, -1}) {
+			arr.set(c.first, c.second, replace);
+			//uint8_t *cur = data + c.second*width + c.first;
+
+			//*cur = replace;
+			c = previous[c.first][c.second];
+		}
+	}
+
+	return ret;
+}
+
 gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
 	gameObject::ptr ret = std::make_shared<gameObject>();
 	//WfcImpl *wfcgrid = getSector({x, y, z});
@@ -291,16 +386,16 @@ gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
 	std::random_device rd;
 	std::mt19937 g(rd());
 
+	using bspimp = bsp::bspGen<genwidth, genheight>;
 	srand(time(NULL));
-
 
 retry:
 	WFCSolver<StateDef, genwidth, genheight> wfcgrid(spec->stateClass);
-	bsp::bspGen<genwidth, genheight> mapskel;
-	uint8_t mapdata[genwidth * genheight];
+	bspimp mapskel;
 
-	memset(mapdata, 0, sizeof(mapdata));
-	mapskel.genSplits(7);
+	mapdata.clear();
+	traversableMask.clear();
+	mapskel.genSplits(4);
 	mapskel.connectNodes(mapskel.root, mapdata, 20);
 
 	auto leaves = mapskel.getLeafCenters();
@@ -309,8 +404,10 @@ retry:
 
 	auto& entry = leaves[0];
 
-	//mapdata[entry.second*genwidth + entry.first] = 0xe0;
-	floodfill(mapdata, genwidth, genheight, entry.first, entry.second, 0xff, 0xe0);
+	//mapdata.set(entry.first, entry.second, 0xe0);
+	mapdata.floodfill(entry.first, entry.second, 0xff, 0xe0);
+	std::cerr << "did floodfill" << std::endl;
+	mapdata.clearExcept(0xe0, 0x00);
 
 	auto exitpoint = entry;
 	bool connects = false;
@@ -321,7 +418,7 @@ retry:
 			return abs(a.first - b.first) + abs(a.second - b.second);
 		};
 
-		if (mapdata[leaf.second*genwidth + leaf.first] == 0xe0) {
+		if (mapdata.get(leaf.first, leaf.second) == 0xe0) {
 			int curdist = dist(exitpoint, entry);
 			int leafdist = dist(leaf, entry);
 
@@ -342,10 +439,11 @@ retry:
 		std::cerr << "Connected, continuing to WFC generation..." << std::endl;
 	}
 
+	markShortestPath(mapdata, entry, exitpoint, 0xe1);
+
 	for (size_t bx = 0; bx < genwidth; bx++) {
 		for (size_t by = 0; by < genheight; by++) {
-			//if (mapdata[by*genwidth + bx] == 0xff) {
-			if (mapdata[by*genwidth + bx]) {
+			if (mapdata.get(bx, by)) {
 				wfcgrid.setTile(bx, by, spec->tags["traversable"]);
 			}
 		}
@@ -384,20 +482,25 @@ retry:
 		goto retry;
 
 	} else {
-		static std::mutex mtx;
-		std::lock_guard g(mtx);
+		//static std::mutex mtx;
+		//std::lock_guard g(mtx);
 
 		for (size_t gx = 0; gx < genwidth - 1; gx++) {
 			for (size_t gy = 0; gy < genheight - 1; gy++) {
 				auto& tile = wfcgrid.gridState.tiles[gy*genwidth + gx];
 
 				for (auto& em : tile) {
-					// BIG XXX: avoid accessing shared pointer from multiple
-					//          threads (assignment increases use count)
 					if (em) {
 						std::string objname = std::string("tile")
 							+ "[" + std::to_string(gx) + "]" 
 							+ "[" + std::to_string(gy) + "]";
+
+						// keep track of what tiles actually collapsed to
+						// traversable tiles, BSP doesn't reflect the final
+						// output
+						if (spec->tags["traversable"].count(em)) {
+							traversableMask.set(gx, gy, true);
+						}
 
 						gameObject::ptr nobj = std::make_shared<gameObject>();
 						TRS transform = nobj->getTransformTRS();
