@@ -247,9 +247,9 @@ class projalphaView : public gameView {
 		std::string loadedMap = "no map loaded either!";
 		std::vector<physicsObject::ptr> mapPhysics;
 		std::vector<entity*> levelEntities;
+		renderQueue mapQueue = renderQueue(cam);
 
-		void nextFloor(gameMain *game);
-		void prevFloor(gameMain *game);
+		void incrementFloor(gameMain *game, int amount);
 		bool nearNode(gameMain *game, const std::string& name, float thresh = 3.f);
 
 	private:
@@ -394,11 +394,11 @@ projalphaView::projalphaView(gameMain *game)
 	input.bind(modes::Move, [=, this] (SDL_Event& ev, unsigned flags) {
 		if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_SPACE) {
 			if (nearNode(game, "exit")) {
-				nextFloor(game);
+				incrementFloor(game, 1);
 			}
 
 			if (nearNode(game, "entry")) {
-				prevFloor(game);
+				incrementFloor(game, -1);
 			}
 		}
 
@@ -484,9 +484,8 @@ projalphaView::projalphaView(gameMain *game)
 	input.setMode(modes::MainMenu);
 };
 
-void projalphaView::nextFloor(gameMain *game) {
-	gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
-	currentFloor++;
+void projalphaView::incrementFloor(gameMain *game, int amount) {
+	currentFloor += amount;
 
 	for (auto& ent : levelEntities) {
 		if (ent->active) {
@@ -497,9 +496,16 @@ void projalphaView::nextFloor(gameMain *game) {
 		}
 	}
 
+	mapPhysics.clear();
+	mapQueue.clear();
 	levelEntities.clear();
 	wfcgen->generate(game, {});
 
+				//setNode("wfc", node, wfcgen->getNode());
+
+	mapQueue.add(wfcgen->getNode());
+
+	gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
 	if (wfcroot && wfcroot->hasNode("leaves")) {
 		gameObject::ptr leafroot = wfcroot->getNode("leaves");
 		glm::vec3 amuletPos;
@@ -537,6 +543,7 @@ void projalphaView::nextFloor(gameMain *game) {
 	}
 }
 
+/*
 void projalphaView::prevFloor(gameMain *game) {
 	gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
 	currentFloor--;
@@ -562,6 +569,7 @@ void projalphaView::prevFloor(gameMain *game) {
 		}
 	}
 }
+*/
 
 bool projalphaView::nearNode(gameMain *game, const std::string& name, float thresh)
 {
@@ -594,11 +602,13 @@ void projalphaView::logic(gameMain *game, float delta) {
 		return;
 	}
 
+	/*
 	// big XXX
 	if (currentMap != loadedMap) {
 		loadedMap = currentMap;
 		load(game, currentMap);
 	}
+	*/
 
 	if (input.mode == modes::Loading) {
 		gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
@@ -650,7 +660,7 @@ void projalphaView::render(gameMain *game) {
 	renderFlags flags = game-> rend->getLightingFlags();
 
 	if (input.mode == modes::MainMenu) {
-		renderWorld(game, cam, flags);
+		renderWorld(game, cam, mapQueue, flags);
 
 		// TODO: need to set post size on resize event..
 		//post->setSize(winsize_x, winsize_y);
@@ -663,7 +673,7 @@ void projalphaView::render(gameMain *game) {
 		drawMainMenu(game, winsize_x, winsize_y);
 
 	} else if (input.mode == modes::Pause) {
-		renderWorld(game, cam, flags);
+		renderWorld(game, cam, mapQueue, flags);
 
 		// TODO: need to set post size on resize event..
 		//post->setSize(winsize_x, winsize_y);
@@ -675,7 +685,7 @@ void projalphaView::render(gameMain *game) {
 		drawPauseMenu(game, winsize_x, winsize_y);
 
 	} else if (input.mode == modes::Won) {
-		renderWorld(game, cam, flags);
+		renderWorld(game, cam, mapQueue, flags);
 
 		// TODO: need to set post size on resize event..
 		//post->setSize(winsize_x, winsize_y);
@@ -695,7 +705,7 @@ void projalphaView::render(gameMain *game) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	} else if (input.mode == modes::Inventory) {
-		renderWorld(game, cam, flags);
+		renderWorld(game, cam, mapQueue, flags);
 
 		// TODO: need to set post size on resize event..
 		//post->setSize(winsize_x, winsize_y);
@@ -711,7 +721,7 @@ void projalphaView::render(gameMain *game) {
 
 	} else {
 		// main game mode
-		renderWorld(game, cam, flags);
+		renderWorld(game, cam, mapQueue, flags);
 		post->setUniform("exposure", game->rend->exposure);
 		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
@@ -790,6 +800,8 @@ void projalphaView::load(gameMain *game, std::string map) {
 			game->jobs->addDeferred([=, this] () {
 				// TODO: some sort of world entity
 				mapPhysics.clear();
+				mapQueue.clear();
+
 				game->phys->addStaticModels(nullptr,
 				                            node,
 				                            staticPosition,
@@ -801,7 +813,8 @@ void projalphaView::load(gameMain *game, std::string map) {
 				game->state->rootnode = node;
 				setNode("asyncLoaded", node, std::make_shared<gameObject>());
 				setNode("entities", node, game->entities->root);
-				setNode("wfc", node, wfcgen->getNode());
+				//setNode("wfc", node, wfcgen->getNode());
+				//mapQueue.add(wfcgen->getNode());
 
 				return true;
 			});
@@ -1124,7 +1137,7 @@ int main(int argc, char *argv[]) try {
 
 	view->level->addInit([=] () {
 		view->currentFloor = 1;
-		view->nextFloor(game);
+		view->incrementFloor(game, 1);
 	});
 
 	view->level->addDestructor([=] () {
@@ -1156,6 +1169,7 @@ int main(int argc, char *argv[]) try {
 	//view->load(game, mapfile);
 	auto mapdata = loadMapCompiled(game, mapfile);
 	game->state->rootnode = mapdata;
+	setNode("entities", game->state->rootnode, game->entities->root);
 
 	if (char *target = getenv("GREND_TEST_TARGET")) {
 		SDL_Log("Got a test target!");
