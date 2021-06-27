@@ -53,13 +53,20 @@ class wfcGenerator : public worldGenerator {
 		using WfcImpl = WFCSolver<StateDef, genwidth, genheight>;
 		using WfcPtr = std::unique_ptr<WfcImpl>;
 		using Coord  = std::tuple<int, int, int>;
-		using Array  = array2D<int, genwidth, genheight>;
+		using Array  = array2D<float, genwidth, genheight>;
 
-		Array mapdata;
+		array2D<int, genwidth, genheight> mapdata;
 		Array hotpathDistance;
+		Array outbounds;
 		array2D<bool, genwidth, genheight> traversableMask;
+		array2D<bool, genwidth, genheight> generatedMask;
+		array2D<bool, genwidth, genheight> outboundMask;
 		// TODO
-		array2D<Array*, genwidth, genheight> omnidijkstra;
+		std::map<Array::Coord, Array> omnidijkstra;
+		// for each dijkstra map, keep track of where the maximum distance
+		// from the starting point is (useful for evasion)
+		std::map<Array::Coord, Array::Coord> maxDistances;
+		//array2D<Array*, genwidth, genheight> omnidijkstra;
 		//std::array<Array*, genwidth*genheight>
 
 	private:

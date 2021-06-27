@@ -52,18 +52,21 @@ using namespace grendx::ecs;
 #include <entities/targetArea.hpp>
 #include <entities/amulet.hpp>
 
+#include <logic/projalphaView.hpp>
 #include <logic/wfcGenerator.hpp>
 #include <logic/UI.hpp>
 #include <logic/levelController.hpp>
 
 #include <nuklear/nuklear.h>
 
+/*
 class landscapeEventSystem : public entitySystem {
 	public:
 		virtual void update(entityManager *manager, float delta);
 
 		generatorEventQueue::ptr queue = std::make_shared<generatorEventQueue>();
 };
+*/
 
 class abyssDeleter : public entitySystem {
 	public:
@@ -79,6 +82,7 @@ class abyssDeleter : public entitySystem {
 		}
 };
 
+#if 0
 class generatorEventHandler : public component {
 	public:
 		generatorEventHandler(entityManager *manager, entity *ent)
@@ -209,55 +213,7 @@ class worldEntitySpawner : public entity {
 
 		virtual void update(entityManager *manager, float delta) { /* nop */ };
 };
-
-class projalphaView : public gameView {
-	public:
-		typedef std::shared_ptr<projalphaView> ptr;
-		typedef std::weak_ptr<projalphaView>   weakptr;
-
-		projalphaView(gameMain *game);
-		virtual void logic(gameMain *game, float delta);
-		virtual void render(gameMain *game);
-		void load(gameMain *game, std::string map);
-		//void loadPlayer(void);
-
-		enum modes {
-			MainMenu,
-			Move,
-			Pause,
-			Loading,
-			Won,
-			Inventory,
-		};
-
-		renderPostChain::ptr post = nullptr;
-		//modalSDLInput input;
-		//vecGUI vgui;
-		struct nk_context *nk_ctx;
-
-		int menuSelect = 0;
-		int currentFloor = 0;
-		float zoom = 20.f;
-
-		std::unique_ptr<levelController> level;
-		//landscapeGenerator landscape;
-		std::unique_ptr<wfcGenerator> wfcgen;
-		inputHandlerSystem::ptr inputSystem;
-		std::string currentMap = "no map!";
-		std::string loadedMap = "no map loaded either!";
-		std::vector<physicsObject::ptr> mapPhysics;
-		std::vector<entity*> levelEntities;
-		renderQueue mapQueue = renderQueue(cam);
-
-		void incrementFloor(gameMain *game, int amount);
-		bool nearNode(gameMain *game, const std::string& name, float thresh = 3.f);
-
-	private:
-		void drawMainMenu(gameMain *game, int wx, int wy);
-		void drawInventory(gameMain *game, int wx, int wy);
-		void drawWinScreen(gameMain *game, int wx, int wy);
-		void drawPauseMenu(gameMain *game, int wx, int wy);
-};
+#endif
 
 // XXX
 static glm::vec2 movepos(0, 0);
@@ -281,7 +237,8 @@ projalphaView::projalphaView(gameMain *game)
 	{
 		struct nk_font_atlas *atlas;
 		nk_sdl_font_stash_begin(&atlas);
-		struct nk_font *roboto = nk_font_atlas_add_from_file(atlas, GR_PREFIX "assets/fonts/Roboto-Regular.ttf", 16, 0);
+		struct nk_font *roboto;
+		roboto = nk_font_atlas_add_from_file(atlas, GR_PREFIX "assets/fonts/Roboto-Regular.ttf", 16, 0);
 		/*struct nk_font *droid = nk_font_atlas_add_from_file(atlas, "../../../extra_font/DroidSans.ttf", 14, 0);*/
 		/*struct nk_font *roboto = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Roboto-Regular.ttf", 16, 0);*/
 		/*struct nk_font *future = nk_font_atlas_add_from_file(atlas, "../../../extra_font/kenvector_future_thin.ttf", 13, 0);*/
@@ -361,9 +318,11 @@ projalphaView::projalphaView(gameMain *game)
 	inputSystem = std::make_shared<inputHandlerSystem>();
 	game->entities->systems["input"] = inputSystem;
 
+	/*
 	auto generatorSys = std::make_shared<landscapeEventSystem>();
 	game->entities->systems["landscapeEvents"] = generatorSys;
 	wfcgen->setEventQueue(generatorSys->queue);
+	*/
 
 	bindCookedMeshes();
 	input.bind(MODAL_ALL_MODES, resizeInputHandler(game, post));
@@ -734,6 +693,7 @@ void projalphaView::render(gameMain *game) {
 		glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		renderHealthbars(game->entities.get(), nk_ctx, cam);
+		//drawTileDebug(game);
 	}
 
 	nk_sdl_render(NK_ANTI_ALIASING_ON, 512*1024, 128*1024);
@@ -988,6 +948,91 @@ void projalphaView::drawWinScreen(gameMain *game, int wx, int wy) {
 	nk_end(nk_ctx);
 }
 
+#include <nuklear/canvas.h>
+void projalphaView::drawTileDebug(gameMain *game) {
+	entity *playerEnt = findFirst(game->entities.get(), {"player", "inventory"});
+	gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
+
+	if (!playerEnt || !wfcroot) return;
+
+	glm::vec3 playerPos = playerEnt->node->getTransformTRS().position;
+	std::pair<int, int> playerCoord = {
+		int(playerPos.x/4 + 0.5),
+		int(playerPos.z/4 + 0.5)
+	};
+
+	auto it = wfcgen->omnidijkstra.find(playerCoord);
+	if (it == wfcgen->omnidijkstra.end()) {
+		// no map
+		return;
+	}
+
+	auto& tilemap = it->second;
+
+	for (auto& [name, node] : wfcroot->nodes) {
+		TRS transform = node->getTransformTRS();
+		std::pair<int, int> tileCoord = {
+			int(transform.position.x/4 + 0.5),
+			int(transform.position.z/4 + 0.5)
+		};
+
+		//if (wfcgen->traversableMask.get(tileCoord.first, tileCoord.second)) {
+		if (wfcgen->generatedMask.get(tileCoord.first, tileCoord.second)) {
+			glm::vec4 screenpos = cam->worldToScreenPosition(transform.position);
+
+			if (cam->onScreen(screenpos)) {
+				screenpos.y = 1.0 - screenpos.y;
+				screenpos.x *= game->rend->screen_x;
+				screenpos.y *= game->rend->screen_y;
+
+				/*
+				struct nk_canvas canvas;
+
+				if (nk_canvas_begin(nk_ctx, &canvas, name.c_str(), 0,
+				                    screenpos.x, screenpos.y, 64, 32,
+				                    nk_rgba(32, 32, 32, 127)))
+				{
+					nk_draw_text(canvas.painter, nk_rect(screenpos.x,screenpos.y,64,32), "testing this", 12, nk_ctx->style.font, nk_rgba(0xff, 0xff, 0xff, 0x80), nk_rgb(0,0,0));
+				}
+				nk_canvas_end(nk_ctx, &canvas);
+				*/
+				float hot = wfcgen->hotpathDistance.get(tileCoord);
+				float dist = tilemap.get(tileCoord);
+
+				if (nk_begin(nk_ctx, name.c_str(), nk_rect(screenpos.x, screenpos.y, 64, 32), 0)) {
+					//double fps = manager->engine->frame_timer.average();
+					//std::string fpsstr = std::to_string(fps) + "fps";
+					
+					auto foo = [] (float x) {
+						char buf[16];
+						sprintf(buf, "%.1f", x);
+						/*
+						return (x == HUGE_VALF)
+							? std::string("X")
+							: std::string(buf);
+							*/
+						return std::string(buf);
+					};
+
+					//std::string diststr = std::to_string(dist);
+					std::string diststr = foo(hot) + ", " + foo(dist);
+						/*
+						std::to_string(hot) + " : " +
+						((dist == INT_MAX)
+							? std::string("X")
+							: std::to_string(dist));
+							*/
+
+					nk_layout_row_dynamic(nk_ctx, 14, 1);
+					//nk_label(nk_ctx, "testing this", NK_TEXT_LEFT);
+					nk_label(nk_ctx, diststr.c_str(), NK_TEXT_LEFT);
+				}
+				nk_end(nk_ctx);
+			}
+		}
+	}
+}
+
 void initEntitiesFromNodes(gameObject::ptr node,
                            std::function<void(const std::string&, gameObject::ptr&)> init)
 {
@@ -1100,7 +1145,7 @@ int main(int argc, char *argv[]) try {
 
 		playerEnt = new player(game->entities.get(), game, pos);
 		game->entities->add(playerEnt);
-		new generatorEventHandler(game->entities.get(), playerEnt);
+		//new generatorEventHandler(game->entities.get(), playerEnt);
 		new health(game->entities.get(), playerEnt);
 		new enemyCollision(game->entities.get(), playerEnt);
 		new healthPickupCollision(game->entities.get(), playerEnt);

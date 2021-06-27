@@ -81,8 +81,10 @@ enemy::enemy(entityManager *manager, entity *ent, nlohmann::json properties)
 	body->phys->setAngularFactor(0.0);
 }
 
+#include <logic/projalphaView.hpp>
 void enemy::update(entityManager *manager, float delta) {
 	glm::vec3 playerPos;
+	glm::vec3 selfPos = node->getTransformTRS().position;
 
 	entity *playerEnt =
 		findNearest(manager, node->getTransformTRS().position, {"player"});
@@ -91,6 +93,7 @@ void enemy::update(entityManager *manager, float delta) {
 		playerPos = playerEnt->getNode()->getTransformTRS().position;
 	}
 
+	/*
 	// TODO: should this be a component, a generic chase implementation?
 	glm::vec3 diff = playerPos - node->getTransformTRS().position;
 	glm::vec3 vel =  glm::normalize(glm::vec3(diff.x, 0, diff.z));
@@ -100,6 +103,98 @@ void enemy::update(entityManager *manager, float delta) {
 
 	if (body) {
 		body->phys->setAcceleration(10.f*vel);
+	}
+	*/
+	rigidBody *body = castEntityComponent<rigidBody*>(manager, this, "rigidBody");
+	health *hp = castEntityComponent<health*>(manager, this, "health");
+
+	if (!body || !hp) {
+		std::cerr << "No body/health!" << std::endl;
+		return;
+	}
+
+	std::pair<int, int> playerTile = {
+		int(playerPos.x/4 + 0.5),
+		int(playerPos.z/4 + 0.5)
+	};
+
+	std::pair<int, int> currentTile = {
+		int(selfPos.x/4 + 0.5),
+		int(selfPos.z/4 + 0.5)
+	};
+
+	// BIG XXX
+	auto v = std::dynamic_pointer_cast<projalphaView>(manager->engine->view);
+
+	if (!v) {
+		std::cerr << "No view!" << std::endl;
+	}
+
+	if (v) {
+		auto& wfcgen = v->wfcgen;
+		gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
+
+		if (!wfcroot) {
+			return;
+		}
+
+		using Coord = std::pair<int, int>;
+
+		Coord bestDir = {0, 0};
+		float score = HUGE_VALF;
+		int fleeing = hp->amount <= 0.5;
+		wfcGenerator::Array* tilemap = nullptr;
+
+		if (fleeing) {
+			auto mit = wfcgen->maxDistances.find(playerTile);
+			if (mit == wfcgen->maxDistances.end()) {
+				// no map
+				std::cerr << "No map!" << std::endl;
+				return;
+			}
+
+			auto it = wfcgen->omnidijkstra.find(mit->second);
+			if (it == wfcgen->omnidijkstra.end()) {
+				// also no map
+				std::cerr << "No map!" << std::endl;
+				return;
+			}
+
+			tilemap = &it->second;
+
+		} else {
+			auto it = wfcgen->omnidijkstra.find(playerTile);
+			if (it == wfcgen->omnidijkstra.end()) {
+				// no map
+				std::cerr << "No map!" << std::endl;
+				return;
+			}
+
+			tilemap = &it->second;
+		}
+
+		float dist = tilemap->get(currentTile);
+
+		for (int x = -1; x <= 1; x++) {
+			for (int y = -1; y <= 1; y++) {
+				if (x == 0 && y == 0) continue;
+
+				Coord c = {currentTile.first + x, currentTile.second + y};
+				float dist = tilemap->valid(c)? tilemap->get(c) : HUGE_VALF;
+
+				if (dist < score) {
+					score = dist;
+					bestDir = {x, y};
+				}
+			}
+		}
+
+		if (bestDir != Coord {0, 0}) {
+			//glm::vec3 vel = glm::normalize(glm::vec3((lowest.first, 0, lowest.second)));
+			glm::vec2 dir = glm::normalize(glm::vec2(bestDir.first, bestDir.second));
+			glm::vec3 vel(dir.x, 0, dir.y);
+			body->phys->setAcceleration(10.f*vel);
+		}
 	}
 
 	uint32_t k = SDL_GetTicks();

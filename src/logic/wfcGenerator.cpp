@@ -377,6 +377,130 @@ static int markShortestPath(array2D<int, X, Y>& arr,
 	return ret;
 }
 
+template <int X, int Y>
+static Coord generateDijkstraMap(array2D<float, X, Y>& distances,
+                                 array2D<bool, X, Y>& mask,
+                                 Coord start)
+{
+	std::set<Coord> unvisited;
+	std::set<Coord> visited;
+
+	unvisited.insert(start);
+	distances.set(start, 0);
+
+	float maxDist = 0.f;
+	Coord maxCoord = start;
+
+	while (!unvisited.empty()) {
+		float min = HUGE_VALF;
+		Coord current;
+
+		// XXX: should store this in sorted order somehow...
+		for (auto& c : unvisited) {
+			if (distances.get(c) < min) {
+				min = distances.get(c);
+				current = c;
+			}
+		}
+		unvisited.erase(current);
+
+		if (distances.get(current) == HUGE_VALF) {
+			// no valid path
+			break;
+		}
+
+		for (int x = -1; x <= 1; x++) {
+			for (int y = -1; y <= 1; y++) {
+				if (x == 0 && y == 0) continue;
+
+				Coord coord = {current.first + x, current.second + y};
+
+				if (distances.valid(coord)
+					&& !visited.count(coord)
+					&& mask.get(coord))
+				{
+					//int  dist = distances[current.first][current.second] + 1;
+					//int& other = distances[coord.first][coord.second];
+					float foo = (abs(x) == abs(y))? 1.41421356f : 1.;
+					float dist  = distances.get(current) + foo;
+					float other = distances.get(coord);
+
+					if (dist < other) {
+						distances.set(coord, dist);
+						//other = dist;
+						//previous[coord.first][coord.second] = current;
+					}
+
+					unvisited.insert(coord);
+				}
+			}
+		}
+
+		visited.insert(current);
+
+		if (distances.get(current) > maxDist) {
+			maxDist = distances.get(current);
+			maxCoord = current;
+		}
+	}
+
+	return maxCoord;
+}
+
+template <int X, int Y>
+static void generateHotpathMap(array2D<int, X, Y>& arr,
+                               array2D<float, X, Y>& distances,
+                               array2D<bool, X, Y>& mask,
+                               Coord start,
+                               int target)
+{
+	std::set<Coord> nodes;
+	//std::vector<Coord> unvisited;
+
+	for (int x = 0; x < X; x++) {
+		for (int y = 0; y < Y; y++) {
+			if (arr.get(x, y) == target) {
+				nodes.insert({x, y});
+			}
+		}
+	}
+
+	distances.clear(HUGE_VALF);
+	for (auto& c : nodes) {
+		generateDijkstraMap(distances, mask, c);
+	}
+}
+
+// hmmmmmmmmmm
+template <int X, int Y>
+static 
+std::pair<
+	std::map<wfcGenerator::Array::Coord, wfcGenerator::Array>,
+	std::map<wfcGenerator::Array::Coord, wfcGenerator::Array::Coord>>
+generateOmnidijkstra(array2D<bool, X, Y>& mask)
+{
+	std::map<wfcGenerator::Array::Coord, wfcGenerator::Array> ret;
+	std::map<wfcGenerator::Array::Coord, wfcGenerator::Array::Coord> maxes;
+
+	std::set<Coord> nodes;
+	//std::vector<Coord> unvisited;
+
+	for (int x = 0; x < X; x++) {
+		for (int y = 0; y < Y; y++) {
+			if (mask.get(x, y)) {
+				Coord c = {x, y};
+				ret[c].clear(HUGE_VALF);
+
+				Coord max = generateDijkstraMap(ret[c], mask, c);
+				maxes[c] = max;
+			}
+		}
+	}
+
+	return {ret, maxes};
+}
+
+
 gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
 	gameObject::ptr ret = std::make_shared<gameObject>();
 	//WfcImpl *wfcgrid = getSector({x, y, z});
@@ -395,6 +519,8 @@ retry:
 
 	mapdata.clear();
 	traversableMask.clear();
+	generatedMask.clear();
+	omnidijkstra.clear();
 	mapskel.genSplits(4);
 	mapskel.connectNodes(mapskel.root, mapdata, 20);
 
@@ -498,6 +624,10 @@ retry:
 						// keep track of what tiles actually collapsed to
 						// traversable tiles, BSP doesn't reflect the final
 						// output
+						if (em) {
+							generatedMask.set(gx, gy, true);
+						}
+
 						if (spec->tags["traversable"].count(em)) {
 							traversableMask.set(gx, gy, true);
 						}
@@ -515,6 +645,13 @@ retry:
 			}
 		}
 	}
+
+	generateHotpathMap(mapdata, hotpathDistance, traversableMask, entry, 0xe1);
+	auto [omni, maxes] = generateOmnidijkstra(traversableMask);
+	omnidijkstra = omni;
+	maxDistances = maxes;
+
+	//generateHotpathMap(mapdata, hotpathDistance, generatedMask, entry, 0xe1);
 
 	gameObject::ptr entryObj = std::make_shared<gameObject>();
 	gameObject::ptr exitObj  = std::make_shared<gameObject>();
