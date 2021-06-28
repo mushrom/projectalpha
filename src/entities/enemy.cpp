@@ -144,7 +144,9 @@ void enemy::update(entityManager *manager, float delta) {
 		float score = HUGE_VALF;
 		int fleeing = hp->amount <= 0.5;
 		wfcGenerator::Array* tilemap = nullptr;
+		wfcGenerator::Array* farmap = nullptr;
 
+		/*
 		if (fleeing) {
 			auto mit = wfcgen->maxDistances.find(playerTile);
 			if (mit == wfcgen->maxDistances.end()) {
@@ -162,7 +164,25 @@ void enemy::update(entityManager *manager, float delta) {
 
 			tilemap = &it->second;
 
-		} else {
+		} else
+		*/
+		{
+			auto mit = wfcgen->maxDistances.find(playerTile);
+			if (mit == wfcgen->maxDistances.end()) {
+				// no map
+				std::cerr << "No map!" << std::endl;
+				return;
+			}
+
+			auto fit = wfcgen->omnidijkstra.find(mit->second);
+			if (fit == wfcgen->omnidijkstra.end()) {
+				// also no map
+				std::cerr << "No map!" << std::endl;
+				return;
+			}
+
+			farmap = &fit->second;
+
 			auto it = wfcgen->omnidijkstra.find(playerTile);
 			if (it == wfcgen->omnidijkstra.end()) {
 				// no map
@@ -181,15 +201,23 @@ void enemy::update(entityManager *manager, float delta) {
 
 				Coord c = {currentTile.first + x, currentTile.second + y};
 				float dist = tilemap->valid(c)? tilemap->get(c) : HUGE_VALF;
+				float fdist = farmap->valid(c)? farmap->get(c) : HUGE_VALF;
 
-				if (dist < score) {
-					score = dist;
-					bestDir = {x, y};
+				if (dist < HUGE_VALF) {
+					if (fleeing && fdist < HUGE_VALF) {
+						dist *= (fleeing)? -1.414 : 1.0;
+						dist += fdist;
+					}
+
+					if (dist < score) {
+						score = dist;
+						bestDir = {x, y};
+					}
 				}
 			}
 		}
 
-		if (bestDir != Coord {0, 0}) {
+		if (hp->amount < 1.0 && bestDir != Coord {0, 0}) {
 			//glm::vec3 vel = glm::normalize(glm::vec3((lowest.first, 0, lowest.second)));
 			glm::vec2 dir = glm::normalize(glm::vec2(bestDir.first, bestDir.second));
 			glm::vec3 vel(dir.x, 0, dir.y);

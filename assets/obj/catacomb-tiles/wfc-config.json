@@ -8,7 +8,7 @@
 		"ext-wall-light": "base-wall-light.gltf",
 		"ext-wall-waterfall": "base-wall-waterfall.glb",
 		"hall-wall": "hall-wall.gltf",
-		"ext-hall-corner": "hall-corner.gltf"
+		"ext-hall-corner": "floor-tile-empty.gltf"
 	},
 
 	"comment" : "left, up, right, down (0, 1, 2, 3)",

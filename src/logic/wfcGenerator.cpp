@@ -412,6 +412,20 @@ static Coord generateDijkstraMap(array2D<float, X, Y>& distances,
 		for (int x = -1; x <= 1; x++) {
 			for (int y = -1; y <= 1; y++) {
 				if (x == 0 && y == 0) continue;
+				// XXX: doing search in all 8 directions results in some
+				//      diagonally intraversable tiles being marked as
+				//      traversable here, need either directional traversal
+				//      info to check that it's a valid path,
+				//      or coooould just check that tiles adjacent to the
+				//      diagonal are also traversable...
+				//      would be a bit of a hack, but having diagonal
+				//      distances is an asthetic choice to avoid enemies
+				//      taking awkward clumsy routes in wide open spaces,
+				//      falling back to 4-direction pathing would be fine
+				//      in tight spaces and corners (maybe even preferable?)
+				//
+				//      idk, undecided, this works for now
+				if (abs(x) == abs(y)) { continue; }
 
 				Coord coord = {current.first + x, current.second + y};
 
@@ -427,8 +441,6 @@ static Coord generateDijkstraMap(array2D<float, X, Y>& distances,
 
 					if (dist < other) {
 						distances.set(coord, dist);
-						//other = dist;
-						//previous[coord.first][coord.second] = current;
 					}
 
 					unvisited.insert(coord);
