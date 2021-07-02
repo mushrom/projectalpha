@@ -141,11 +141,15 @@ void enemy::update(entityManager *manager, float delta) {
 			return;
 		}
 
-		if (hp->amount < 1.0) {
+		if (hp->amount < 0.5) {
+			// flee
+			glm::vec3 dir = wfcgen->pathfindAway(selfPos, playerPos);
+			body->phys->setAcceleration(10.f*dir);
+
+		} else if (hp->amount < 1.0) {
 			glm::vec3 dir = wfcgen->pathfindDirection(selfPos, playerPos);
 			body->phys->setAcceleration(10.f*dir);
 		}
-
 #if 0
 		using Coord = std::pair<int, int>;
 

@@ -559,9 +559,40 @@ wfcGenerator::pathfindDirection(glm::vec3 a, glm::vec3 b) {
 
 glm::vec3
 wfcGenerator::pathfindAway(glm::vec3 a, glm::vec3 b) {
-	glm::vec3 ret;
+	auto ca = positionToCoord(a);
+	auto cb = positionToCoord(b);
 
-	return ret;
+	auto pb = getCoordMap(cb);
+
+	if (!pb) {
+		return glm::vec3(0);
+	}
+
+	glm::vec3 ret;
+	float score = 0;
+	Array::Coord bestDir = {0, 0};
+
+	for (int x = -1; x <= 1; x++) {
+		for (int y = -1; y <= 1; y++) {
+			if (x == 0 && y == 0) continue;
+
+			Array::Coord c = {ca.first + x, ca.second + y};
+			float dist = pb->valid(c)? pb->get(c) : HUGE_VALF;
+
+			if (dist != HUGE_VALF && dist > score) {
+				score = dist;
+				bestDir = {x, y};
+			}
+		}
+	}
+
+	if (bestDir != Array::Coord {0, 0}) {
+		glm::vec2 foo = glm::normalize(glm::vec2(bestDir.first, bestDir.second));
+		return glm::vec3(foo.x, 0, foo.y);
+
+	} else {
+		return glm::vec3(0);
+	}
 }
 
 void wfcGenerator::clear(void) {
