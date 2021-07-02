@@ -37,7 +37,8 @@ enemy::enemy(entityManager *manager, gameMain *game, glm::vec3 position)
 		//enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/ld48/enemy-cube.glb");
 		//enemyModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/ld48/enemy-cube.glb");
 		//enemyModel->transform.scale = glm::vec3(0.25);
-		sfx = openAudio(DEMO_PREFIX "assets/sfx/meh/emeny.wav.ogg");
+		//sfx = openAudio(DEMO_PREFIX "assets/sfx/meh/emeny.wav.ogg");
+		sfx = openAudio(DEMO_PREFIX "assets/sfx/mnstr7.ogg");
 	}
 
 	setNode("model", node, enemyModel);
@@ -113,6 +114,7 @@ void enemy::update(entityManager *manager, float delta) {
 		return;
 	}
 
+#if 0
 	std::pair<int, int> playerTile = {
 		int(playerPos.x/4 + 0.5),
 		int(playerPos.z/4 + 0.5)
@@ -122,6 +124,7 @@ void enemy::update(entityManager *manager, float delta) {
 		int(selfPos.x/4 + 0.5),
 		int(selfPos.z/4 + 0.5)
 	};
+#endif
 
 	// BIG XXX
 	auto v = std::dynamic_pointer_cast<projalphaView>(manager->engine->view);
@@ -138,6 +141,12 @@ void enemy::update(entityManager *manager, float delta) {
 			return;
 		}
 
+		if (hp->amount < 1.0) {
+			glm::vec3 dir = wfcgen->pathfindDirection(selfPos, playerPos);
+			body->phys->setAcceleration(10.f*dir);
+		}
+
+#if 0
 		using Coord = std::pair<int, int>;
 
 		Coord bestDir = {0, 0};
@@ -204,6 +213,18 @@ void enemy::update(entityManager *manager, float delta) {
 				float fdist = farmap->valid(c)? farmap->get(c) : HUGE_VALF;
 
 				if (dist < HUGE_VALF) {
+					if (abs(x) == abs(y)) {
+						Coord adjx = {currentTile.first + x, currentTile.second};
+						Coord adjy = {currentTile.first, currentTile.second + y};
+						float m = max(tilemap->get(adjx), tilemap->get(adjy));
+
+						if (m == HUGE_VALF) {
+							// avoid hugging (and possibly getting stuck
+							// on) corners
+							continue;
+						}
+					}
+
 					if (fleeing && fdist < HUGE_VALF) {
 						dist *= (fleeing)? -1.414 : 1.0;
 						dist += fdist;
@@ -223,6 +244,8 @@ void enemy::update(entityManager *manager, float delta) {
 			glm::vec3 vel(dir.x, 0, dir.y);
 			body->phys->setAcceleration(10.f*vel);
 		}
+#endif
+
 	}
 
 	uint32_t k = SDL_GetTicks();

@@ -42,6 +42,7 @@ class projalphaView : public gameView {
 
 		enum modes {
 			MainMenu,
+			NewGame,
 			Move,
 			Pause,
 			Loading,
@@ -57,6 +58,7 @@ class projalphaView : public gameView {
 		int menuSelect = 0;
 		int currentFloor = 0;
 		float zoom = 20.f;
+		bool debugTiles = false;
 
 		std::unique_ptr<levelController> level;
 		//landscapeGenerator landscape;
@@ -73,6 +75,7 @@ class projalphaView : public gameView {
 
 	private:
 		void drawMainMenu(gameMain *game, int wx, int wy);
+		void drawNewGameMenu(gameMain *game, int wx, int wy);
 		void drawInventory(gameMain *game, int wx, int wy);
 		void drawWinScreen(gameMain *game, int wx, int wy);
 		void drawPauseMenu(gameMain *game, int wx, int wy);

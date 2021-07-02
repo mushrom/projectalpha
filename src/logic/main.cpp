@@ -331,6 +331,15 @@ projalphaView::projalphaView(gameMain *game)
 		return MODAL_NO_CHANGE;
 	});
 
+#if defined(GAME_BUILD_DEBUG)
+	input.bind(MODAL_ALL_MODES, [=, this] (SDL_Event& ev, unsigned flags) {
+		if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_t) {
+			debugTiles =! debugTiles;
+		}
+		return MODAL_NO_CHANGE;
+	});
+#endif
+
 #if !defined(__ANDROID__)
 	//input.bind(modes::Move, controller::camMovement(cam, 30.f));
 	//input.bind(modes::Move, controller::camFPS(cam, game));
@@ -554,8 +563,10 @@ void projalphaView::logic(gameMain *game, float delta) {
 	nk_input_end(nk_ctx);
 
 	if (input.mode == modes::MainMenu
+		|| input.mode == modes::NewGame
 		|| input.mode == modes::Pause
-		|| input.mode == modes::Won)
+		|| input.mode == modes::Won
+		)
 	{
 		// XXX:
 		return;
@@ -626,10 +637,19 @@ void projalphaView::render(gameMain *game) {
 		post->setUniform("exposure", game->rend->exposure);
 		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
-		//input.setMode(modes::Move);
 
-		// TODO: function to do this
 		drawMainMenu(game, winsize_x, winsize_y);
+
+	} else if (input.mode == modes::NewGame) {
+		renderWorld(game, cam, mapQueue, flags);
+
+		// TODO: need to set post size on resize event..
+		//post->setSize(winsize_x, winsize_y);
+		post->setUniform("exposure", game->rend->exposure);
+		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
+		post->draw(game->rend->framebuffer);
+
+		drawNewGameMenu(game, winsize_x, winsize_y);
 
 	} else if (input.mode == modes::Pause) {
 		renderWorld(game, cam, mapQueue, flags);
@@ -693,7 +713,10 @@ void projalphaView::render(gameMain *game) {
 		glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		renderHealthbars(game->entities.get(), nk_ctx, cam);
-		//drawTileDebug(game);
+
+		if (debugTiles) {
+			drawTileDebug(game);
+		}
 	}
 
 	nk_sdl_render(NK_ANTI_ALIASING_ON, 512*1024, 128*1024);
@@ -785,18 +808,13 @@ void projalphaView::load(gameMain *game, std::string map) {
 }
 
 void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
-	static int selected;
-	bool reset = false;
-
-	//input.setMode(modes::Loading);
 	if (nk_begin(nk_ctx, "Main menu", nk_rect(50, 50, 220, 220),
 	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
 	{
 		nk_layout_row_dynamic(nk_ctx, 0, 1);
 		if (nk_button_label(nk_ctx, "New game")) {
 			SDL_Log("New game!");
-			input.setMode(modes::Loading);
-			reset = true;
+			input.setMode(modes::NewGame);
 		}
 		
 		nk_layout_row_dynamic(nk_ctx, 0, 1);
@@ -810,9 +828,105 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 		}
 	}
 	nk_end(nk_ctx);
+}
+
+void projalphaView::drawNewGameMenu(gameMain *game, int wx, int wy) {
+	bool reset = false;
+
+	if (nk_begin(nk_ctx, "New Game", nk_rect(50, 50, 1180, 600),
+	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
+	{
+		nk_label_wrap(nk_ctx, "Select a class");
+
+		nk_layout_row_dynamic(nk_ctx, 400, 4);
+		if (nk_group_begin(nk_ctx, "ExplorerGroup", 0)) {
+			nk_layout_row_dynamic(nk_ctx, 0, 1);
+			nk_label_wrap(nk_ctx, "A hardy adventurer from the surface, eager to find the thing");
+			nk_label_wrap(nk_ctx, "+ Well-rounded, best for beginners");
+			nk_label_wrap(nk_ctx, "+ Mid strength, dexterity");
+			nk_label_wrap(nk_ctx, "+ Starts with flashlight, 10 flares, and arrows");
+			nk_label_wrap(nk_ctx, "> Natural alignment with bunker clan");
+			nk_label_wrap(nk_ctx, "> Neutral alignment with other clans and mobs");
+			nk_label_wrap(nk_ctx, "- Not very stealthy");
+			nk_label_wrap(nk_ctx, "- Low aptitude for special abilities");
+
+			if (nk_button_label(nk_ctx, "Explorer")) {
+				SDL_Log("New game!");
+				reset = true;
+			}
+
+			nk_group_end(nk_ctx);
+		}
+
+		if (nk_group_begin(nk_ctx, "ThiefGroup", 0)) {
+			nk_layout_row_dynamic(nk_ctx, 0, 1);
+			nk_label_wrap(nk_ctx, "An outlaw that steals stuff??");
+			nk_label_wrap(nk_ctx, "+ High dexterity");
+			nk_label_wrap(nk_ctx, "+ High stealth");
+			nk_label_wrap(nk_ctx, "+ Starts with flashlight and throwing stars");
+			nk_label_wrap(nk_ctx, "> Mid strength");
+			nk_label_wrap(nk_ctx, "> Natural alignment with thieves guild");
+			nk_label_wrap(nk_ctx, "- Disliked by all other clans and mobs");
+			nk_label_wrap(nk_ctx, "- Unable to do business at non-thief vendors");
+
+			if (nk_button_label(nk_ctx, "Thief")) {
+				SDL_Log("New game!");
+				reset = true;
+			}
+
+			nk_group_end(nk_ctx);
+		}
+
+		if (nk_group_begin(nk_ctx, "GhoulGroup", 0)) {
+			nk_layout_row_dynamic(nk_ctx, 0, 1);
+			nk_label_wrap(nk_ctx, "A cursed being, born in and molded by the darkness");
+			nk_label_wrap(nk_ctx, "+ Very high stealth");
+			nk_label_wrap(nk_ctx, "+ High dexterity");
+			nk_label_wrap(nk_ctx, "+ Very sensitive to light and sound, high visibility");
+
+			nk_label_wrap(nk_ctx, "> Starts with throwable rocks");
+			nk_label_wrap(nk_ctx, "> Neutral alignment with mobs");
+			nk_label_wrap(nk_ctx, "- Low strength");
+			nk_label_wrap(nk_ctx, "- Does not start with a light source");
+			nk_label_wrap(nk_ctx, "- Not aligned with any clans");
+
+			if (nk_button_label(nk_ctx, "Ghoul")) {
+				SDL_Log("New game!");
+				reset = true;
+			}
+
+			nk_group_end(nk_ctx);
+		}
+
+		if (nk_group_begin(nk_ctx, "CultistGroup", 0)) {
+			nk_layout_row_dynamic(nk_ctx, 0, 1);
+			nk_label_wrap(nk_ctx, "A devoted follower of the arcane");
+			nk_label_wrap(nk_ctx, "+ Mid strength, stealth, and dexterity");
+			nk_label_wrap(nk_ctx, "+ Starts with a lamp and daggers");
+			nk_label_wrap(nk_ctx, "> Natural alignment with cultist clan");
+			nk_label_wrap(nk_ctx, "- Not very stealthy");
+			nk_label_wrap(nk_ctx, "- Low aptitude for special abilities");
+
+			if (nk_button_label(nk_ctx, "Cultist")) {
+				SDL_Log("New game!");
+				reset = true;
+			}
+
+			nk_group_end(nk_ctx);
+		}
+
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
+		if (nk_button_label(nk_ctx, "Back to main menu")) {
+			SDL_Log("Back to main");
+			input.setMode(modes::MainMenu);
+		}
+	}
+	nk_end(nk_ctx);
 
 	if (reset) {
+		SDL_Log("Selected, loading...");
 		level->reset();
+		input.setMode(modes::Loading);
 	}
 }
 
@@ -976,8 +1090,8 @@ void projalphaView::drawTileDebug(gameMain *game) {
 			int(transform.position.z/4 + 0.5)
 		};
 
-		//if (wfcgen->traversableMask.get(tileCoord.first, tileCoord.second)) {
-		if (wfcgen->generatedMask.get(tileCoord.first, tileCoord.second)) {
+		if (wfcgen->traversableMask.get(tileCoord.first, tileCoord.second)) {
+		//if (wfcgen->generatedMask.get(tileCoord.first, tileCoord.second)) {
 			glm::vec4 screenpos = cam->worldToScreenPosition(transform.position);
 
 			if (cam->onScreen(screenpos)) {
@@ -1084,9 +1198,23 @@ int main(int argc, char *argv[]) try {
 	*/
 
 	game->jobs->addAsync([=] {
-		auto bar = openSpatialLoop(GR_PREFIX "assets/sfx/Meditating Beat.ogg");
-		bar->worldPosition = glm::vec3(0, 0, -5);
-		game->audio->add(bar);
+		auto hum = openAudio(DEMO_PREFIX "assets/sfx/cave themeb4.ogg");
+		auto water = openAudio(DEMO_PREFIX "assets/sfx/atmosbasement.mp3_.ogg");
+
+		for (auto& sfx : {hum, water}) {
+			for (int i = 0; i < 5; i++) {
+				auto bar = std::make_shared<spatialAudioChannel>(sfx);
+				glm::vec3 r(rand() / (float)RAND_MAX, 0, rand() / (float)RAND_MAX);
+				bar->worldPosition = glm::vec3(4*32.f * r.x, 2.f, 4*32.f * r.z);
+				bar->loopMode = audioChannel::mode::Loop;
+				game->audio->add(bar);
+			}
+		}
+
+		//auto bar = openSpatialLoop(GR_PREFIX "assets/sfx/Meditating Beat.ogg");
+		//auto bar = openSpatialLoop(DEMO_PREFIX "assets/sfx/cave themeb4.ogg");
+		//bar->worldPosition = glm::vec3(34, 0, 34);
+		//game->audio->add(bar);
 		return true;
 	});
 

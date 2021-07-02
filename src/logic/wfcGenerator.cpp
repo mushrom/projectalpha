@@ -512,6 +512,118 @@ generateOmnidijkstra(array2D<bool, X, Y>& mask)
 	return {ret, maxes};
 }
 
+std::vector<wfcGenerator::Coord>
+wfcGenerator::pathfind(glm::vec3 a, glm::vec3 b) {
+	std::vector<wfcGenerator::Coord> ret;
+
+	return ret;
+}
+
+glm::vec3
+wfcGenerator::pathfindDirection(glm::vec3 a, glm::vec3 b) {
+	auto ca = positionToCoord(a);
+	auto cb = positionToCoord(b);
+
+	auto pb = getCoordMap(cb);
+
+	if (!pb) {
+		return glm::vec3(0);
+	}
+
+	glm::vec3 ret;
+	float score = HUGE_VALF;
+	Array::Coord bestDir = {0, 0};
+
+	for (int x = -1; x <= 1; x++) {
+		for (int y = -1; y <= 1; y++) {
+			if (x == 0 && y == 0) continue;
+
+			Array::Coord c = {ca.first + x, ca.second + y};
+			float dist = pb->valid(c)? pb->get(c) : HUGE_VALF;
+
+			if (dist < score) {
+				score = dist;
+				bestDir = {x, y};
+			}
+		}
+	}
+
+	if (bestDir != Array::Coord {0, 0}) {
+		glm::vec2 foo = glm::normalize(glm::vec2(bestDir.first, bestDir.second));
+		return glm::vec3(foo.x, 0, foo.y);
+
+	} else {
+		return glm::vec3(0);
+	}
+}
+
+glm::vec3
+wfcGenerator::pathfindAway(glm::vec3 a, glm::vec3 b) {
+	glm::vec3 ret;
+
+	return ret;
+}
+
+void wfcGenerator::clear(void) {
+	mapdata.clear();
+	traversableMask.clear();
+	generatedMask.clear();
+	placedMask.clear();
+
+	omnidijkstra.clear();
+	omniGenerated.clear();
+}
+
+void wfcGenerator::clearCaches(void) {
+	omniGenerated.clear();
+}
+
+wfcGenerator::Array *wfcGenerator::getCoordMap(Array::Coord position) {
+	if (regenerateCoordMaps(position)) {
+		return &omnidijkstra[position];
+	}
+
+	return nullptr;
+}
+
+void wfcGenerator::regenerateMaps(void) {
+	generateHotpathMap(mapdata, hotpathDistance, traversableMask, entry, 0xe1);
+	//auto [omni, maxes] = generateOmnidijkstra(traversableMask);
+	//omnidijkstra = omni;
+	//maxDistances = maxes;
+	placedMask = traversableMask;
+}
+
+bool wfcGenerator::regenerateCoordMaps(Array::Coord position) {
+	if (omniGenerated.get(position)) {
+		// if the map is already generated, nothing to do
+		return true;
+	}
+
+	if (traversableMask.get(position)) {
+		auto& om = omnidijkstra[position];
+		om.clear(HUGE_VALF);
+
+		Array::Coord max = generateDijkstraMap(om, traversableMask, position);
+		maxDistances[position] = max;
+
+		omniGenerated.set(position, true);
+		fprintf(stderr, "regenerated: (%d, %d)\n", position.first, position.second);
+		return true;
+	}
+
+	return false;
+}
+
+bool wfcGenerator::placeObject(Coord position, Coord dimensions) {
+	// TODO:
+	return true;
+}
+
+bool wfcGenerator::placeObjectRandomly(Coord dimensions) {
+	// TODO:
+	return true;
+}
 
 gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
 	gameObject::ptr ret = std::make_shared<gameObject>();
@@ -529,25 +641,20 @@ retry:
 	WFCSolver<StateDef, genwidth, genheight> wfcgrid(spec->stateClass);
 	bspimp mapskel;
 
-	mapdata.clear();
-	traversableMask.clear();
-	generatedMask.clear();
-	omnidijkstra.clear();
+	clear();
 	mapskel.genSplits(4);
 	mapskel.connectNodes(mapskel.root, mapdata, 20);
 
 	auto leaves = mapskel.getLeafCenters();
-
 	std::shuffle(leaves.begin(), leaves.end(), g);
 
-	auto& entry = leaves[0];
+	entry = leaves[0];
 
 	//mapdata.set(entry.first, entry.second, 0xe0);
 	mapdata.floodfill(entry.first, entry.second, 0xff, 0xe0);
 	std::cerr << "did floodfill" << std::endl;
 	mapdata.clearExcept(0xe0, 0x00);
 
-	auto exitpoint = entry;
 	bool connects = false;
 
 	for (unsigned i = 1; i < leaves.size(); i++) {
@@ -600,7 +707,7 @@ retry:
 		}
 	}
 
-	std::cerr << "Set empty parameter" << std::endl;
+	std::cerr << "Set empty perimeter" << std::endl;
 
 	for (bool running = true; running && valid;) {
 		auto [r, v] = wfcgrid.iterate();
@@ -658,11 +765,7 @@ retry:
 		}
 	}
 
-	generateHotpathMap(mapdata, hotpathDistance, traversableMask, entry, 0xe1);
-	auto [omni, maxes] = generateOmnidijkstra(traversableMask);
-	omnidijkstra = omni;
-	maxDistances = maxes;
-
+	regenerateMaps();
 	//generateHotpathMap(mapdata, hotpathDistance, generatedMask, entry, 0xe1);
 
 	gameObject::ptr entryObj = std::make_shared<gameObject>();
@@ -707,7 +810,9 @@ void wfcGenerator::generate(gameMain *game,
 }
 
 void wfcGenerator::setPosition(gameMain *game, glm::vec3 position) {
+#if 0
 	static bool food = false;
+#endif
 
 	if (!havePhysics) {
 		game->phys->addStaticModels(nullptr, root, root->getTransformTRS(), mapobjs);

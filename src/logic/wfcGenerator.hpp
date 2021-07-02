@@ -22,7 +22,8 @@ using namespace grendx;
 using namespace grendx::ecs;
 using namespace wfc;
 
-using StateDef = stateDefinition2D<staticStateSet<256>>;
+//using StateDef = stateDefinition2D<staticStateSet<512>>;
+using StateDef = stateDefinition2D<dynamicStateSet>;
 
 class wfcSpec {
 	public:
@@ -40,6 +41,9 @@ class wfcSpec {
 		std::map<std::string, std::set<unsigned>> tags;
 };
 
+// TODO: should base be renamed to worldState? might be more fitting than
+//       generator, having a more general interface for pathfinding
+//       and item placements etc
 class wfcGenerator : public worldGenerator {
 	public:
 		static constexpr int genwidth  = 32;
@@ -47,6 +51,7 @@ class wfcGenerator : public worldGenerator {
 
 		wfcGenerator(gameMain *game, std::string spec, unsigned seed = 0xcafebabe);
 		virtual ~wfcGenerator();
+
 		void generate(gameMain *game, std::vector<glm::vec3> entries);
 		virtual void setPosition(gameMain *game, glm::vec3 position);
 
@@ -54,15 +59,65 @@ class wfcGenerator : public worldGenerator {
 		using WfcPtr = std::unique_ptr<WfcImpl>;
 		using Coord  = std::tuple<int, int, int>;
 		using Array  = array2D<float, genwidth, genheight>;
+		using ArrayInt = array2D<int, genwidth, genheight>;
+
+		// some interface functions
+		bool setTraversable(glm::vec3 p, bool traversable);
+		/// find full path between two coordinates
+		/// for 2D generation the Y component can be ignored
+		std::vector<Coord> pathfind(glm::vec3 a, glm::vec3 b);
+
+		/// normalized direction down the gradient, following this
+		/// each iteration (frame) results in reaching the point 'b' in
+		/// optimal time
+		glm::vec3 pathfindDirection(glm::vec3 a, glm::vec3 b);
+
+		/// normalized direction to run away from point 'b'
+		glm::vec3 pathfindAway(glm::vec3 a, glm::vec3 b);
+
+		//
+		bool placeObject(Coord position, Coord dimensions);
+		bool placeObjectRandomly(Coord dimensions);
+
+		// these will probably be specific to this class, no need for 'Coord'...
+		
+		void clear(void);
+		void regenerateMaps(void);
+		bool regenerateCoordMaps(Array::Coord position);
+		void clearCaches(void);
+		Array *getCoordMap(Array::Coord position);
+
+		static inline Array::Coord positionToCoord(glm::vec3 pos) {
+			return {int(pos.x/4 + 0.5), int(pos.z/4 + 0.5)};
+		}
 
 		array2D<int, genwidth, genheight> mapdata;
+		ArrayInt::Coord entry, exitpoint;
 		Array hotpathDistance;
 		Array outbounds;
+
+		// map of all traversable tiles
 		array2D<bool, genwidth, genheight> traversableMask;
+		// map of all generated (ie, not empty) tiles
 		array2D<bool, genwidth, genheight> generatedMask;
+		// map of tiles that are empty (out of bounds)
 		array2D<bool, genwidth, genheight> outboundMask;
-		// TODO
+		// map of available places to place entities, is equivalent to
+		// the traversable mask after generation
+		array2D<bool, genwidth, genheight> placedMask;
+
+		// generate maps as needed to spread out costs, essentially
+		// working as a cache
+		// TODO: changing world pathing state means clearing this whole
+		//       array and generating a few maps, relatively expensive for
+		//       something that might be as simple as opening a door...
+		array2D<bool, genwidth, genheight> omniGenerated;
+		// per-tile dijkstra map
 		std::map<Array::Coord, Array> omnidijkstra;
+		// per-tile dijkstra map, targeting fleeing from a point
+		// rather than getting closer to it
+		std::map<Array::Coord, Array> fleeMap;
+
 		// for each dijkstra map, keep track of where the maximum distance
 		// from the starting point is (useful for evasion)
 		std::map<Array::Coord, Array::Coord> maxDistances;
@@ -78,6 +133,7 @@ class wfcGenerator : public worldGenerator {
 		std::future<bool> genjob;
 		gameObject::ptr returnValue;
 
+		// XXX
 		bool havePhysics = false;
 		std::vector<physicsObject::ptr> mapobjs;
 };

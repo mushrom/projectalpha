@@ -1,14 +1,15 @@
 {
 	"models" : {
 		"floor-tile-empty": "floor-tile-empty.gltf",
+		"floor-tile-boulders": "floor-tile-boulders.gltf",
 		"floor-tile-water": "floor-tile-water.glb",
 		"floor-tile-water-bridge": "floor-tile-water-bridge.glb",
-		"ext-corner": "ext-corner.gltf",
+		"ext-corner": "ext-corner-experimental.gltf",
 		"ext-wall": "base-wall.gltf",
-		"ext-wall-light": "base-wall-light.gltf",
+		"ext-wall-light": "base-wall.gltf",
 		"ext-wall-waterfall": "base-wall-waterfall.glb",
-		"hall-wall": "hall-wall.gltf",
-		"ext-hall-corner": "floor-tile-empty.gltf"
+		"hall-wall": "base-wall.gltf",
+		"ext-hall-corner": "hall-corner-experimental.gltf"
 	},
 
 	"comment" : "left, up, right, down (0, 1, 2, 3)",
@@ -65,7 +66,7 @@
 		{
 			"name" : "ext-corner",
 			"model" : "ext-corner",
-			"tags" : ["traversable", "wall"],
+			"tags" : ["nontraversable", "wall"],
 			"adjacent" : [
 				[0, "ext-wall", 3],
 				[3, "ext-wall", 0]
@@ -77,7 +78,7 @@
 		{
 			"name" : "ext-wall",
 			"model" : "ext-wall",
-			"tags" : ["traversable", "wall"],
+			"tags" : ["nontraversable", "wall"],
 			"adjacent" : [
 				[1, "ext-wall", 0],
 				[3, "ext-wall", 0],
@@ -103,7 +104,7 @@
 		{
 			"name" : "ext-wall-light",
 			"model" : "ext-wall-light",
-			"tags" : ["traversable", "wall"],
+			"tags" : ["nontraversable", "wall"],
 			"adjacent" : [
 				[1, "ext-wall", 0],
 				[3, "ext-wall", 0],
@@ -119,7 +120,7 @@
 		{
 			"name" : "hall-wall",
 			"model" : "hall-wall",
-			"tags" : ["traversable", "wall"],
+			"tags" : ["nontraversable", "wall"],
 			"adjacent" : [
 				[0, "floor-tile-empty", -1],
 

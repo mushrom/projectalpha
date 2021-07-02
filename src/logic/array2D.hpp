@@ -13,6 +13,16 @@ class array2D {
 		constexpr int width()  const { return X; };
 		constexpr int height() const { return Y; };
 
+		array2D& operator=(const array2D& arr) {
+			for (int x = 0; x < X; x++) {
+				for (int y = 0; y < Y; y++) {
+					set(x, y, arr.get(x, y));
+				}
+			}
+
+			return *this;
+		}
+
 		bool valid(int x, int y) const {
 			return x >= 0 && y >= 0 && x < X && y < Y;
 		}
