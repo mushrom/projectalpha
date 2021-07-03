@@ -20,9 +20,12 @@ static gameObject::ptr coverModel = nullptr;
 
 wfcGenerator::wfcGenerator(gameMain *game, std::string specFilename, unsigned seed) {
 	if (!ladderModel || !coverModel) {
-		ladderModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder.glb");
-		coverModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder-cover.glb");
+		//ladderModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder.glb");
+		//coverModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder-cover.glb");
 
+		ladderModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ascending-staircase.gltf");
+		coverModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/descending-staircase.gltf");
+		
 		auto redlit = std::make_shared<gameLightPoint>();
 		auto greenlit = std::make_shared<gameLightPoint>();
 
@@ -656,6 +659,48 @@ bool wfcGenerator::placeObjectRandomly(Coord dimensions) {
 	return true;
 }
 
+wfcGenerator::Array::Coord wfcGenerator::findNearest(
+		WFCSolver<StateDef, genwidth, genheight>& wfcgrid,
+		Array::Coord position,
+		std::string tag)
+{
+	auto it = spec->tags.find(tag);
+
+	if (it == spec->tags.end()) {
+		return {-1, -1};
+	}
+
+	Array::Coord ret = {-1, -1};
+	int mindist = INT_MAX;
+	auto& tagset = it->second;
+
+	// naive brute force... honestly should be good enough, there are better
+	// ways to do this for sure, but N is small and this will only be run
+	// a few times each generation for placing stairs and what not,
+	// need to get this done quickly
+	for (int x = 0; x < genwidth; x++) {
+		for (int y = 0; y < genheight; y++) {
+			int dist = abs(x - position.first) + abs(y - position.second);
+
+			if (dist >= mindist) {
+				// already found one closer
+				continue;
+			}
+
+			auto& tile = wfcgrid.gridState.tiles[y*genwidth + x];
+
+			for (auto& em : tile) {
+				if (em && tagset.count(em)) {
+					mindist = dist;
+					ret = {x, y};
+				}
+			}
+		}
+	}
+
+	return ret;
+}
+
 gameObject::ptr wfcGenerator::genCell(int x, int y, int z) {
 	gameObject::ptr ret = std::make_shared<gameObject>();
 	//WfcImpl *wfcgrid = getSector({x, y, z});
@@ -802,8 +847,42 @@ retry:
 	gameObject::ptr entryObj = std::make_shared<gameObject>();
 	gameObject::ptr exitObj  = std::make_shared<gameObject>();
 
+	entry     = findNearest(wfcgrid, entry, "replaceable");
+	exitpoint = findNearest(wfcgrid, exitpoint, "replaceable");
+
+	{
+		std::string objname = std::string("tile")
+			+ "[" + std::to_string(entry.first) + "]" 
+			+ "[" + std::to_string(entry.second) + "]";
+
+		auto ptr = ret->getNode(objname);
+		auto rot = ptr->getNode("model");
+		entryObj->setTransform((TRS) {
+			.position = ptr->getTransformTRS().position,
+			.rotation = rot->getTransformTRS().rotation
+		});
+		setNode(objname, ret, entryObj);
+	}
+
+	{
+		std::string objname = std::string("tile")
+			+ "[" + std::to_string(exitpoint.first) + "]" 
+			+ "[" + std::to_string(exitpoint.second) + "]";
+
+		auto ptr = ret->getNode(objname);
+		//exitObj->setTransform(ptr->getTransformTRS());
+		auto rot = ptr->getNode("model");
+		exitObj->setTransform((TRS) {
+			.position = ptr->getTransformTRS().position,
+			.rotation = rot->getTransformTRS().rotation
+		});
+		setNode(objname, ret, exitObj);
+	}
+
+	/*
 	entryObj->setTransform({.position = {4*entry.first, 0, 4*entry.second} });
 	exitObj->setTransform({.position = {4*exitpoint.first, 0, 4*exitpoint.second} });
+	*/
 
 	setNode("model", entryObj, ladderModel);
 	setNode("model", exitObj, coverModel);

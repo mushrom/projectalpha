@@ -78,7 +78,7 @@
 		{
 			"name" : "ext-wall",
 			"model" : "ext-wall",
-			"tags" : ["nontraversable", "wall"],
+			"tags" : ["nontraversable", "wall", "replaceable"],
 			"adjacent" : [
 				[1, "ext-wall", 0],
 				[3, "ext-wall", 0],
@@ -104,7 +104,7 @@
 		{
 			"name" : "ext-wall-light",
 			"model" : "ext-wall-light",
-			"tags" : ["nontraversable", "wall"],
+			"tags" : ["nontraversable", "wall", "replaceable"],
 			"adjacent" : [
 				[1, "ext-wall", 0],
 				[3, "ext-wall", 0],
@@ -120,7 +120,7 @@
 		{
 			"name" : "hall-wall",
 			"model" : "hall-wall",
-			"tags" : ["nontraversable", "wall"],
+			"tags" : ["nontraversable", "wall", "replaceable"],
 			"adjacent" : [
 				[0, "floor-tile-empty", -1],
 

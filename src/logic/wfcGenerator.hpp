@@ -46,8 +46,8 @@ class wfcSpec {
 //       and item placements etc
 class wfcGenerator : public worldGenerator {
 	public:
-		static constexpr int genwidth  = 32;
-		static constexpr int genheight = 32;
+		static constexpr int genwidth  = 40;
+		static constexpr int genheight = 40;
 
 		wfcGenerator(gameMain *game, std::string spec, unsigned seed = 0xcafebabe);
 		virtual ~wfcGenerator();
@@ -86,6 +86,11 @@ class wfcGenerator : public worldGenerator {
 		bool regenerateCoordMaps(Array::Coord position);
 		void clearCaches(void);
 		Array *getCoordMap(Array::Coord position);
+		Array::Coord findNearest(
+				// TODO: should store WFC state in this class...
+				WFCSolver<StateDef, genwidth, genheight>& wfcgrid,
+				Array::Coord position,
+				std::string tag);
 
 		static inline Array::Coord positionToCoord(glm::vec3 pos) {
 			return {int(pos.x/4 + 0.5), int(pos.z/4 + 0.5)};
