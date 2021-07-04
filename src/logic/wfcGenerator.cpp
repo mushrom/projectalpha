@@ -850,34 +850,22 @@ retry:
 	entry     = findNearest(wfcgrid, entry, "replaceable");
 	exitpoint = findNearest(wfcgrid, exitpoint, "replaceable");
 
-	{
+	auto replaceTile = [&] (Array::Coord p, gameObject::ptr obj) {
 		std::string objname = std::string("tile")
-			+ "[" + std::to_string(entry.first) + "]" 
-			+ "[" + std::to_string(entry.second) + "]";
+			+ "[" + std::to_string(p.first) + "]"
+			+ "[" + std::to_string(p.second) + "]";
 
 		auto ptr = ret->getNode(objname);
 		auto rot = ptr->getNode("model");
-		entryObj->setTransform((TRS) {
+		obj->setTransform((TRS) {
 			.position = ptr->getTransformTRS().position,
 			.rotation = rot->getTransformTRS().rotation
 		});
 		setNode(objname, ret, entryObj);
-	}
+	};
 
-	{
-		std::string objname = std::string("tile")
-			+ "[" + std::to_string(exitpoint.first) + "]" 
-			+ "[" + std::to_string(exitpoint.second) + "]";
-
-		auto ptr = ret->getNode(objname);
-		//exitObj->setTransform(ptr->getTransformTRS());
-		auto rot = ptr->getNode("model");
-		exitObj->setTransform((TRS) {
-			.position = ptr->getTransformTRS().position,
-			.rotation = rot->getTransformTRS().rotation
-		});
-		setNode(objname, ret, exitObj);
-	}
+	replaceTile(entry, entryObj);
+	replaceTile(exitpoint, exitObj);
 
 	/*
 	entryObj->setTransform({.position = {4*entry.first, 0, 4*entry.second} });

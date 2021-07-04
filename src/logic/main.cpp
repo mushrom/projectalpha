@@ -509,6 +509,16 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 			game->entities->add(en);
 		}
 	}
+
+	entity *playerEnt = findFirst(game->entities.get(), {"player"});
+	if (playerEnt && wfcroot) {
+		auto p = wfcroot->getNode((amount > 0)? "entry" : "exit");
+		TRS t = p->getTransformTRS();
+		// XXX: avoid falling below staircases
+		t.position += glm::vec3(0, 2, 0);
+		updateEntityTransforms(game->entities.get(), playerEnt, t);
+		std::cerr << "Setting player transform" << std::endl;
+	}
 }
 
 /*
@@ -544,14 +554,14 @@ bool projalphaView::nearNode(gameMain *game, const std::string& name, float thre
 	gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
 	entity *playerEnt = findFirst(game->entities.get(), {"player"});
 
-	if (wfcroot->hasNode("exit") && playerEnt) {
+	if (wfcroot->hasNode(name) && playerEnt) {
 		TRS nodeTrans = wfcroot->getNode(name)->getTransformTRS();
 		TRS playerTrans = playerEnt->getNode()->getTransformTRS();
 		// TODO: need a way to calculate the transform from this node
 		//glm::vec3 pos = nodeTrans.position - glm::vec3(64, 0, 64);
 		//glm::vec3 pos = nodeTrans.position - glm::vec3(64, 0, 64);
 		glm::vec3 pos = nodeTrans.position;
-		return glm::distance(pos, playerTrans.position) < 3;
+		return glm::distance(pos, playerTrans.position) < thresh;
 	}
 
 	return false;
