@@ -184,6 +184,10 @@ endif()
 
 
 if (PORTABLE_BUILD)
+	install(FILES run/run-linux64.sh
+	        DESTINATION ${CMAKE_INSTALL_PREFIX}
+	        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+	                    GROUP_EXECUTE GROUP_READ)
 	# TODO: should also output a launcher script
 	install(CODE "set(CMAKE_INSTALL_LIBDIR \"${CMAKE_INSTALL_LIBDIR}\")")
 	install(CODE
