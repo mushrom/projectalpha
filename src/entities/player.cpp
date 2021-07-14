@@ -58,7 +58,7 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 	new movementHandler(manager, this);
 	new projectileCollision(manager, this);
 	new syncRigidBodyPosition(manager, this);
-	rigidBody *body = new rigidBodySphere(manager, this, position, 10.0, 0.5);
+	rigidBody *body = new rigidBodySphere(manager, this, position, 10.0, 0.75);
 
 	manager->registerComponent(this, "player", this);
 
@@ -74,7 +74,7 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 		transform.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0));
 		//transform.scale = glm::vec3(0.16f);
 		//transform.scale = glm::vec3(2.0f);
-		transform.position = glm::vec3(0, -0.5, 0);
+		transform.position = glm::vec3(0, -0.75, 0);
 		playerModel->setTransform(transform);
 
 		assert(playerModel != nullptr);
@@ -91,14 +91,15 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 
 	auto lit = std::make_shared<gameLightSpot>();
 	lit->setTransform((TRS) {
-		.position = glm::vec3(0, 0, 1),
+		.position = glm::vec3(0, 1, 1),
 		.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0)),
 	});
 
-	lit->intensity = 50;
+	lit->intensity = 125;
 	lit->is_static = false;
-	//lit->casts_shadows = true;
-	lit->casts_shadows = false;
+	lit->casts_shadows = true;
+	//lit->angle = cos(glm::degrees(35.f));
+	//lit->casts_shadows = false;
 
 	auto plit = std::make_shared<gameLightPoint>();
 	plit->diffuse = glm::vec4(0.0, 0.17, 0.46, 1.0);
