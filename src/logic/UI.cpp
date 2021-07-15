@@ -37,6 +37,12 @@ void drawPlayerHealthbar(entityManager *manager,
 	}
 	nk_canvas_end(nk_ctx, &canvas);
 
+	if (nk_begin(nk_ctx, "Inventory info", nk_rect(90, 72, 192, 32), 0)) {
+		nk_layout_row_dynamic(nk_ctx, 14, 1);
+		nk_label(nk_ctx, "[Tab] Open inventory", NK_TEXT_LEFT);
+	}
+	nk_end(nk_ctx);
+
 	if (nk_begin(nk_ctx, "FPS", nk_rect(wx - 144, 48, 112, 32), 0)) {
 		double fps = manager->engine->frame_timer.average();
 		std::string fpsstr = std::to_string(fps) + "fps";

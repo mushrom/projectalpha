@@ -80,4 +80,5 @@ class projalphaView : public gameView {
 		void drawWinScreen(gameMain *game, int wx, int wy);
 		void drawPauseMenu(gameMain *game, int wx, int wy);
 		void drawTileDebug(gameMain *game);
+		void drawNavPrompts(gameMain *game, int wx, int wy);
 };

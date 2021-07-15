@@ -864,24 +864,7 @@ void projalphaView::render(gameMain *game) {
 			drawTileDebug(game);
 		}
 
-		if (nearNode(game, "exit") || nearNode(game, "entry")) {
-			//if (nk_begin(nk_ctx, "[Space]", nk_rect(wx - 144, 48, 112, 32), 0)) {
-			if (nk_begin(nk_ctx, "[Space]", nk_rect(600, 360, 112, 32), 0)) {
-				const char *label = "asdf";
-
-				if (nearNode(game, "exit")) {
-					label = "[Space] Descend";
-				} else if (nearNode(game, "entry") && currentFloor == 0) {
-					label = "[Space] Exit Dungeon";
-				} else {
-					label = "[Space] Ascend";
-				}
-
-				nk_layout_row_dynamic(nk_ctx, 14, 1);
-				nk_label(nk_ctx, label, NK_TEXT_CENTERED);
-			}
-			nk_end(nk_ctx);
-		}
+		drawNavPrompts(game, winsize_x, winsize_y);
 	}
 
 	nk_sdl_render(NK_ANTI_ALIASING_ON, 512*1024, 128*1024);
@@ -1312,6 +1295,36 @@ void projalphaView::drawTileDebug(gameMain *game) {
 	}
 }
 
+void projalphaView::drawNavPrompts(gameMain *game, int wx, int wy) {
+	int xpos = wx/2 - 64;
+
+	if (nearNode(game, "exit") || nearNode(game, "entry")) {
+		int ypos = wy/2 - 100 + 20*sin(4*SDL_GetTicks()/1000.f);
+
+		if (nk_begin(nk_ctx, "[Space]", nk_rect(xpos, ypos, 128, 32), 0)) {
+			const char *label = "asdf";
+
+			if (nearNode(game, "exit")) {
+				label = "[Space] Descend";
+			} else if (nearNode(game, "entry") && currentFloor == 1) {
+				label = "[Space] Exit Dungeon";
+			} else {
+				label = "[Space] Ascend";
+			}
+
+			nk_layout_row_dynamic(nk_ctx, 14, 1);
+			nk_label(nk_ctx, label, NK_TEXT_CENTERED);
+		}
+		nk_end(nk_ctx);
+	}
+
+	if (nk_begin(nk_ctx, "Current floor", nk_rect(xpos, 48, 128, 32), 0)) {
+		nk_layout_row_dynamic(nk_ctx, 14, 1);
+		nk_labelf(nk_ctx, NK_TEXT_ALIGN_LEFT, "Catacombs 1-%d", currentFloor);
+	}
+	nk_end(nk_ctx);
+}
+
 void initEntitiesFromNodes(gameObject::ptr node,
                            std::function<void(const std::string&, gameObject::ptr&)> init)
 {
@@ -1474,7 +1487,7 @@ int main(int argc, char *argv[]) try {
 	});
 
 	view->level->addInit([=] () {
-		view->currentFloor = 1;
+		view->currentFloor = 0;
 		view->incrementFloor(game, 1);
 	});
 
