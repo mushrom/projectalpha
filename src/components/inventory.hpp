@@ -18,6 +18,7 @@ class inventory : public component {
 
 		void insert(entityManager *manager, entity *ent);
 		entity *remove(entityManager *manager, entity *ent);
+		entity *findType(const std::string& type);
 
 		std::map<std::string, std::set<entity*>> items;
 };

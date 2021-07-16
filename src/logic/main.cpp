@@ -40,6 +40,7 @@ using namespace grendx::ecs;
 #include <components/team.hpp>
 #include <components/itemPickup.hpp>
 #include <components/inventory.hpp>
+#include <components/playerInfo.hpp>
 
 #include <entities/player.hpp>
 #include <entities/enemy.hpp>
@@ -1111,72 +1112,142 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 	if (!playerEnt) return;
 
 	auto inv = castEntityComponent<inventory*>(game->entities.get(), playerEnt, "inventory");
+	auto stats = castEntityComponent<playerInfo*>(game->entities.get(), playerEnt, "playerInfo");
 
-	if (!inv) return;
+	if (!inv || !stats) return;
 
 	static std::map<entity*, std::string> names;
 
-	if (nk_begin(nk_ctx, "Player inventory", nk_rect(50, 50, 270, 270),
+	if (nk_begin(nk_ctx, "Player inventory", nk_rect(50, 50, 720, 250),
 	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
 	{
-		nk_layout_row_dynamic(nk_ctx, 0, 1);
-		if (nk_button_label(nk_ctx, "a button")) {
-			// asdf
-			SDL_Log("clicked a button");
-		}
+		nk_layout_row_dynamic(nk_ctx, 200, 2);
 
-		for (auto& [key, items] : inv->items) {
-			if (items.size() == 0) {
-				// no items of this type, nothing to do
-				continue;
+		if (nk_group_begin(nk_ctx, "invlist", 0)) {
+			nk_layout_row_dynamic(nk_ctx, 0, 1);
+			if (nk_button_label(nk_ctx, "a button")) {
+				// asdf
+				SDL_Log("clicked a button");
 			}
 
-			const char *name = key.c_str();
-			entity *ent = *items.begin();
-
-			/*
-			if (names.count(ent) == 0) {
-				std::string foo = std::string(ent->typeString()) + ": ";
-				auto comps = game->entities->getEntityComponents(ent);
-
-				for (auto& [name, _] : comps) {
-					foo += name + ", ";
+			for (auto& [key, items] : inv->items) {
+				if (items.size() == 0) {
+					// no items of this type, nothing to do
+					continue;
 				}
 
-				names[ent] = foo;
-			}
+				const char *name = key.c_str();
+				entity *ent = *items.begin();
 
-			const char *name = names[ent].c_str();
-			*/
-
-			nk_layout_row_dynamic(nk_ctx, 0, 3);
-			nk_labelf(nk_ctx, NK_TEXT_ALIGN_LEFT, "%lu : %s", items.size(), name);
-
-			if (nk_button_label(nk_ctx, "Use")) {
-				SDL_Log("Using %s", name);
+				nk_layout_row_dynamic(nk_ctx, 0, 4);
+				nk_labelf(nk_ctx, NK_TEXT_ALIGN_LEFT, "%lu : %s", items.size(), name);
 
 				Wieldable *w;
 				castEntityComponent(w, game->entities.get(), ent, "Wieldable");
 
-				// TODO: need a way to safely observe entity pointers in cases
-				//       where they may be deleted... don't want to use shared_ptr
-				//       here because the entity manager has sole ownership
-				//       over the lifetime of the entity, shared_ptr would
-				//       result in lingering invalid entities
 				if (w) {
+					static bool wieldClicked = false;
+
+					if (nk_button_label(nk_ctx, "Wield")) {
+						SDL_Log("Wield %s", name);
+						//stats->primaryWeapon = name;
+						wieldClicked = true;
+					}
+
+					if (wieldClicked) {
+						static struct nk_rect s = {20, 100, 220, 90};
+						if (nk_popup_begin(nk_ctx, NK_POPUP_STATIC, "Error", 0, s))
+						{
+							nk_layout_row_dynamic(nk_ctx, 25, 1);
+							nk_label(nk_ctx, "Wield", NK_TEXT_LEFT);
+							nk_layout_row_dynamic(nk_ctx, 25, 2);
+							if (nk_button_label(nk_ctx, "Primary")) {
+								stats->primaryWeapon = name;
+								wieldClicked = 0;
+								nk_popup_close(nk_ctx);
+							}
+							if (nk_button_label(nk_ctx, "Secondary")) {
+								stats->secondaryWeapon = name;
+								wieldClicked = 0;
+								nk_popup_close(nk_ctx);
+							}
+							if (nk_button_label(nk_ctx, "Accessory")) {
+								stats->accessory = name;
+								wieldClicked = 0;
+								nk_popup_close(nk_ctx);
+							}
+							nk_popup_end(nk_ctx);
+						} else wieldClicked = nk_false;
+
+					}
+
+					if (nk_button_label(nk_ctx, "Use")) {
+						SDL_Log("Using %s", name);
+
+
+						// TODO: need a way to safely observe entity pointers in cases
+						//       where they may be deleted... don't want to use shared_ptr
+						//       here because the entity manager has sole ownership
+						//       over the lifetime of the entity, shared_ptr would
+						//       result in lingering invalid entities
+						//if (w) {
+							inv->remove(game->entities.get(), ent);
+							game->entities->activate(ent);
+							w->action(game->entities.get(), playerEnt);
+						//}
+					}
+				}
+
+				if (nk_button_label(nk_ctx, "Drop")) {
 					inv->remove(game->entities.get(), ent);
 					game->entities->activate(ent);
-					w->action(game->entities.get(), playerEnt);
+					TRS newtrans = playerEnt->node->getTransformTRS();
+					newtrans.position += glm::vec3(3, 0, 3);
+					ent->node->setTransform(newtrans);
 				}
 			}
+			nk_group_end(nk_ctx);
+		}
 
-			if (nk_button_label(nk_ctx, "Drop")) {
-				inv->remove(game->entities.get(), ent);
-				game->entities->activate(ent);
-				TRS newtrans = playerEnt->node->getTransformTRS();
-				newtrans.position += glm::vec3(3, 0, 3);
-				ent->node->setTransform(newtrans);
+		if (nk_group_begin(nk_ctx, "playerstuff", 0)) {
+			nk_layout_row_dynamic(nk_ctx, 0, 1);
+
+			entity *prim = inv->findType(stats->primaryWeapon);
+			entity *sec  = inv->findType(stats->secondaryWeapon);
+			entity *acc  = inv->findType(stats->accessory);
+
+			std::string pstr = (prim? "" : "(empty) ") + stats->primaryWeapon;
+			std::string sstr = (sec?  "" : "(empty) ") + stats->secondaryWeapon;
+			std::string astr = (acc?  "" : "(empty) ") + stats->accessory;
+
+			auto useItem = [&] (entity *item) {
+				Wieldable *w;
+				castEntityComponent(w, game->entities.get(), item, "Wieldable");
+
+				if (w) {
+					inv->remove(game->entities.get(), item);
+					game->entities->activate(item);
+					w->action(game->entities.get(), playerEnt);
+				}
+			};
+
+			if (nk_button_label(nk_ctx, pstr.c_str()) && prim) {
+				SDL_Log("A button!");
+				useItem(prim);
 			}
+
+			if (nk_button_label(nk_ctx, sstr.c_str()) && sec) {
+				SDL_Log("A button!");
+				useItem(sec);
+			}
+
+			if (nk_button_label(nk_ctx, astr.c_str()) && acc) {
+				SDL_Log("A button!");
+				useItem(acc);
+			}
+
+
+			nk_group_end(nk_ctx);
 		}
 	}
 	nk_end(nk_ctx);
@@ -1458,6 +1529,7 @@ int main(int argc, char *argv[]) try {
 		new flagPickup(game->entities.get(), playerEnt);
 		new team(game->entities.get(), playerEnt, "blue");
 		new areaAddScore(game->entities.get(), playerEnt, {});
+		new playerInfo(game->entities.get(), playerEnt, {});
 		inventory *inv = new inventory(game->entities.get(), playerEnt, {});
 
 		// start with 5 flares

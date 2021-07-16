@@ -1,5 +1,6 @@
 #include <grend/gameEditor.hpp>
 #include "player.hpp"
+#include <components/playerInfo.hpp>
 
 player::~player() {};
 
@@ -54,7 +55,8 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 	: entity(manager)
 {
 
-	new boxSpawner(manager, this);
+	//new boxSpawner(manager, this);
+	new wieldedHandler(manager, this);
 	new movementHandler(manager, this);
 	new projectileCollision(manager, this);
 	new syncRigidBodyPosition(manager, this);

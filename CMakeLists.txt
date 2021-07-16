@@ -83,6 +83,7 @@ set(LANDSCAPE_DEMO_SRC
 	src/components/timedLifetime.cpp
 	src/components/itemPickup.cpp
 	src/components/inventory.cpp
+	src/components/playerInfo.cpp
 
 	src/entities/enemy.cpp
 	src/entities/enemySpawner.cpp
