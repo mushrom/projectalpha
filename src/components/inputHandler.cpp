@@ -64,7 +64,8 @@ void mouseRotationPoller::update(entityManager *manager, entity *ent) {
 	glm::vec2 meh = glm::normalize(glm::vec2(cam->direction().x, cam->direction().z));
 	glm::vec2 center(0.5);
 	glm::vec2 diff = pos - center;
-	glm::quat rot(glm::vec3(0, atan2(diff.x, diff.y) - atan2(meh.x, -meh.y), 0));
+	//glm::quat rot(glm::vec3(0, atan2(diff.x, diff.y) - atan2(meh.x, -meh.y), 0));
+	glm::quat rot(glm::vec3(0, atan2(diff.x, diff.y) - atan2(meh.x, -meh.y) - M_PI/2.f, 0));
 
 	TRS transform = ent->node->getTransformTRS();
 	transform.rotation = rot;

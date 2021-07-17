@@ -73,7 +73,7 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 		//playerModel = loadSceneCompiled("/home/flux/blender/objects/lowpoly-cc0-guy/low-poly-cc0-guy-fixedimport.gltf");
 
 		TRS transform = playerModel->getTransformTRS();
-		transform.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0));
+		//transform.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0));
 		//transform.scale = glm::vec3(0.16f);
 		//transform.scale = glm::vec3(2.0f);
 		transform.position = glm::vec3(0, -0.75, 0);
@@ -94,7 +94,7 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 	auto lit = std::make_shared<gameLightSpot>();
 	lit->setTransform((TRS) {
 		.position = glm::vec3(0, 1, 1),
-		.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0)),
+		//.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0)),
 	});
 
 	lit->intensity = 125;

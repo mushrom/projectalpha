@@ -1539,6 +1539,13 @@ int main(int argc, char *argv[]) try {
 			inv->insert(game->entities.get(), flare);
 		}
 
+		// 20 bullets
+		for (int i = 0; i < 50; i++) {
+			entity *bullet = new boxBullet(game->entities.get(), game, glm::vec3(0));
+			game->entities->add(bullet);
+			inv->insert(game->entities.get(), bullet);
+		}
+
 		new pickupAction(game->entities.get(), playerEnt, {"amuletPickup"});
 		new pickupAction(game->entities.get(), playerEnt, {"pickup"});
 

@@ -2,13 +2,49 @@
 #include <grend/geometryGeneration.hpp>
 #include <grend/audioMixer.hpp>
 #include <grend/gameEditor.hpp>
+// TODO: move stuff around
+#include <entities/healthPickup.hpp>
+#include <components/timedLifetime.hpp>
 
 static channelBuffers_ptr sfx = nullptr;
 
 using namespace grendx;
 
+class Fireable : public Action {
+	public:
+		Fireable(entityManager *manager, entity *ent)
+			: Action(manager, ent)
+		{
+			manager->registerComponent(ent, "Fireable", this);
+		}
+		virtual ~Fireable();
+
+		virtual void action(entityManager *manager, entity *ent) const {
+			entity *self = manager->getEntity((component*)this);
+			TRS transform = ent->node->getTransformTRS();
+
+			glm::vec3 dir;
+			dir = glm::mat3_cast(transform.rotation) * glm::vec3(1, 0, 0);
+			//dir = glm::normalize(dir + glm::vec3(0, 1, 0));
+			dir = glm::normalize(dir);
+			glm::vec3 pos = transform.position + dir*3.f;
+
+			rigidBody *body = new rigidBodySphere(manager, self, pos, 1.0, 0.25);
+			new syncRigidBodyTransform(manager, self);
+			new timedLifetime(manager, self);
+
+			body->phys->setVelocity((30.f) * dir);
+			//manager->add(box);
+
+			auto ch = std::make_shared<spatialAudioChannel>(sfx);
+			ch->worldPosition = transform.position;
+			manager->engine->audio->add(ch);
+		}
+};
+
 boxBullet::~boxBullet() {};
 boxSpawner::~boxSpawner() {};
+Fireable::~Fireable() {};
 
 boxBullet::boxBullet(entityManager *manager, gameMain *game, glm::vec3 position)
 	: projectile(manager, game, position)
@@ -16,6 +52,10 @@ boxBullet::boxBullet(entityManager *manager, gameMain *game, glm::vec3 position)
 	static gameObject::ptr model = nullptr;
 
 	manager->registerComponent(this, "boxBullet", this);
+
+	new Fireable(manager, this);
+	//new Throwable(manager, this);
+	new Wieldable(manager, this, "Fireable");
 
 	if (!model) {
 		// TODO: assets

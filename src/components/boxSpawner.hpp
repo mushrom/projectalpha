@@ -13,8 +13,11 @@ using namespace grendx::ecs;
 
 class boxBullet : public projectile {
 	public:
+		constexpr static const char *serializedType = "boxBullet";
+
 		boxBullet(entityManager *manager, gameMain *game, glm::vec3 position);
 		virtual ~boxBullet();
+		virtual const char *typeString() const { return serializedType; };
 };
 
 class boxSpawner : public inputHandler {
