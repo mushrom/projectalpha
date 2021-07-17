@@ -1146,15 +1146,15 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 				castEntityComponent(w, game->entities.get(), ent, "Wieldable");
 
 				if (w) {
-					static bool wieldClicked = false;
+					static const char *wieldClicked = nullptr;
 
 					if (nk_button_label(nk_ctx, "Wield")) {
 						SDL_Log("Wield %s", name);
 						//stats->primaryWeapon = name;
-						wieldClicked = true;
+						wieldClicked = name;
 					}
 
-					if (wieldClicked) {
+					if (wieldClicked == name) {
 						static struct nk_rect s = {20, 100, 220, 90};
 						if (nk_popup_begin(nk_ctx, NK_POPUP_STATIC, "Error", 0, s))
 						{
@@ -1163,21 +1163,21 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 							nk_layout_row_dynamic(nk_ctx, 25, 2);
 							if (nk_button_label(nk_ctx, "Primary")) {
 								stats->primaryWeapon = name;
-								wieldClicked = 0;
+								wieldClicked = nullptr;
 								nk_popup_close(nk_ctx);
 							}
 							if (nk_button_label(nk_ctx, "Secondary")) {
 								stats->secondaryWeapon = name;
-								wieldClicked = 0;
+								wieldClicked = nullptr;
 								nk_popup_close(nk_ctx);
 							}
 							if (nk_button_label(nk_ctx, "Accessory")) {
 								stats->accessory = name;
-								wieldClicked = 0;
+								wieldClicked = nullptr;
 								nk_popup_close(nk_ctx);
 							}
 							nk_popup_end(nk_ctx);
-						} else wieldClicked = nk_false;
+						} else wieldClicked = nullptr;
 
 					}
 
