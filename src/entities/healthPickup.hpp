@@ -311,6 +311,7 @@ class flareItem : public pickup {
 			gameLightPoint::ptr lit = std::make_shared<gameLightPoint>();
 
 			lit->diffuse = glm::vec4(1.0, 0.3, 0.1, 1); // bright red
+			lit->intensity = 150;
 			lit->setTransform({ .position = {0, 1, 0} });
 			setNode("light", node, lit);
 		}

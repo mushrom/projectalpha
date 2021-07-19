@@ -440,6 +440,7 @@ projalphaView::projalphaView(gameMain *game)
 	game->entities->systems["abyss"]    = std::make_shared<abyssDeleter>();
 	game->entities->systems["collision"] = std::make_shared<entitySystemCollision>();
 	game->entities->systems["syncPhysics"] = std::make_shared<syncRigidBodySystem>();
+	game->entities->systems["UI"] = std::make_shared<uiSystem>(nk_ctx, cam);
 
 	/*
 	game->entities->addEvents["killedParticles"]
@@ -625,12 +626,21 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 			game->entities->add(en);
 			levelEntities.push_back(en);
 
-			if (rand() & 1) {
+			int mod = rand() % 3;
+
+			if (mod == 0) {
 				auto hen = new healthPickup(game->entities.get(),
 				                            ptr->getTransformTRS().position + glm::vec3(0, 0.75, 0));
 				
 				game->entities->add(hen);
 				levelEntities.push_back(hen);
+
+			} else if (mod == 1) {
+				// chest
+				/*
+				game->entities->add(hen);
+				levelEntities.push_back(en);
+				*/
 
 			} else {
 				auto xen = new coinPickup(game->entities.get(),
@@ -918,7 +928,7 @@ void projalphaView::load(gameMain *game, std::string map) {
 	if (true || map != currentMap) {
 		TRS staticPosition; // default
 		gameObject::ptr newroot
-			= game->state->rootnode
+			//= game->state->rootnode
 			= std::make_shared<gameObject>();
 
 		currentMap = map;
@@ -942,9 +952,10 @@ void projalphaView::load(gameMain *game, std::string map) {
 				compileModels(models);
 
 				level->reset();
-				game->state->rootnode = node;
+				//game->state->rootnode = node;
 				setNode("asyncLoaded", node, std::make_shared<gameObject>());
 				setNode("entities", node, game->entities->root);
+				setNode("maproot", game->state->rootnode, node);
 				//setNode("wfc", node, wfcgen->getNode());
 				//mapQueue.add(wfcgen->getNode());
 
@@ -1184,17 +1195,9 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 					if (nk_button_label(nk_ctx, "Use")) {
 						SDL_Log("Using %s", name);
 
-
-						// TODO: need a way to safely observe entity pointers in cases
-						//       where they may be deleted... don't want to use shared_ptr
-						//       here because the entity manager has sole ownership
-						//       over the lifetime of the entity, shared_ptr would
-						//       result in lingering invalid entities
-						//if (w) {
-							inv->remove(game->entities.get(), ent);
-							game->entities->activate(ent);
-							w->action(game->entities.get(), playerEnt);
-						//}
+						inv->remove(game->entities.get(), ent);
+						game->entities->activate(ent);
+						w->action(game->entities.get(), playerEnt);
 					}
 				}
 
@@ -1595,11 +1598,18 @@ int main(int argc, char *argv[]) try {
 			return std::pair<bool, std::string>(players.size() == 0, "lol u died");
 		});
 
-	SDL_Log("Got to game->run()!");
+	SDL_Log("Got to game->run()! mapfile: %s\n", mapfile);
 	//view->load(game, mapfile);
 	auto mapdata = loadMapCompiled(game, mapfile);
 	game->state->rootnode = mapdata;
+	//setNode("asdf", game->state->rootnode, mapdata);
 	setNode("entities", game->state->rootnode, game->entities->root);
+
+	std::vector<physicsObject::ptr> mapPhysics;
+	game->phys->addStaticModels(nullptr,
+								mapdata,
+								TRS(),
+								mapPhysics);
 
 	if (char *target = getenv("GREND_TEST_TARGET")) {
 		SDL_Log("Got a test target!");

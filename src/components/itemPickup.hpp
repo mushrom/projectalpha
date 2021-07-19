@@ -7,11 +7,11 @@
 using namespace grendx;
 using namespace grendx::ecs;
 
-class pickupAction : public areaEnter {
+class pickupAction : public areaInside {
 	public:
 		pickupAction(entityManager *manager, entity *ent,
 		           std::vector<std::string> _tags)
-			: areaEnter(manager, ent, _tags)
+			: areaInside(manager, ent, _tags)
 		{
 			manager->registerComponent(ent, "pickupAction", this);
 		}

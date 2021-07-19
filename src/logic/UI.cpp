@@ -5,6 +5,11 @@
 
 #include <nuklear/canvas.h>
 
+// virtual destructors for rtti
+uiComponent::~uiComponent() {};
+dialogPrompt::~dialogPrompt() {};
+uiSystem::~uiSystem() {};
+
 void drawPlayerHealthbar(entityManager *manager,
                          struct nk_context *nk_ctx,
                          health *playerHealth)
@@ -108,6 +113,81 @@ void renderHealthbars(entityManager *manager,
 
 		if (playerHealth) {
 			drawPlayerHealthbar(manager, nk_ctx, playerHealth);
+		}
+	}
+}
+
+// XXX
+void dialogPrompt::onEvent(entityManager *manager, entity *ent, entity *other) {
+	//isActive = true;
+}
+
+bool dialogPrompt::active(entityManager *manager, entity *ent) {
+	if (!ent || !ent->active) {
+		return false;
+	}
+
+	// inherited from areaEvent
+	// TODO: some way to specify onScreen, currentlyInside, etc
+	//return currentlyInside;
+	//bool isActive;
+	entity *playerEnt = findFirst(manager, {"player"});
+
+	if (!playerEnt || !playerEnt->active) {
+		return false;
+	}
+
+	glm::vec3 ownPos = ent->node->getTransformTRS().position;
+	glm::vec3 playerPos = playerEnt->node->getTransformTRS().position;
+
+	return glm::distance(ownPos, playerPos) < 2.f;
+}
+
+void dialogPrompt::draw(entityManager *manager,
+                        entity *ent,
+                        struct nk_context *nk_ctx,
+                        camera::ptr cam)
+{
+	glm::vec3 pos = ent->node->getTransformTRS().position;
+	glm::vec4 screenpos = cam->worldToScreenPosition(pos);
+
+	if (cam->onScreen(screenpos)) {
+		std::string name = "dialog" + std::to_string(pos.x) + std::to_string(pos.y) + std::to_string(pos.z);
+		std::cout << "Butts" << std::endl;
+
+		screenpos.y = 1.0 - screenpos.y;
+		screenpos.x *= manager->engine->rend->screen_x;
+		screenpos.y *= manager->engine->rend->screen_y;
+
+		if (nk_begin(nk_ctx, name.c_str(), nk_rect(screenpos.x, screenpos.y, 64, 32), 0)) {
+			nk_layout_row_dynamic(nk_ctx, 14, 1);
+			nk_label(nk_ctx, "testing this", NK_TEXT_LEFT);
+		}
+		nk_end(nk_ctx);
+	}
+
+
+	// if we're still inside the target area next frame, then this will be
+	// true again... bit of a hack, might be a good idea to some sort of level
+	// signal component for being inside an area......
+	isActive = false;
+}
+
+void uiSystem::update(entityManager *manager, float delta) {
+	auto components = manager->getComponents("uiComponent");
+
+	for (auto& cit : components) {
+		uiComponent *comp = dynamic_cast<uiComponent*>(cit);
+		entity *ent = manager->getEntity(comp);
+
+		if (!comp || !ent) {
+			continue;
+		}
+
+		comp->update();
+
+		if (comp->active(manager, ent)) {
+			comp->draw(manager, ent, nk_ctx, cam);
 		}
 	}
 }
