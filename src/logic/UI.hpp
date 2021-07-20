@@ -60,8 +60,10 @@ class uiSystem : public entitySystem {
 class dialogPrompt : public uiComponent {
 	public:
 		dialogPrompt(entityManager *manager,
-		             entity *ent)
-			: uiComponent(manager, ent)
+		             entity *ent,
+		             std::string _prompt)
+			: uiComponent(manager, ent),
+			  prompt(_prompt)
 		{
 			manager->registerComponent(ent, "dialogPrompt", this);
 		}
@@ -77,4 +79,5 @@ class dialogPrompt : public uiComponent {
 
 	private:
 		bool isActive = true;
+		std::string prompt = "";
 };

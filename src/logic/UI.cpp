@@ -153,15 +153,15 @@ void dialogPrompt::draw(entityManager *manager,
 
 	if (cam->onScreen(screenpos)) {
 		std::string name = "dialog" + std::to_string(pos.x) + std::to_string(pos.y) + std::to_string(pos.z);
-		std::cout << "Butts" << std::endl;
 
 		screenpos.y = 1.0 - screenpos.y;
 		screenpos.x *= manager->engine->rend->screen_x;
 		screenpos.y *= manager->engine->rend->screen_y;
 
-		if (nk_begin(nk_ctx, name.c_str(), nk_rect(screenpos.x, screenpos.y, 64, 32), 0)) {
+		int width = /*XXX: not fixed-width font*/8*(prompt.size());
+		if (nk_begin(nk_ctx, name.c_str(), nk_rect(screenpos.x, screenpos.y, width, 32), 0)) {
 			nk_layout_row_dynamic(nk_ctx, 14, 1);
-			nk_label(nk_ctx, "testing this", NK_TEXT_LEFT);
+			nk_label(nk_ctx, prompt.c_str(), NK_TEXT_LEFT);
 		}
 		nk_end(nk_ctx);
 	}
