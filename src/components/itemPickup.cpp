@@ -44,7 +44,7 @@ pickup::pickup(entityManager *manager, entity *ent, nlohmann::json properties)
 	: entity(manager, properties)
 {
 	new areaSphere(manager, this, 2.f);
-	new dialogPrompt(manager, this);
+	new dialogPrompt(manager, this, "[X] Pick up the item here");
 
 	manager->registerComponent(this, "pickup", this);
 }

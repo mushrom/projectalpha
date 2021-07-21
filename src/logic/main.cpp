@@ -637,10 +637,11 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 
 			} else if (mod == 1) {
 				// chest
-				/*
-				game->entities->add(hen);
-				levelEntities.push_back(en);
-				*/
+				auto cen = new chestItem(game->entities.get(),
+				                         ptr->getTransformTRS().position + glm::vec3(0, 0.75, 0));
+
+				game->entities->add(cen);
+				levelEntities.push_back(cen);
 
 			} else {
 				auto xen = new coinPickup(game->entities.get(),
