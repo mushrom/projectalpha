@@ -912,8 +912,13 @@ void wfcGenerator::setPosition(gameMain *game, glm::vec3 position) {
 	static bool food = false;
 #endif
 
+	// XXX: man I really have to clean this up at some point, ugh
 	if (!havePhysics) {
-		game->phys->addStaticModels(nullptr, root, root->getTransformTRS(), mapobjs);
+		game->phys->addStaticModels(nullptr,
+		                            root,
+		                            root->getTransformTRS(),
+		                            mapobjs,
+		                            "collidable");
 		havePhysics = true;
 	}
 

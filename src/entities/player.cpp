@@ -169,6 +169,8 @@ void player::update(entityManager *manager, float delta) {
 	rigidBody *body = castEntityComponent<rigidBody*>(manager, this, "rigidBody");
 	if (!body) return;
 
+	body->phys->setAngularFactor(0.f);
+
 	glm::vec3 vel = body->phys->getVelocity();
 	if (glm::length(vel) < 2.0) {
 		character->setAnimation("idle");
