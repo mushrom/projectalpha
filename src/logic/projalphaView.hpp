@@ -56,22 +56,60 @@ class projalphaView : public gameView {
 		struct nk_context *nk_ctx;
 
 		int menuSelect = 0;
-		int currentFloor = 0;
+		int currentFloor = -1;
 		float zoom = 20.f;
 		bool debugTiles = false;
 
+		struct floorStates {
+			floorStates(const floorStates& other)
+				//: mapQueue(other.mapQueue)
+			{
+				zone = other.zone;
+				generator = other.generator;
+				mapPhysics = other.mapPhysics;
+				levelEntities = other.levelEntities;
+
+				entrance = other.entrance;
+				exit = other.exit;
+			}
+
+			floorStates(gameMain *game,
+			            projalphaView *view,
+			            std::string z,
+			            std::string spec);
+
+			std::string zone;
+
+			std::shared_ptr<wfcGenerator> generator;
+			std::vector<physicsObject::ptr> mapPhysics;
+			std::vector<entity*> levelEntities;
+			// pre-built queue for faster drawing
+			// renderQueue mapQueue;
+
+			glm::vec3 entrance, exit;
+		};
+
 		std::unique_ptr<levelController> level;
 		//landscapeGenerator landscape;
-		std::unique_ptr<wfcGenerator> wfcgen;
+		//std::unique_ptr<wfcGenerator> wfcgen;
 		inputHandlerSystem::ptr inputSystem;
 		std::string currentMap = "no map!";
 		std::string loadedMap = "no map loaded either!";
-		std::vector<physicsObject::ptr> mapPhysics;
-		std::vector<entity*> levelEntities;
+		std::vector<floorStates> floors;
+		//std::vector<physicsObject::ptr> mapPhysics;
+		//std::vector<entity*> levelEntities;
 		renderQueue mapQueue = renderQueue(cam);
 
 		void incrementFloor(gameMain *game, int amount);
+		floorStates *getFloor(gameMain *game, int n);
 		bool nearNode(gameMain *game, const std::string& name, float thresh = 3.f);
+
+		inline wfcGenerator* getGenerator(void) {
+			// check that currentFloor has a valid floor state
+			return (floors.empty() || currentFloor < 0 || currentFloor >= (int)floors.size())
+				? nullptr
+				: floors[currentFloor].generator.get();
+		}
 
 	private:
 		void drawMainMenu(gameMain *game, int wx, int wy);

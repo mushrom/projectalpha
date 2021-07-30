@@ -129,6 +129,7 @@ class wfcGenerator : public worldGenerator {
 		//array2D<Array*, genwidth, genheight> omnidijkstra;
 		//std::array<Array*, genwidth*genheight>
 
+		std::vector<physicsObject::ptr> mapobjs;
 	private:
 		std::map<Coord, WfcPtr> sectors;
 		std::unique_ptr<wfcSpec> spec;
@@ -140,7 +141,6 @@ class wfcGenerator : public worldGenerator {
 
 		// XXX
 		bool havePhysics = false;
-		std::vector<physicsObject::ptr> mapobjs;
 };
 
 // XXX: global variable, TODO: something else

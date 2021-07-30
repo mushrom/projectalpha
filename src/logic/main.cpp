@@ -356,9 +356,9 @@ static glm::vec2 actionpos(0, 0);
 
 projalphaView::projalphaView(gameMain *game)
 	: gameView(),
-	  level(new levelController),
+	  level(new levelController)
 	  //wfcgen(new wfcGenerator(game, DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json"))
-	  wfcgen(new wfcGenerator(game, DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"))
+	  //wfcgen(new wfcGenerator(game, DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"))
 {
     //ctx = nk_sdl_init(win);
     nk_ctx = nk_sdl_init(game->ctx.window);
@@ -590,9 +590,202 @@ projalphaView::projalphaView(gameMain *game)
 	input.setMode(modes::MainMenu);
 };
 
-void projalphaView::incrementFloor(gameMain *game, int amount) {
-	currentFloor += amount;
+projalphaView::floorStates::floorStates(gameMain *game,
+                                        projalphaView *view,
+                                        std::string z,
+                                        std::string spec)
+	: zone(z)
+	  //mapQueue(view->cam)
+{
+	generator = std::make_shared<wfcGenerator>(game, spec),
+	generator->generate(game, {});
 
+	SDL_Log("Generated");
+	generator->setPosition(game, glm::vec3(0));
+	SDL_Log("Set position");
+
+	//setNode("foo", game->state->rootnode, generator->getNode());
+	//mapQueue.add(generator->getNode());
+	//SDL_Log("Adding to queue: %lu meshes\n", mapQueue.meshes.size());
+
+	gameObject::ptr wfcroot = generator->getNode()->getNode("nodes");
+	if (wfcroot && wfcroot->hasNode("leaves")) {
+		gameObject::ptr leafroot = wfcroot->getNode("leaves");
+		glm::vec3 amuletPos;
+
+		for (const auto& [name, ptr] : leafroot->nodes) {
+			auto en = new enemy(game->entities.get(),
+					game,
+					ptr->getTransformTRS().position + glm::vec3(4, 2, 0));
+			amuletPos = ptr->getTransformTRS().position + glm::vec3(2);
+
+			new team(game->entities.get(), en, "red");
+			game->entities->add(en);
+			levelEntities.push_back(en);
+
+			int mod = rand() % 3;
+
+			if (mod == 0) {
+				auto hen = new healthPickup(game->entities.get(),
+				                            ptr->getTransformTRS().position + glm::vec3(0, 0.75, 0));
+				
+				game->entities->add(hen);
+				levelEntities.push_back(hen);
+
+			} else if (mod == 1) {
+				// chest
+				auto cen = new chestItem(game->entities.get(),
+				                         ptr->getTransformTRS().position + glm::vec3(0, 0.75, 0));
+
+				game->entities->add(cen);
+				levelEntities.push_back(cen);
+
+			} else {
+				auto xen = new coinPickup(game->entities.get(),
+				                          ptr->getTransformTRS().position + glm::vec3(0, 0, 0));
+				
+				game->entities->add(xen);
+				levelEntities.push_back(xen);
+			}
+		}
+
+		/*
+		if (currentFloor == 5) {
+			auto en = new amuletPickup(game->entities.get(), game, amuletPos);
+			game->entities->add(en);
+		}
+		*/
+
+		if (rand() % 10 == 0) {
+			auto en = new amuletPickup(game->entities.get(), game, amuletPos);
+			game->entities->add(en);
+		}
+	}
+	
+	SDL_Log("Generated entities");
+
+	auto entranceNode = wfcroot->getNode("entry");
+	auto exitNode     = wfcroot->getNode("exit");
+
+	if (entranceNode) entrance = entranceNode->getTransformTRS().position;
+	if (exitNode)     exit     = exitNode->getTransformTRS().position;
+
+	SDL_Log("Have entrance: (%g, %g, %g)", entrance.x, entrance.y, entrance.z);
+	SDL_Log("Have exit: (%g, %g, %g)", exit.x, exit.y, exit.z);
+/*
+	entity *playerEnt = findFirst(game->entities.get(), {"player"});
+	if (playerEnt && wfcroot) {
+		auto p = wfcroot->getNode((amount > 0)? "entry" : "exit");
+		TRS t = p->getTransformTRS();
+		// XXX: avoid falling below staircases
+		t.position += glm::vec3(0, 2, 0);
+		updateEntityTransforms(game->entities.get(), playerEnt, t);
+		std::cerr << "Setting player transform" << std::endl;
+	}
+	*/
+}
+
+projalphaView::floorStates* projalphaView::getFloor(gameMain *game, int n) {
+#if 0
+	/*
+	static floorStates *foo = nullptr;
+
+	if (!foo) {
+		foo = new floorStates(
+			game,
+			this,
+			"catacombs",
+			DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"
+		);
+	}
+
+	return foo;
+	*/
+
+#else
+	if (n < 0) return nullptr;
+
+	if (n < floors.size()) {
+		return &floors[n];
+	}
+
+	// otherwise, have to generate a new floor
+	// TODO: what happens if there's a jump larger than one level, not
+	//       just pushing to the back?
+
+/*
+	floors.push_back(floorStates(
+		game,
+		this,
+		"catacombs",
+		// TODO: wfcGenerator will create a new spec class in the constructor,
+		//       which means it'll load all the models again there...
+		//       should have a spec class instead, and pass that to the generator
+		DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"
+	));
+	*/
+
+	floorStates foo(
+		game,
+		this,
+		"catacombs",
+		DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"
+	);
+
+	//SDL_Log("Generated floor, map queue has %lu meshes", foo.mapQueue.meshes.size());
+
+	floors.push_back(foo);
+	return &floors.back();
+#endif
+}
+
+// lols
+#define let auto
+
+void projalphaView::incrementFloor(gameMain *game, int amount) {
+	int nextFloor = currentFloor + amount;
+	auto cur  = getFloor(game, currentFloor);
+	//let cur = nullptr;
+	let next = getFloor(game, nextFloor);
+
+	if (cur) {
+		/* deactivate stuff */;
+		/*
+		for (auto& p : cur->generator->mapobjs) {
+			p->deactivate();
+		}
+		*/
+		cur->generator->mapobjs.clear();
+	}
+
+	if (next) {
+		/* activate stuff */
+		next->generator->mapobjs.clear();
+		next->generator->setPosition(game, glm::vec3(0));
+		mapQueue.clear();
+		mapQueue.add(next->generator->getNode());
+
+		SDL_Log("Built queue: %lu meshes\n", mapQueue.meshes.size());
+
+		entity *playerEnt = findFirst(game->entities.get(), {"player"});
+		if (playerEnt) {
+			TRS t;
+			t.position = (amount > 0)? next->entrance : next->exit;
+			// XXX: avoid falling below staircases
+			t.position += glm::vec3(0, 2, 0);
+			updateEntityTransforms(game->entities.get(), playerEnt, t);
+			SDL_Log("Setting player transform");
+		}
+
+		/*
+		for (auto& p : next->generator->mapobjs) {
+			p->activate();
+		}
+		*/
+	};
+
+	currentFloor = nextFloor;
+/*
 	for (auto& ent : levelEntities) {
 		if (ent->active) {
 			// XXX: items in the inventory are deactivated, and so
@@ -601,7 +794,9 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 			game->entities->remove(ent);
 		}
 	}
+	*/
 
+#if 0
 	mapPhysics.clear();
 	mapQueue.clear();
 	levelEntities.clear();
@@ -667,6 +862,7 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 		updateEntityTransforms(game->entities.get(), playerEnt, t);
 		std::cerr << "Setting player transform" << std::endl;
 	}
+#endif
 }
 
 /*
@@ -699,7 +895,12 @@ void projalphaView::prevFloor(gameMain *game) {
 
 bool projalphaView::nearNode(gameMain *game, const std::string& name, float thresh)
 {
-	gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
+	auto floor = getFloor(game, currentFloor);
+	// XXX: don't like this one bit
+	if (!floor) return false;
+
+	gameObject::ptr wfcroot = floor->generator->getNode()->getNode("nodes");
+	//gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
 	entity *playerEnt = findFirst(game->entities.get(), {"player"});
 
 	if (wfcroot->hasNode(name) && playerEnt) {
@@ -738,6 +939,8 @@ void projalphaView::logic(gameMain *game, float delta) {
 	}
 	*/
 
+/*
+	// TODO: is this still even being used
 	if (input.mode == modes::Loading) {
 		gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
 		//if (!game->state->rootnode->hasNode("wfc")) {
@@ -747,6 +950,11 @@ void projalphaView::logic(gameMain *game, float delta) {
 		} else {
 			input.setMode(modes::Move);
 		}
+	}
+	*/
+
+	if (input.mode == modes::Loading) {
+		input.setMode(modes::Move);
 	}
 
 	static glm::vec3 lastvel = glm::vec3(0);
@@ -764,7 +972,7 @@ void projalphaView::logic(gameMain *game, float delta) {
 	if (playerEnt) {
 		TRS transform = playerEnt->getNode()->getTransformTRS();
 		cam->slide(transform.position - zoom*cam->direction(), 16.f, delta);
-		wfcgen->setPosition(game, transform.position);
+		//wfcgen->setPosition(game, transform.position);
 	}
 
 	game->entities->update(delta);
@@ -858,7 +1066,9 @@ void projalphaView::render(gameMain *game) {
 
 	} else {
 		// main game mode
+		//if (floor) renderWorld(game, cam, floor->mapQueue, flags);
 		renderWorld(game, cam, mapQueue, flags);
+
 		post->setUniform("exposure", game->rend->exposure);
 		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
@@ -925,6 +1135,7 @@ static std::vector<std::pair<std::string, bool>> listdir(std::string path) {
 }
 
 void projalphaView::load(gameMain *game, std::string map) {
+	return;
 	// avoid reloading if the target map is already loaded
 	if (true || map != currentMap) {
 		TRS staticPosition; // default
@@ -942,15 +1153,17 @@ void projalphaView::load(gameMain *game, std::string map) {
 
 			game->jobs->addDeferred([=, this] () {
 				// TODO: some sort of world entity
-				mapPhysics.clear();
-				mapQueue.clear();
+				//mapPhysics.clear();
+				//mapQueue.clear();
 
+/*
 				game->phys->addStaticModels(nullptr,
 				                            node,
 				                            staticPosition,
 				                            mapPhysics);
 
 				compileModels(models);
+				*/
 
 				level->reset();
 				//game->state->rootnode = node;
@@ -1288,7 +1501,13 @@ void projalphaView::drawWinScreen(gameMain *game, int wx, int wy) {
 #include <nuklear/canvas.h>
 void projalphaView::drawTileDebug(gameMain *game) {
 	entity *playerEnt = findFirst(game->entities.get(), {"player", "inventory"});
-	gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
+	//gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
+
+	auto floor = getFloor(game, currentFloor);
+	// XXX: don't like this one bit
+	if (!floor) return;
+
+	gameObject::ptr wfcroot = floor->generator->getNode()->getNode("nodes");
 
 	if (!playerEnt || !wfcroot) return;
 
@@ -1298,8 +1517,8 @@ void projalphaView::drawTileDebug(gameMain *game) {
 		int(playerPos.z/4 + 0.5)
 	};
 
-	auto it = wfcgen->omnidijkstra.find(playerCoord);
-	if (it == wfcgen->omnidijkstra.end()) {
+	auto it = floor->generator->omnidijkstra.find(playerCoord);
+	if (it == floor->generator->omnidijkstra.end()) {
 		// no map
 		return;
 	}
@@ -1313,7 +1532,7 @@ void projalphaView::drawTileDebug(gameMain *game) {
 			int(transform.position.z/4 + 0.5)
 		};
 
-		if (wfcgen->traversableMask.get(tileCoord.first, tileCoord.second)) {
+		if (floor->generator->traversableMask.get(tileCoord.first, tileCoord.second)) {
 		//if (wfcgen->generatedMask.get(tileCoord.first, tileCoord.second)) {
 			glm::vec4 screenpos = cam->worldToScreenPosition(transform.position);
 
@@ -1333,7 +1552,7 @@ void projalphaView::drawTileDebug(gameMain *game) {
 				}
 				nk_canvas_end(nk_ctx, &canvas);
 				*/
-				float hot = wfcgen->hotpathDistance.get(tileCoord);
+				float hot = floor->generator->hotpathDistance.get(tileCoord);
 				float dist = tilemap.get(tileCoord);
 
 				if (nk_begin(nk_ctx, name.c_str(), nk_rect(screenpos.x, screenpos.y, 64, 32), 0)) {
@@ -1508,14 +1727,20 @@ int main(int argc, char *argv[]) try {
 	*/
 
 	view->level->addInit([=] () {
-		view->wfcgen->generate(game, {});
+		//view->wfcgen->generate(game, {});
 	});
 
 	view->level->addInit([=] () {
 		entity *playerEnt;
 		glm::vec3 pos(-5, 20, -5);
-		gameObject::ptr wfcroot = view->wfcgen->getNode()->getNode("nodes");
+		//gameObject::ptr wfcroot = view->wfcgen->getNode()->getNode("nodes");
 
+		auto floor = view->getFloor(game, view->currentFloor);
+		if (floor) {
+			pos = floor->entrance;
+		}
+
+			/*
 		if (wfcroot->hasNode("entry")) {
 			TRS transform = wfcroot->getNode("entry")->getTransformTRS();
 			// TODO: need a way to calculate the transform from this node
@@ -1523,6 +1748,7 @@ int main(int argc, char *argv[]) try {
 			pos = transform.position + glm::vec3(0, 2, 0);
 			//pos = transform.position;
 		}
+		*/
 
 		playerEnt = new player(game->entities.get(), game, pos);
 		game->entities->add(playerEnt);
@@ -1570,7 +1796,7 @@ int main(int argc, char *argv[]) try {
 	});
 
 	view->level->addInit([=] () {
-		view->currentFloor = 0;
+		view->currentFloor = -1;
 		view->incrementFloor(game, 1);
 	});
 
@@ -1581,6 +1807,7 @@ int main(int argc, char *argv[]) try {
 		}
 
 		game->entities->clearFreedEntities();
+		view->floors.clear();
 	});
 
 	view->level->addObjective("Reach exit",
@@ -1588,7 +1815,7 @@ int main(int argc, char *argv[]) try {
 			auto players
 				= searchEntities(game->entities.get(), {"player", "hasItem:amuletPickup"});
 			// TODO: check for goal item (amulet?) and current floor == 0 (exit)
-			return view->currentFloor == 0 && players.size() != 0;
+			return view->currentFloor == -1 && players.size() != 0;
 		});
 
 	view->level->addLoseCondition(

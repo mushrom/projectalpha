@@ -134,7 +134,13 @@ void enemy::update(entityManager *manager, float delta) {
 	}
 
 	if (v) {
-		auto& wfcgen = v->wfcgen;
+		//auto& wfcgen = v->wfcgen;
+		// STILL XXX
+		auto wfcgen = v->getGenerator();
+		if (!wfcgen) {
+			return;
+		}
+
 		gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
 
 		if (!wfcroot) {

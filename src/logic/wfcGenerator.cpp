@@ -23,8 +23,10 @@ wfcGenerator::wfcGenerator(gameMain *game, std::string specFilename, unsigned se
 		//ladderModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder.glb");
 		//coverModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder-cover.glb");
 
-		ladderModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ascending-staircase.gltf");
-		coverModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/descending-staircase.gltf");
+		//ladderModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ascending-staircase.gltf");
+		//coverModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/descending-staircase.gltf");
+		ladderModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/catacomb-tiles/ascending-staircase.gltf");
+		coverModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/catacomb-tiles/descending-staircase.gltf");
 		
 		auto redlit = std::make_shared<gameLightPoint>();
 		auto greenlit = std::make_shared<gameLightPoint>();
@@ -40,7 +42,7 @@ wfcGenerator::wfcGenerator(gameMain *game, std::string specFilename, unsigned se
 
 	//parseJson(DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json");
 	spec.reset(new wfcSpec(game, specFilename));
-	generate(game, {});
+	//generate(game, {});
 
 	//static std::vector<physicsObject::ptr> mapobjs;
 	//static std::unique_ptr<std::vector<physicsObject::ptr>>
@@ -104,9 +106,17 @@ void wfcSpec::parseJson(gameMain *game, std::string filename) {
 
 	auto modelconf = genspec["models"];
 
+	// keep track of dispatched model loading jobs, wait for jobs to finish at the end
+	std::vector<std::future<bool>> futures;
+
 	for (auto& [name, file] : modelconf.items()) {
 		std::string objpath = dirnameStr(filename) + "/" + file.get<std::string>();
-		models[name] = loadSceneAsyncCompiled(game, objpath);
+		//models[name] = loadSceneAsyncCompiledF(game, objpath);
+		//auto [ptr, fut] = loadSceneAsyncCompiledF(game, objpath);
+		//futures.push_back(std::move(fut));
+		//models[name] = ptr;
+
+		models[name] = loadSceneCompiled(objpath);
 	}
 
 	std::map<size_t, size_t> fooidx;
@@ -223,6 +233,10 @@ void wfcSpec::parseJson(gameMain *game, std::string filename) {
 		}
 	}
 
+	for (auto& f : futures) {
+		// wait for all models to finish loading
+		f.wait();
+	}
 	// TODO: do something with the seed
 }
 
@@ -898,13 +912,16 @@ retry:
 void wfcGenerator::generate(gameMain *game,
                             std::vector<glm::vec3> entries)
 {
+	SDL_Log("Generating...");
 	auto cell = genCell(0, 0, 0);
+	SDL_Log("Generated the map...");
 	//cell->setTransform({ .position = {-genwidth * 2, 0, -genheight * 2}, });
 	setNode("nodes", root, cell);
+	SDL_Log("Set nodes");
 
 	// TODO: need to find a way to generate physics here
-	mapobjs.clear();
-	havePhysics = false;
+	//mapobjs.clear();
+	//havePhysics = false;
 }
 
 void wfcGenerator::setPosition(gameMain *game, glm::vec3 position) {
@@ -913,14 +930,21 @@ void wfcGenerator::setPosition(gameMain *game, glm::vec3 position) {
 #endif
 
 	// XXX: man I really have to clean this up at some point, ugh
-	if (!havePhysics) {
+	//if (!havePhysics) {
+		/*
+		game->phys->addStaticModels(nullptr,
+		                            root,
+		                            root->getTransformTRS(),
+		                            mapobjs);
+									*/
 		game->phys->addStaticModels(nullptr,
 		                            root,
 		                            root->getTransformTRS(),
 		                            mapobjs,
 		                            "collidable");
+		SDL_Log("Doing the physics thing!");
 		havePhysics = true;
-	}
+	//}
 
 #if 0
 	glm::vec3 curpos = glm::floor((glm::vec3(1, 0, 1)*position)/cellsize);
