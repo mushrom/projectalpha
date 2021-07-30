@@ -27,6 +27,9 @@ using StateDef = stateDefinition2D<dynamicStateSet>;
 
 class wfcSpec {
 	public:
+		using ptr = std::shared_ptr<wfcSpec>;
+		using weakptr = std::weak_ptr<wfcSpec>;
+
 		using Name = std::pair<std::string, int>; /* name, rotation */
 
 		wfcSpec(gameMain *game, std::string filename);
@@ -49,7 +52,7 @@ class wfcGenerator : public worldGenerator {
 		static constexpr int genwidth  = 40;
 		static constexpr int genheight = 40;
 
-		wfcGenerator(gameMain *game, std::string spec, unsigned seed = 0xcafebabe);
+		wfcGenerator(gameMain *game, wfcSpec::ptr, unsigned seed = 0xcafebabe);
 		virtual ~wfcGenerator();
 
 		void generate(gameMain *game, std::vector<glm::vec3> entries);
@@ -132,7 +135,8 @@ class wfcGenerator : public worldGenerator {
 		std::vector<physicsObject::ptr> mapobjs;
 	private:
 		std::map<Coord, WfcPtr> sectors;
-		std::unique_ptr<wfcSpec> spec;
+		//std::unique_ptr<wfcSpec> spec;
+		wfcSpec::ptr spec;
 
 		gameObject::ptr genCell(int x, int y, int z);
 		void parseJson(gameMain *game, std::string filename);

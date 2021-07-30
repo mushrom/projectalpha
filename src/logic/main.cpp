@@ -360,6 +360,11 @@ projalphaView::projalphaView(gameMain *game)
 	  //wfcgen(new wfcGenerator(game, DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json"))
 	  //wfcgen(new wfcGenerator(game, DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"))
 {
+	spec = std::make_shared<wfcSpec>(
+		game,
+		DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"
+	);
+
     //ctx = nk_sdl_init(win);
     nk_ctx = nk_sdl_init(game->ctx.window);
 
@@ -593,7 +598,7 @@ projalphaView::projalphaView(gameMain *game)
 projalphaView::floorStates::floorStates(gameMain *game,
                                         projalphaView *view,
                                         std::string z,
-                                        std::string spec)
+                                        wfcSpec::ptr spec)
 	: zone(z)
 	  //mapQueue(view->cam)
 {
@@ -713,25 +718,7 @@ projalphaView::floorStates* projalphaView::getFloor(gameMain *game, int n) {
 	// TODO: what happens if there's a jump larger than one level, not
 	//       just pushing to the back?
 
-/*
-	floors.push_back(floorStates(
-		game,
-		this,
-		"catacombs",
-		// TODO: wfcGenerator will create a new spec class in the constructor,
-		//       which means it'll load all the models again there...
-		//       should have a spec class instead, and pass that to the generator
-		DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"
-	));
-	*/
-
-	floorStates foo(
-		game,
-		this,
-		"catacombs",
-		DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"
-	);
-
+	floorStates foo(game, this, "catacombs", spec);
 	//SDL_Log("Generated floor, map queue has %lu meshes", foo.mapQueue.meshes.size());
 
 	floors.push_back(foo);
@@ -750,11 +737,6 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 
 	if (cur) {
 		/* deactivate stuff */;
-		/*
-		for (auto& p : cur->generator->mapobjs) {
-			p->deactivate();
-		}
-		*/
 		cur->generator->mapobjs.clear();
 	}
 
@@ -776,12 +758,6 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 			updateEntityTransforms(game->entities.get(), playerEnt, t);
 			SDL_Log("Setting player transform");
 		}
-
-		/*
-		for (auto& p : next->generator->mapobjs) {
-			p->activate();
-		}
-		*/
 	};
 
 	currentFloor = nextFloor;

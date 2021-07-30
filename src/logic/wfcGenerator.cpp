@@ -18,7 +18,8 @@ static constexpr int foo = (genwidth - 1)*4;
 static gameObject::ptr ladderModel = nullptr;
 static gameObject::ptr coverModel = nullptr;
 
-wfcGenerator::wfcGenerator(gameMain *game, std::string specFilename, unsigned seed) {
+wfcGenerator::wfcGenerator(gameMain *game, wfcSpec::ptr specptr, unsigned seed) {
+	// TODO: resource manager
 	if (!ladderModel || !coverModel) {
 		//ladderModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder.glb");
 		//coverModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder-cover.glb");
@@ -41,8 +42,9 @@ wfcGenerator::wfcGenerator(gameMain *game, std::string specFilename, unsigned se
 	}
 
 	//parseJson(DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json");
-	spec.reset(new wfcSpec(game, specFilename));
+	//spec.reset(new wfcSpec(game, specFilename));
 	//generate(game, {});
+	spec = specptr;
 
 	//static std::vector<physicsObject::ptr> mapobjs;
 	//static std::unique_ptr<std::vector<physicsObject::ptr>>
@@ -112,11 +114,11 @@ void wfcSpec::parseJson(gameMain *game, std::string filename) {
 	for (auto& [name, file] : modelconf.items()) {
 		std::string objpath = dirnameStr(filename) + "/" + file.get<std::string>();
 		//models[name] = loadSceneAsyncCompiledF(game, objpath);
-		//auto [ptr, fut] = loadSceneAsyncCompiledF(game, objpath);
-		//futures.push_back(std::move(fut));
-		//models[name] = ptr;
+		auto [ptr, fut] = loadSceneAsyncCompiledF(game, objpath);
+		futures.push_back(std::move(fut));
+		models[name] = ptr;
 
-		models[name] = loadSceneCompiled(objpath);
+		//models[name] = loadSceneCompiled(objpath);
 	}
 
 	std::map<size_t, size_t> fooidx;

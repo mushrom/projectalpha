@@ -76,7 +76,7 @@ class projalphaView : public gameView {
 			floorStates(gameMain *game,
 			            projalphaView *view,
 			            std::string z,
-			            std::string spec);
+			            wfcSpec::ptr spec);
 
 			std::string zone;
 
@@ -89,6 +89,7 @@ class projalphaView : public gameView {
 			glm::vec3 entrance, exit;
 		};
 
+		wfcSpec::ptr spec;
 		std::unique_ptr<levelController> level;
 		//landscapeGenerator landscape;
 		//std::unique_ptr<wfcGenerator> wfcgen;
