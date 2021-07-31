@@ -738,6 +738,16 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 	if (cur) {
 		/* deactivate stuff */;
 		cur->generator->mapobjs.clear();
+
+		// XXX
+		// TODO: need to remove items from level entities when they're picked up...
+		//       and deleted, need to re-add them to the current level when they're
+		//       dropped from inventory, hmmmmm... not sure how to approach this
+		for (auto& e : cur->levelEntities) {
+			if (game->entities->valid(e)) {
+				game->entities->deactivate(e);
+			}
+		}
 	}
 
 	if (next) {
@@ -746,8 +756,13 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 		next->generator->setPosition(game, glm::vec3(0));
 		mapQueue.clear();
 		mapQueue.add(next->generator->getNode());
-
 		SDL_Log("Built queue: %lu meshes\n", mapQueue.meshes.size());
+
+		for (auto& e : next->levelEntities) {
+			if (game->entities->valid(e)) {
+				game->entities->activate(e);
+			}
+		}
 
 		entity *playerEnt = findFirst(game->entities.get(), {"player"});
 		if (playerEnt) {
@@ -761,84 +776,6 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 	};
 
 	currentFloor = nextFloor;
-/*
-	for (auto& ent : levelEntities) {
-		if (ent->active) {
-			// XXX: items in the inventory are deactivated, and so
-			//      won't be removed here...
-			//      bit of a hack, but probably ok performance-wise
-			game->entities->remove(ent);
-		}
-	}
-	*/
-
-#if 0
-	mapPhysics.clear();
-	mapQueue.clear();
-	levelEntities.clear();
-	wfcgen->generate(game, {});
-
-				//setNode("wfc", node, wfcgen->getNode());
-
-	mapQueue.add(wfcgen->getNode());
-
-	gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
-	if (wfcroot && wfcroot->hasNode("leaves")) {
-		gameObject::ptr leafroot = wfcroot->getNode("leaves");
-		glm::vec3 amuletPos;
-
-		for (const auto& [name, ptr] : leafroot->nodes) {
-			auto en = new enemy(game->entities.get(),
-					game,
-					ptr->getTransformTRS().position + glm::vec3(4, 2, 0));
-			amuletPos = ptr->getTransformTRS().position + glm::vec3(2);
-
-			new team(game->entities.get(), en, "red");
-			game->entities->add(en);
-			levelEntities.push_back(en);
-
-			int mod = rand() % 3;
-
-			if (mod == 0) {
-				auto hen = new healthPickup(game->entities.get(),
-				                            ptr->getTransformTRS().position + glm::vec3(0, 0.75, 0));
-				
-				game->entities->add(hen);
-				levelEntities.push_back(hen);
-
-			} else if (mod == 1) {
-				// chest
-				auto cen = new chestItem(game->entities.get(),
-				                         ptr->getTransformTRS().position + glm::vec3(0, 0.75, 0));
-
-				game->entities->add(cen);
-				levelEntities.push_back(cen);
-
-			} else {
-				auto xen = new coinPickup(game->entities.get(),
-				                          ptr->getTransformTRS().position + glm::vec3(0, 0, 0));
-				
-				game->entities->add(xen);
-				levelEntities.push_back(xen);
-			}
-		}
-
-		if (currentFloor == 5) {
-			auto en = new amuletPickup(game->entities.get(), game, amuletPos);
-			game->entities->add(en);
-		}
-	}
-
-	entity *playerEnt = findFirst(game->entities.get(), {"player"});
-	if (playerEnt && wfcroot) {
-		auto p = wfcroot->getNode((amount > 0)? "entry" : "exit");
-		TRS t = p->getTransformTRS();
-		// XXX: avoid falling below staircases
-		t.position += glm::vec3(0, 2, 0);
-		updateEntityTransforms(game->entities.get(), playerEnt, t);
-		std::cerr << "Setting player transform" << std::endl;
-	}
-#endif
 }
 
 /*
