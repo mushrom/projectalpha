@@ -90,12 +90,12 @@ set(LANDSCAPE_DEMO_SRC
 	src/entities/enemySpawner.cpp
 	src/entities/enemyCollision.cpp
 	src/entities/flag.cpp
-	src/entities/healthPickup.cpp
 	src/entities/player.cpp
 	src/entities/targetArea.cpp
 	src/entities/projectile.cpp
 	src/entities/killedParticles.cpp
 	src/entities/amulet.cpp
+	src/entities/items/destructors.cpp
 
 	src/logic/UI.cpp
 	src/logic/landscapeGenerator.cpp

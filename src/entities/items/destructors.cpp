@@ -4,6 +4,7 @@
 #include <components/actions/Wieldable.hpp>
 #include <components/removeBodiesOnWorldCollision.hpp>
 
+// non-virtual dtors for rtti
 healthPickup::~healthPickup() {};
 healthPickupCollision::~healthPickupCollision() {};
 coinPickup::~coinPickup() {};
