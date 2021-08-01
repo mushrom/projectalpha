@@ -1,3 +1,5 @@
+#pragma once
+
 #include <grend/gameObject.hpp>
 #include <grend/animation.hpp>
 #include <grend/gameEditor.hpp>

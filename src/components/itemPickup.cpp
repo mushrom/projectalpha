@@ -1,5 +1,6 @@
 #include <components/itemPickup.hpp>
 #include <components/inventory.hpp>
+#include <utility/serializer.hpp>
 #include <grend/gameEditor.hpp>
 
 #include <logic/UI.hpp>
@@ -28,13 +29,6 @@ void pickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
 		//manager->remove(other);
 		new hasItem(manager, ent, tags);
 	}
-}
-
-template <class T>
-static inline nlohmann::json setSerializedPosition(glm::vec3 position) {
-	nlohmann::json asdf = T::defaultProperties();
-	asdf["node"]["position"] = { position[0], position[1], position[2] };
-	return asdf;
 }
 
 pickup::pickup(entityManager *manager, glm::vec3 position)

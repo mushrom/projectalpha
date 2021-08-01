@@ -25,6 +25,8 @@ class landscapeGenerator : public worldGenerator {
 
 // XXX: global variable, TODO: something else
 //      (could just put it in the landscapeGenerator contructor)
+/*
 inline material::ptr landscapeMaterial;
 inline gameObject::ptr landscapeNodes = std::make_shared<gameObject>();
 inline gameModel::ptr treeNode;
+*/

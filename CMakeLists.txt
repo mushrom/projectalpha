@@ -19,7 +19,8 @@ else()
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-option(PORTABLE_BUILD "Portable build, include all dependancies in the install" OFF)
+option(PORTABLE_BUILD      "Portable build, include all dependancies in the install" OFF)
+option(PRECOMPILED_HEADERS "Build with precompiled headers (experimental)"           OFF)
 include(GNUInstallDirs)
 
 if (EXISTS ${PROJECT_SOURCE_DIR}/grend)
@@ -183,6 +184,57 @@ target_include_directories(${TARGET_NAME} PUBLIC wfc/include)
 target_include_directories(${TARGET_NAME} PUBLIC Grend)
 target_link_libraries(${TARGET_NAME} ${DEMO_LINK_LIBS})
 target_link_options(${TARGET_NAME} PUBLIC ${DEMO_LINK_OPTIONS})
+
+if (PRECOMPILED_HEADERS)
+target_precompile_headers(${TARGET_NAME} PRIVATE
+	# this is the way described in the cmake documentation to limit
+	# a header to one language... jeeeeeez this is terrible man
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/area.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/boxSpawner.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/health.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/healthbar.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/inputHandler.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/team.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/timedLifetime.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/itemPickup.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/inventory.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/playerInfo.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/actions/action.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/actions/Throwable.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/actions/Wieldable.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<components/removeBodiesOnWorldCollision.hpp$<ANGLE-R>>"
+
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/enemy.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/enemyCollision.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/enemySpawner.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/flag.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/killedParticles.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/player.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/projectile.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/targetArea.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/amulet.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/items/items.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/items/coinPickup.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/items/flareItem.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/items/chestItem.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<entities/items/healthPickup.hpp$<ANGLE-R>>"
+
+	"$<$<COMPILE_LANGUAGE:CXX>:<logic/UI.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<logic/levelController.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<logic/generatorEvent.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<logic/bspGenerator.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<logic/array2D.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<logic/projalphaView.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<logic/wfcGenerator.hpp$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<logic/tests/tests.hpp$<ANGLE-R>>"
+
+	"$<$<COMPILE_LANGUAGE:CXX>:<utility/serializer.hpp$<ANGLE-R>>"
+
+	"$<$<COMPILE_LANGUAGE:CXX>:<nuklear/impl/nuklear.h$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<nuklear/nuklear.h$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<nuklear/canvas.h$<ANGLE-R>>"
+)
+endif()
 
 if (PORTABLE_BUILD)
 	target_compile_options(${TARGET_NAME} PUBLIC -DDEMO_PREFIX="./share/proj/")

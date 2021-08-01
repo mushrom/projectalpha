@@ -216,7 +216,7 @@ void landscapeGenerator::generateLandscape(gameMain *game,
 
 					SDL_Log("JJJJJJJ: adding node instances...");
 					parts->update();
-					setNodeXXX("tree", parts, treeNode);
+					//setNodeXXX("tree", parts, treeNode);
 					setNodeXXX("parts", ptr, parts);
 					SDL_Log("KKKKKKK: ok cool");
 
