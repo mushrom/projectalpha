@@ -1,6 +1,6 @@
 #include <components/playerInfo.hpp>
 #include <components/inventory.hpp>
-#include <entities/healthPickup.hpp>
+#include <entities/items/items.hpp>
 
 playerInfo::~playerInfo() {};
 wieldedHandler::~wieldedHandler() {};

@@ -3,7 +3,7 @@
 #include <grend/audioMixer.hpp>
 #include <grend/gameEditor.hpp>
 // TODO: move stuff around
-#include <entities/healthPickup.hpp>
+#include <entities/items/items.hpp>
 #include <components/timedLifetime.hpp>
 
 static channelBuffers_ptr sfx = nullptr;

@@ -45,7 +45,7 @@ using namespace grendx::ecs;
 #include <entities/enemy.hpp>
 #include <entities/projectile.hpp>
 #include <entities/enemyCollision.hpp>
-#include <entities/healthPickup.hpp>
+#include <entities/items/items.hpp>
 #include <entities/flag.hpp>
 #include <entities/enemySpawner.hpp>
 #include <entities/killedParticles.hpp>

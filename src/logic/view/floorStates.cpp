@@ -21,8 +21,8 @@ using namespace grendx::ecs;
 #include <entities/enemy.hpp>
 #include <entities/projectile.hpp>
 #include <entities/enemyCollision.hpp>
-#include <entities/healthPickup.hpp>
 #include <entities/amulet.hpp>
+#include <entities/items/items.hpp>
 
 #include <logic/projalphaView.hpp>
 #include <logic/wfcGenerator.hpp>

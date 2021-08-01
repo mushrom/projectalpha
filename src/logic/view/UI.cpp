@@ -6,7 +6,7 @@
 #include <components/itemPickup.hpp>
 #include <components/playerInfo.hpp>
 #include <components/inventory.hpp>
-#include <entities/healthPickup.hpp>
+#include <entities/items/items.hpp>
 
 void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	if (nk_begin(nk_ctx, "Main menu", nk_rect(50, 50, 220, 220),
