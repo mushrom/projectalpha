@@ -109,6 +109,8 @@ set(LANDSCAPE_DEMO_SRC
 	src/logic/view/main.cpp
 	src/logic/view/UI.cpp
 
+	src/logic/tests/default.cpp
+
 	src/nuklear/impl/nuklear.c
 )
 

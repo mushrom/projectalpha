@@ -114,6 +114,8 @@ void initEntitiesFromNodes(gameObject::ptr node,
 	}
 }
 
+#include <logic/tests/tests.hpp>
+
 #if defined(_WIN32)
 extern "C" {
 //int WinMain(int argc, char *argv[]);
@@ -124,7 +126,7 @@ int WinMain(void) try {
 	int argc = 1;
 	const char *argv[] = {"asdf"};
 #else
-int main(int argc, char *argv[]) try {
+int main(int argc, char *argv[]) { try {
 #endif
 	const char *mapfile = DEMO_PREFIX "assets/maps/level-test.map";
 
@@ -287,30 +289,9 @@ int main(int argc, char *argv[]) try {
 		SDL_Log("Got a test target!");
 
 		if (strcmp(target, "default") == 0) {
-			SDL_Log("Default tester!");
-			game->running = true;
-			view->load(game, mapfile);
-			view->input.setMode(projalphaView::modes::Move);
-
-			for (unsigned i = 0; i < 256; i++) {
-				if (!game->running) {
-					SDL_Log("ERROR: game stopped running!");
-					return 1;
-				}
-
-				try {
-					game->step();
-				} catch (const std::exception& ex) {
-					SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Exception! %s", ex.what());
-					return 1;
-
-				} catch (const char* ex) {
-					SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Exception! %s", ex);
-					return 1;
-				}
-			}
-
-			SDL_Log("Test '%s' passed.", target);
+			//view->setMode(projalphaView::modes::Move);
+			bool result = tests::defaultTest(game, view);
+			SDL_Log("Test '%s' %s.", target, result? "passed" : "failed");
 
 		} else {
 			SDL_Log("Unknown test '%s', counting that as an error...", target);
@@ -332,4 +313,5 @@ int main(int argc, char *argv[]) try {
 } catch (const char* ex) {
 	SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Exception! %s", ex);
 	return 1;
+}
 }
