@@ -100,9 +100,13 @@ set(LANDSCAPE_DEMO_SRC
 	src/logic/landscapeGenerator.cpp
 	src/logic/levelController.cpp
 	src/logic/main.cpp
-	src/logic/projalphaView.cpp
 	src/logic/wfcGenerator.cpp
 	src/logic/generatorEvent.cpp
+
+	src/logic/projalphaView.cpp
+	src/logic/view/floorStates.cpp
+	src/logic/view/main.cpp
+	src/logic/view/UI.cpp
 
 	src/nuklear/impl/nuklear.c
 )
