@@ -3,7 +3,7 @@
 #include <components/actions/Wieldable.hpp>
 #include <components/removeBodiesOnWorldCollision.hpp>
 
-// non-virtual destructors for rtti
+// non-pure destructors for rtti
 Action::~Action() {};
 Consumable::~Consumable() {};
 Throwable::~Throwable() {};
