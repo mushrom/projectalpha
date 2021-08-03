@@ -18,17 +18,28 @@ static constexpr int foo = (genwidth - 1)*4;
 static gameObject::ptr ladderModel = nullptr;
 static gameObject::ptr coverModel = nullptr;
 
+static const char *ascendingStairs = DEMO_PREFIX "assets/obj/catacomb-tiles/ascending-staircase.gltf";
+static const char *descendingStairs = DEMO_PREFIX "assets/obj/catacomb-tiles/descending-staircase.gltf";
+
 wfcGenerator::wfcGenerator(gameMain *game, wfcSpec::ptr specptr, unsigned seed) {
 	// TODO: resource manager
 	if (!ladderModel || !coverModel) {
 		//ladderModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder.glb");
 		//coverModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ladder-cover.glb");
 
+		// TODO: resource manager
+		//auto [ladderModel, _] = loadSceneAsyncCompiledF(game, ascendingStairs);
+		//auto [coverModel, __] = loadSceneAsyncCompiledF(game, descendingStairs);
+		auto [aptr, afut] = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ascending-staircase.gltf");
+		auto [dptr, dfut] = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/descending-staircase.gltf");
 		//ladderModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/ascending-staircase.gltf");
 		//coverModel = loadSceneAsyncCompiled(game, DEMO_PREFIX "assets/obj/catacomb-tiles/descending-staircase.gltf");
-		ladderModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/catacomb-tiles/ascending-staircase.gltf");
-		coverModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/catacomb-tiles/descending-staircase.gltf");
+		//ladderModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/catacomb-tiles/ascending-staircase.gltf");
+		//coverModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/catacomb-tiles/descending-staircase.gltf");
 		
+		ladderModel = aptr;
+		coverModel = dptr;
+
 		auto redlit = std::make_shared<gameLightPoint>();
 		auto greenlit = std::make_shared<gameLightPoint>();
 
@@ -36,9 +47,13 @@ wfcGenerator::wfcGenerator(gameMain *game, wfcSpec::ptr specptr, unsigned seed) 
 		greenlit->diffuse = glm::vec4(0.3, 1.0, 0.01, 1.0);
 		redlit->setTransform({ .position = glm::vec3(0, 2, 0) });
 		greenlit->setTransform({ .position = glm::vec3(0, 2, 0) });
+		redlit->casts_shadows = greenlit->casts_shadows = true;
 
 		setNode("lit", coverModel, redlit);
 		setNode("lit", ladderModel, greenlit);
+
+		afut.wait();
+		dfut.wait();
 	}
 
 	//parseJson(DEMO_PREFIX "assets/obj/ld48/tiles/wfc-config.json");
@@ -114,7 +129,7 @@ void wfcSpec::parseJson(gameMain *game, std::string filename) {
 	for (auto& [name, file] : modelconf.items()) {
 		std::string objpath = dirnameStr(filename) + "/" + file.get<std::string>();
 		//models[name] = loadSceneAsyncCompiledF(game, objpath);
-		auto [ptr, fut] = loadSceneAsyncCompiledF(game, objpath);
+		auto [ptr, fut] = loadSceneAsyncCompiled(game, objpath);
 		futures.push_back(std::move(fut));
 		models[name] = ptr;
 

@@ -42,7 +42,8 @@ boxParticles::boxParticles(entityManager *manager, glm::vec3 pos)
 
 	if (!model) {
 		//model = loadSceneAsyncCompiled(manager->engine, "assets/obj/emissive-cube.glb");
-		model = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/emissive-plane.glb");
+		auto [data, _] = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/emissive-plane.glb");
+		model = data;
 	}
 
 	setNode("model", parts, model);

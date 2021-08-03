@@ -33,12 +33,15 @@ enemy::enemy(entityManager *manager, gameMain *game, glm::vec3 position)
 	if (!enemyModel) {
 		//enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/test-enemy.glb");
 		//enemyModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/test-enemy.glb");
-		enemyModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/noodler.glb");
+		//enemyModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/noodler.glb");
+		// TODO: resource manager
+		auto [data, _] = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/noodler.glb");
+		enemyModel = data;
+		sfx = openAudio(DEMO_PREFIX "assets/sfx/mnstr7.ogg");
 		//enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/ld48/enemy-cube.glb");
 		//enemyModel = loadSceneCompiled(DEMO_PREFIX "assets/obj/ld48/enemy-cube.glb");
 		//enemyModel->transform.scale = glm::vec3(0.25);
 		//sfx = openAudio(DEMO_PREFIX "assets/sfx/meh/emeny.wav.ogg");
-		sfx = openAudio(DEMO_PREFIX "assets/sfx/mnstr7.ogg");
 	}
 
 	setNode("model", node, enemyModel);
@@ -70,7 +73,10 @@ enemy::enemy(entityManager *manager, entity *ent, nlohmann::json properties)
 
 	// TODO:
 	if (!enemyModel) {
-		enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/test-enemy.glb");
+		//enemyModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/test-enemy.glb");
+		auto [data, _] = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/noodler.glb");
+		enemyModel = data;
+		sfx = openAudio(DEMO_PREFIX "assets/sfx/mnstr7.ogg");
 
 		TRS transform = enemyModel->getTransformTRS();
 		transform.scale = glm::vec3(0.25);

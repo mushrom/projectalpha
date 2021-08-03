@@ -24,7 +24,8 @@ enemySpawner::enemySpawner(entityManager *manager, gameMain *game, glm::vec3 pos
 
 	// TODO: resource manager
 	if (!spawnerModel) {
-		spawnerModel = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/enemy-spawner.glb");
+		auto [data, _] = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/enemy-spawner.glb");
+		spawnerModel = data;
 	}
 
 	TRS transform = node->getTransformTRS();
@@ -53,7 +54,8 @@ enemySpawner::enemySpawner(entityManager *manager,
 
 	// TODO: resource manager
 	if (!spawnerModel) {
-		spawnerModel = loadSceneAsyncCompiled(manager->engine, "assets/obj/enemy-spawner.glb");
+		auto [data, _] = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/enemy-spawner.glb");
+		spawnerModel = data;
 	}
 
 	// TODO: this should just be done as part of creating a rigidBody...
