@@ -99,7 +99,6 @@ set(LANDSCAPE_DEMO_SRC
 	src/entities/items/destructors.cpp
 
 	src/logic/UI.cpp
-	src/logic/landscapeGenerator.cpp
 	src/logic/levelController.cpp
 	src/logic/main.cpp
 	src/logic/wfcGenerator.cpp
