@@ -28,6 +28,13 @@ void pickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
 		inv->insert(manager, other);
 		//manager->remove(other);
 		new hasItem(manager, ent, tags);
+
+		Messages()->publish({
+			.type = "itemPickedUp",
+			.ent  = other,
+			.comp = ent,
+			// TODO: tag with level
+		});
 	}
 }
 

@@ -2,14 +2,17 @@
 
 #include <grend/gameObject.hpp>
 #include <grend/ecs/ecs.hpp>
+#include <grend/ecs/message.hpp>
+
 #include <components/inputHandler.hpp>
 
 using namespace grendx;
-using namespace grendx::ecs;
 
 class playerInfo : public component {
 	public:
-		playerInfo(entityManager *manager, entity *ent, nlohmann::json properties)
+		playerInfo(entityManager *manager,
+		           entity *ent,
+		           nlohmann::json properties)
 			: component(manager, ent)
 		{
 			manager->registerComponent(ent, "playerInfo", this);
@@ -40,8 +43,8 @@ class wieldedHandler : public inputHandler {
 	public:
 		// TODO: could set firing rate, bullet amount, etc in properties
 		wieldedHandler(entityManager *manager,
-		           entity *ent,
-		           nlohmann::json properties={})
+		               entity *ent,
+		               nlohmann::json properties={})
 			: inputHandler(manager, ent)
 		{
 			manager->registerComponent(ent, "wieldedHandler", this);

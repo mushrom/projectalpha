@@ -2,18 +2,27 @@
 
 #include <grend/gameObject.hpp>
 #include <grend/ecs/ecs.hpp>
+#include <grend/ecs/message.hpp>
+
 #include <components/area.hpp>
+#include <logic/globalMessages.hpp>
 
 using namespace grendx;
 using namespace grendx::ecs;
 
 class pickupAction : public areaInside {
 	public:
-		pickupAction(entityManager *manager, entity *ent,
-		           std::vector<std::string> _tags)
+		pickupAction(entityManager *manager,
+		             entity *ent,
+		             std::vector<std::string> _tags)
 			: areaInside(manager, ent, _tags)
 		{
 			manager->registerComponent(ent, "pickupAction", this);
+			Messages()->publish({
+				.type = "actionCreated",
+				.ent  = ent,
+				.comp = this,
+			});
 		}
 
 		virtual ~pickupAction();

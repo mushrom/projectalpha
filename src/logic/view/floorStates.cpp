@@ -28,6 +28,7 @@ using namespace grendx::ecs;
 #include <logic/wfcGenerator.hpp>
 #include <logic/UI.hpp>
 #include <logic/levelController.hpp>
+#include <logic/globalMessages.hpp>
 
 #include <nuklear/nuklear.h>
 
@@ -61,7 +62,7 @@ projalphaView::floorStates::floorStates(gameMain *game,
 			amuletPos = ptr->getTransformTRS().position + glm::vec3(2);
 
 			game->entities->add(en);
-			levelEntities.push_back(en);
+			levelEntities.insert(en);
 
 			int mod = rand() % 3;
 
@@ -70,7 +71,7 @@ projalphaView::floorStates::floorStates(gameMain *game,
 				                            ptr->getTransformTRS().position + glm::vec3(0, 0.75, 0));
 				
 				game->entities->add(hen);
-				levelEntities.push_back(hen);
+				levelEntities.insert(hen);
 
 			} else if (mod == 1) {
 				// chest
@@ -78,14 +79,14 @@ projalphaView::floorStates::floorStates(gameMain *game,
 				                         ptr->getTransformTRS().position + glm::vec3(0, 0.75, 0));
 
 				game->entities->add(cen);
-				levelEntities.push_back(cen);
+				levelEntities.insert(cen);
 
 			} else {
 				auto xen = new coinPickup(game->entities.get(),
 				                          ptr->getTransformTRS().position + glm::vec3(0, 0, 0));
 				
 				game->entities->add(xen);
-				levelEntities.push_back(xen);
+				levelEntities.insert(xen);
 			}
 		}
 
@@ -99,6 +100,7 @@ projalphaView::floorStates::floorStates(gameMain *game,
 		if (rand() % 10 == 0) {
 			auto en = new amuletPickup(game->entities.get(), game, amuletPos);
 			game->entities->add(en);
+			levelEntities.insert(en);
 		}
 	}
 	
@@ -114,22 +116,49 @@ projalphaView::floorStates::floorStates(gameMain *game,
 	SDL_Log("Have exit: (%g, %g, %g)", exit.x, exit.y, exit.z);
 }
 
+void projalphaView::floorStates::processMessages(void) {
+	while (pickupEvents->haveMessage()) {
+		auto msg = pickupEvents->get();
+
+		if (msg.type == "itemPickedUp") {
+			if (msg.ent) {
+				SDL_Log("Removing entity from world");
+				levelEntities.erase(msg.ent);
+
+			}
+
+		} else if (msg.type == "itemDropped") {
+			if (msg.ent) {
+				SDL_Log("Adding entity to world");
+				levelEntities.insert(msg.ent);
+			}
+		}
+	}
+}
+
 projalphaView::floorStates* projalphaView::getFloor(gameMain *game, int n) {
 	if (n < 0) return nullptr;
 
 	if (n < (int)floors.size()) {
-		return &floors[n];
+		return floors[n].get();
 	}
 
 	// otherwise, have to generate a new floor
 	// TODO: what happens if there's a jump larger than one level, not
 	//       just pushing to the back?
 
-	floorStates foo(game, this, "catacombs", spec);
+	floorStates::uniqueptr foo =
+		std::make_unique<floorStates>(game, this, "catacombs", spec);
+
 	//SDL_Log("Generated floor, map queue has %lu meshes", foo.mapQueue.meshes.size());
 
-	floors.push_back(foo);
-	return &floors.back();
+	floors.push_back(std::move(foo));
+	floors.back()->pickupEvents = std::make_shared<messaging::mailbox>();
+	//auto& ev = floors.back()->pickupEvents;
+	//Messages()->subscribe(ev, "itemPickedUp");
+	//Messages()->subscribe(ev, "itemDropped");
+
+	return floors.back().get();
 }
 
 void projalphaView::incrementFloor(gameMain *game, int amount) {
@@ -140,6 +169,9 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 	if (cur) {
 		/* deactivate stuff */;
 		cur->generator->mapobjs.clear();
+
+		Messages()->unsubscribe(cur->pickupEvents, "itemPickedUp");
+		Messages()->unsubscribe(cur->pickupEvents, "itemDropped");
 
 		// XXX
 		// TODO: need to remove items from level entities when they're picked up...
@@ -158,6 +190,10 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 		next->generator->setPosition(game, glm::vec3(0));
 		mapQueue.clear();
 		mapQueue.add(next->generator->getNode());
+
+		Messages()->subscribe(next->pickupEvents, "itemPickedUp");
+		Messages()->subscribe(next->pickupEvents, "itemDropped");
+
 		SDL_Log("Built queue: %lu meshes\n", mapQueue.meshes.size());
 
 		for (auto& e : next->levelEntities) {

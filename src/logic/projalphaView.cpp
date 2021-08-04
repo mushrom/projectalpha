@@ -43,6 +43,10 @@ void projalphaView::logic(gameMain *game, float delta) {
 		return;
 	}
 
+	for (auto& p : floors) {
+		p->processMessages();
+	}
+
 	/*
 	// big XXX
 	if (currentMap != loadedMap) {

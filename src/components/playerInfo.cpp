@@ -1,6 +1,7 @@
 #include <components/playerInfo.hpp>
 #include <components/inventory.hpp>
 #include <entities/items/items.hpp>
+#include <logic/globalMessages.hpp>
 
 playerInfo::~playerInfo() {};
 wieldedHandler::~wieldedHandler() {};
@@ -50,6 +51,12 @@ void wieldedHandler::handleInput(entityManager *manager,
 				inv->remove(manager, item);
 				manager->engine->entities->activate(item);
 				w->action(manager, playerEnt);
+
+				Messages()->publish({
+					.type = "itemDropped",
+					.ent  = item,
+					.comp = playerEnt,
+				});
 			}
 		};
 

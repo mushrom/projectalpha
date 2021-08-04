@@ -7,6 +7,7 @@
 #include <components/playerInfo.hpp>
 #include <components/inventory.hpp>
 #include <entities/items/items.hpp>
+#include <logic/globalMessages.hpp>
 
 void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	if (nk_begin(nk_ctx, "Main menu", nk_rect(50, 50, 220, 220),
@@ -239,6 +240,12 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 						inv->remove(game->entities.get(), ent);
 						game->entities->activate(ent);
 						w->action(game->entities.get(), playerEnt);
+
+						Messages()->publish({
+							.type = "itemDropped",
+							.ent  = ent,
+							.comp = playerEnt,
+						});
 					}
 				}
 
@@ -248,6 +255,12 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 					TRS newtrans = playerEnt->node->getTransformTRS();
 					newtrans.position += glm::vec3(3, 0, 3);
 					ent->node->setTransform(newtrans);
+
+					Messages()->publish({
+						.type = "itemDropped",
+						.ent  = ent,
+						.comp = playerEnt,
+					});
 				}
 			}
 			nk_group_end(nk_ctx);

@@ -12,6 +12,7 @@
 #include <grend/ecs/rigidBody.hpp>
 #include <grend/ecs/collision.hpp>
 #include <grend/ecs/serializer.hpp>
+#include <grend/ecs/message.hpp>
 
 #include <memory>
 #include <chrono>
@@ -61,6 +62,10 @@ class projalphaView : public gameView {
 		bool debugTiles = false;
 
 		struct floorStates {
+			typedef std::shared_ptr<floorStates> ptr;
+			typedef std::weak_ptr<floorStates>   weakptr;
+			typedef std::unique_ptr<floorStates> uniqueptr;
+
 			floorStates(const floorStates& other)
 				//: mapQueue(other.mapQueue)
 			{
@@ -78,15 +83,18 @@ class projalphaView : public gameView {
 			            std::string z,
 			            wfcSpec::ptr spec);
 
+			void processMessages(void);
+
 			std::string zone;
 
 			std::shared_ptr<wfcGenerator> generator;
 			std::vector<physicsObject::ptr> mapPhysics;
-			std::vector<entity*> levelEntities;
+			std::set<entity*> levelEntities;
 			// pre-built queue for faster drawing
 			// renderQueue mapQueue;
 
 			glm::vec3 entrance, exit;
+			messaging::mailbox::ptr pickupEvents;
 		};
 
 		wfcSpec::ptr spec;
@@ -96,7 +104,7 @@ class projalphaView : public gameView {
 		inputHandlerSystem::ptr inputSystem;
 		std::string currentMap = "no map!";
 		std::string loadedMap = "no map loaded either!";
-		std::vector<floorStates> floors;
+		std::vector<floorStates::uniqueptr> floors;
 		//std::vector<physicsObject::ptr> mapPhysics;
 		//std::vector<entity*> levelEntities;
 		renderQueue mapQueue = renderQueue(cam);
@@ -109,7 +117,7 @@ class projalphaView : public gameView {
 			// check that currentFloor has a valid floor state
 			return (floors.empty() || currentFloor < 0 || currentFloor >= (int)floors.size())
 				? nullptr
-				: floors[currentFloor].generator.get();
+				: floors[currentFloor]->generator.get();
 		}
 
 	private:
