@@ -35,6 +35,7 @@ void projalphaView::logic(gameMain *game, float delta) {
 
 	if (input.mode == modes::MainMenu
 		|| input.mode == modes::NewGame
+		|| input.mode == modes::Intro
 		|| input.mode == modes::Pause
 		|| input.mode == modes::Won
 		)
@@ -70,7 +71,7 @@ void projalphaView::logic(gameMain *game, float delta) {
 	*/
 
 	if (input.mode == modes::Loading) {
-		input.setMode(modes::Move);
+		input.setMode(modes::Intro);
 	}
 
 	static glm::vec3 lastvel = glm::vec3(0);
@@ -132,6 +133,17 @@ void projalphaView::render(gameMain *game) {
 		post->draw(game->rend->framebuffer);
 
 		drawNewGameMenu(game, winsize_x, winsize_y);
+
+	} else if (input.mode == modes::Intro) {
+		renderWorld(game, cam, mapQueue, flags);
+
+		// TODO: need to set post size on resize event..
+		//post->setSize(winsize_x, winsize_y);
+		post->setUniform("exposure", game->rend->exposure);
+		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
+		post->draw(game->rend->framebuffer);
+
+		drawIntroWindow(game, winsize_x, winsize_y);
 
 	} else if (input.mode == modes::Pause) {
 		renderWorld(game, cam, mapQueue, flags);

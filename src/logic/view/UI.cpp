@@ -132,6 +132,37 @@ void projalphaView::drawNewGameMenu(gameMain *game, int wx, int wy) {
 	}
 }
 
+void projalphaView::drawIntroWindow(gameMain *game, int wx, int wy) {
+	if (nk_begin(nk_ctx, "Welcome", nk_rect(200, 200, 800, 480),
+	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
+	{
+		nk_layout_row_static(nk_ctx, 100, 480, 1);
+		nk_label_wrap(nk_ctx,
+			"Legend has it that long ago, some dude hid a "
+			"priceless amulet in here somewhere for safe keeping, "
+			"but was unable to recover it. If you find it you "
+			"would make big monies... possibly magic? I don't know"
+		);
+
+		nk_layout_row_dynamic(nk_ctx, 0, 1);
+
+		nk_label_wrap(nk_ctx, "CONTROLS: ");
+		nk_label_wrap(nk_ctx, " W, A, S, D - Move up, left, down, right");
+		nk_label_wrap(nk_ctx, "      Space - Jump");
+		nk_label_wrap(nk_ctx, "      Mouse - Look around");
+		nk_label_wrap(nk_ctx, " Left click - Primary action (bindable)");
+		nk_label_wrap(nk_ctx, "Right click - Secondary action (bindable)");
+		nk_label_wrap(nk_ctx, "        Tab - Manage inventory");
+		nk_label_wrap(nk_ctx, "     Escape - Pause");
+
+		if (nk_button_label(nk_ctx, "Ok cool")) {
+			SDL_Log("Cool");
+			input.setMode(modes::Move);
+		}
+	}
+	nk_end(nk_ctx);
+}
+
 void projalphaView::drawPauseMenu(gameMain *game, int wx, int wy) {
 	if (nk_begin(nk_ctx, "Pause", nk_rect(50, 50, 220, 220),
 	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
