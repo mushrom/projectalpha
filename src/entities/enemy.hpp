@@ -11,7 +11,7 @@
 using namespace grendx;
 using namespace grendx::ecs;
 
-class enemy : public entity {
+class enemy : public entity, public updatable {
 	public:
 		enemy(entityManager *manager, gameMain *game, glm::vec3 position);
 		enemy(entityManager *manager, entity *ent, nlohmann::json properties);

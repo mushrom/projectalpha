@@ -28,6 +28,7 @@ enemy::enemy(entityManager *manager, gameMain *game, glm::vec3 position)
 	auto body = new rigidBodyCapsule(manager, this, transform.position, 1.0, 1.0, 2.0);
 
 	manager->registerComponent(this, "enemy", this);
+	manager->registerComponent(this, "updatable", this);
 
 	// TODO:
 	if (!enemyModel) {

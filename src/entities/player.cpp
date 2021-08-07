@@ -63,6 +63,7 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 	rigidBody *body = new rigidBodySphere(manager, this, position, 10.0, 0.75);
 
 	manager->registerComponent(this, "player", this);
+	manager->registerComponent(this, "updatable", this);
 
 	if (!playerModel) {
 		// TODO: resource cache

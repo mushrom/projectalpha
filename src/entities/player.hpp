@@ -31,7 +31,7 @@ class animatedCharacter {
 		gameObject::ptr objects;
 };
 
-class player : public entity {
+class player : public entity, public updatable {
 	public:
 		player(entityManager *manager, gameMain *game, glm::vec3 position);
 		player(entityManager *manager, entity *ent, nlohmann::json properties);

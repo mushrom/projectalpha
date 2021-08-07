@@ -46,7 +46,7 @@ struct particleInfo {
 };
 
 // TODO: generic particle system
-class fragmentParticles : public component {
+class fragmentParticles : public component, public updatable {
 	static const unsigned num = 32;
 
 	public:
@@ -84,6 +84,8 @@ fragmentParticles::fragmentParticles(entityManager *manager, entity *ent)
 	static gameObject::ptr model = nullptr;
 
 	manager->registerComponent(ent, "fragmentParticles", this);
+	manager->registerComponent(ent, "updatable", this);
+
 	//new timedLifetime(manager, this, 7.f);
 	particleBuf = std::make_shared<gameParticles>(num);
 	glm::vec3 pos = ent->node->getTransformTRS().position;
@@ -163,10 +165,12 @@ pickup::pickup(entityManager *manager, entity *ent, nlohmann::json properties)
 }
 
 void pickup::update(entityManager *manager, float delta) {
+	/*
 	fragmentParticles *farts;
 	castEntityComponent(farts, manager, this, "fragmentParticles");
 
 	if (farts) {
 		farts->update(manager, delta);
 	}
+	*/
 }
