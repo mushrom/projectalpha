@@ -38,6 +38,117 @@ void pickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
 	}
 }
 
+struct particleInfo {
+	glm::mat4 transform;
+	float velocity;
+	float offset;
+	float age;
+};
+
+// TODO: generic particle system
+class fragmentParticles : public component {
+	static const unsigned num = 32;
+
+	public:
+		fragmentParticles(entityManager *manager, entity *ent);
+		virtual ~fragmentParticles();
+		virtual void update(entityManager *manager, float delta);
+
+		void spawn(particleInfo& particle) {
+			particle.transform = glm::mat4(1);
+			particle.velocity  = float(rand()) / RAND_MAX * 2.5f;
+			particle.offset    = float(rand()) / RAND_MAX * 5.f;
+			//offsets[idx]    = 0.f;
+			// add an offset of up to 1 second so particles don't
+			// all respawn at once
+			particle.age       = float(rand()) / RAND_MAX * 1.f;
+		}
+
+		void updateParticle(particleInfo& particle, float delta);
+
+		gameParticles::ptr particleBuf;
+		particleInfo particles[num];
+		//float velocities[num];
+		//float offsets[num];
+		//float ages[num];
+		float time = 0.0;
+
+		glm::vec3 asdf;
+};
+
+fragmentParticles::~fragmentParticles() {};
+
+fragmentParticles::fragmentParticles(entityManager *manager, entity *ent)
+	: component(manager, ent)
+{
+	static gameObject::ptr model = nullptr;
+
+	manager->registerComponent(ent, "fragmentParticles", this);
+	//new timedLifetime(manager, this, 7.f);
+	particleBuf = std::make_shared<gameParticles>(num);
+	glm::vec3 pos = ent->node->getTransformTRS().position;
+
+	for (unsigned i = 0; i < num; i++) {
+		spawn(particles[i]);
+		particleBuf->positions[i] = particles[i].transform;
+		//parts->positions[i] = (glm::mat4(1));
+		//parts->positions[i] = (glm::vec4(1));
+	}
+
+	//asdf = pos;
+	asdf = glm::vec3(0);
+	particleBuf->activeInstances = num;
+	particleBuf->radius = 100.f;
+	particleBuf->update();
+
+	if (!model) {
+		//model = loadSceneAsyncCompiled(manager->engine, "assets/obj/emissive-cube.glb");
+		//auto [data, _] = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/emissive-plane.glb");
+		auto [data, _] = loadSceneAsyncCompiled(manager->engine, DEMO_PREFIX "assets/obj/particle-fragment.glb");
+		model = data;
+	}
+
+	setNode("model", particleBuf, model);
+	// TODO: good idea? maybe not so much
+	setNode("parts", ent->node, particleBuf);
+};
+
+void fragmentParticles::update(entityManager *manager, float delta) {
+	time += delta;
+
+	for (unsigned i = 0; i < num; i++) {
+		updateParticle(particles[i], delta);
+		particleBuf->positions[i] = particles[i].transform;
+	}
+
+	particleBuf->update();
+}
+
+void fragmentParticles::updateParticle(particleInfo& particle, float delta) {
+	if (particle.age > 5.0) {
+		// destroy and respawn
+		spawn(particle);
+	}
+
+	glm::vec3 pos =
+		//glm::vec3(0, velocities[i] * ages[i], 0);
+		glm::vec3(sin(particle.offset * particle.age),
+				particle.velocity * particle.age,
+				cos(particle.offset * particle.age))
+		//+ asdf;
+		;
+
+	particle.age += delta;
+
+	float scale = sin(particle.age + particle.offset);
+	particle.transform =
+		glm::translate(pos)
+		* glm::mat4_cast(glm::quat(glm::vec3(0, particle.age, 0)))
+		//* glm::mat4_cast(glm::quat(glm::vec3(ages[i], 0, 0)))
+		* glm::scale(glm::vec3(sin(particle.age + particle.offset) * 0.5f + 0.75f));
+	;
+}
+
 pickup::pickup(entityManager *manager, glm::vec3 position)
 	: pickup(manager, this, setSerializedPosition<pickup>(position)) {};
 
@@ -46,6 +157,16 @@ pickup::pickup(entityManager *manager, entity *ent, nlohmann::json properties)
 {
 	new areaSphere(manager, this, 2.f);
 	new dialogPrompt(manager, this, "[X] Pick up the item here");
+	new fragmentParticles(manager, this);
 
 	manager->registerComponent(this, "pickup", this);
+}
+
+void pickup::update(entityManager *manager, float delta) {
+	fragmentParticles *farts;
+	castEntityComponent(farts, manager, this, "fragmentParticles");
+
+	if (farts) {
+		farts->update(manager, delta);
+	}
 }

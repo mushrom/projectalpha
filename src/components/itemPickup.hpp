@@ -56,6 +56,7 @@ class pickup : public entity {
 		pickup(entityManager *manager, entity *ent, nlohmann::json properties);
 		virtual ~pickup();
 
-		virtual void update(entityManager *manager, float delta) {};
+		//virtual void update(entityManager *manager, float delta) {};
+		virtual void update(entityManager *manager, float delta);
 };
 
