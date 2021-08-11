@@ -24,6 +24,8 @@ boxParticles::boxParticles(entityManager *manager, glm::vec3 pos)
 	static gameObject::ptr model = nullptr;
 
 	manager->registerComponent(this, "boxParticles", this);
+	manager->registerComponent(this, "updatable", this);
+
 	new timedLifetime(manager, this, 7.f);
 	parts = std::make_shared<gameBillboardParticles>(32);
 

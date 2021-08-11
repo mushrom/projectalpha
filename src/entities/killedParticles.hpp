@@ -15,7 +15,7 @@ class killedParticles : public entityEventSystem {
 		virtual void onEvent(entityManager *manager, entity *ent, float delta);
 };
 
-class boxParticles : public entity {
+class boxParticles : public entity, public updatable {
 	public:
 		boxParticles(entityManager *manager, glm::vec3 pos);
 		virtual ~boxParticles();
