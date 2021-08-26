@@ -202,4 +202,5 @@ class touchRotationHandler : public rawEventHandler {
 };
 
 bindFunc inputMapper(inputQueue q, camera::ptr cam);
+bindFunc camMovement2D(inputQueue q, camera::ptr cam, float accel);
 bindFunc touchMapper(inputQueue q, camera::ptr cam);

@@ -11,6 +11,8 @@
 #include <grend/ecs/collision.hpp>
 #include <grend/ecs/serializer.hpp>
 
+#include <logic/gameController.hpp>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
@@ -252,12 +254,18 @@ projalphaView::projalphaView(gameMain *game)
 		SCREEN_SIZE_X, SCREEN_SIZE_Y));
 #else
 	post = renderPostChain::ptr(new renderPostChain(
+		{loadPostShader(GR_PREFIX "shaders/baked/texpresent.frag",
+		                game->rend->globalShaderOptions)},
+		SCREEN_SIZE_X, SCREEN_SIZE_Y));
+	/*
+	post = renderPostChain::ptr(new renderPostChain(
 		{
-			game->rend->postShaders["fog-depth"],
+			//game->rend->postShaders["fog-depth"],
 			//game->rend->postShaders["psaa"],
 		},
 		//{game->rend->postShaders["tonemap"], game->rend->postShaders["psaa"]},
 		SCREEN_SIZE_X, SCREEN_SIZE_Y));
+		*/
 #endif
 
 	// TODO: less redundant way to do this
@@ -319,6 +327,12 @@ projalphaView::projalphaView(gameMain *game)
 		return MODAL_NO_CHANGE;
 	});
 
+	input.bind(MODAL_ALL_MODES, [=, this] (SDL_Event& ev, unsigned flags) {
+		// XXX
+		updateController(ev);
+		return MODAL_NO_CHANGE;
+	});
+
 #if defined(GAME_BUILD_DEBUG)
 	input.bind(MODAL_ALL_MODES, [=, this] (SDL_Event& ev, unsigned flags) {
 		if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_t) {
@@ -333,9 +347,10 @@ projalphaView::projalphaView(gameMain *game)
 	//input.bind(modes::Move, controller::camFPS(cam, game));
 	// movement controller needs to be MODAL_ALL_MODES to avoid dropping
 	// keystrokes and missing state changes
-	input.bind(MODAL_ALL_MODES, controller::camMovement2D(cam, 15.f));
+	//input.bind(MODAL_ALL_MODES, controller::camMovement2D(cam, 15.f));
 	input.bind(modes::Move, controller::camScrollZoom(cam, &zoom, 3.f));
 	input.bind(modes::Move, inputMapper(inputSystem->inputs, cam));
+	input.bind(MODAL_ALL_MODES, camMovement2D(inputSystem->inputs, cam, 15.f));
 #endif
 
 	input.bind(modes::Move,
@@ -347,7 +362,9 @@ projalphaView::projalphaView(gameMain *game)
 	});
 
 	input.bind(modes::Move, [=, this] (SDL_Event& ev, unsigned flags) {
-		if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_SPACE) {
+		if ((ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_SPACE)
+			|| (ev.type == SDL_CONTROLLERBUTTONDOWN && ev.cbutton.button == SDL_CONTROLLER_BUTTON_X))
+		{
 			if (nearNode(game, "exit")) {
 				incrementFloor(game, 1);
 			}
@@ -365,6 +382,10 @@ projalphaView::projalphaView(gameMain *game)
 			return (int)modes::Move;
 		}
 
+		if (ev.type == SDL_CONTROLLERBUTTONUP && ev.cbutton.button == SDL_CONTROLLER_BUTTON_BACK) {
+			return (int)modes::Move;
+		}
+
 		return MODAL_NO_CHANGE;
 	});
 
@@ -374,11 +395,20 @@ projalphaView::projalphaView(gameMain *game)
 			return (int)modes::Inventory;
 		}
 
+		if (ev.type == SDL_CONTROLLERBUTTONDOWN && ev.cbutton.button == SDL_CONTROLLER_BUTTON_BACK) {
+			return (int)modes::Inventory;
+		}
+
 		return MODAL_NO_CHANGE;
 	});
 
 	input.bind(modes::Move, [=, this] (SDL_Event& ev, unsigned flags) {
 		if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE) {
+			return (int)modes::Pause;
+		}
+
+		if (ev.type == SDL_CONTROLLERBUTTONDOWN && ev.cbutton.button == SDL_CONTROLLER_BUTTON_START)
+		{
 			return (int)modes::Pause;
 		}
 

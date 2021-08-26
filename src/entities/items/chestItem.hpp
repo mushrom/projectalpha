@@ -40,12 +40,12 @@ class chestItem : public pickup {
 			}
 
 			{
-				TRS transform = model->getTransformTRS();
-				transform.scale = glm::vec3(2.0);
-				model->setTransform(transform);
+				//TRS transform = model->getTransformTRS();
+				//transform.scale = glm::vec3(2.0);
+				//model->setTransform(transform);
 			}
 
-			setNode("model", node, model);
+			setNode("model", node, duplicate(model));
 
 			gameLightPoint::ptr lit = std::make_shared<gameLightPoint>();
 

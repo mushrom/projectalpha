@@ -1,4 +1,5 @@
 #include "inputHandler.hpp"
+#include <logic/gameController.hpp>
 
 inputHandler::~inputHandler() {};
 rawEventHandler::~rawEventHandler() {};
@@ -60,12 +61,25 @@ void mouseRotationPoller::update(entityManager *manager, entity *ent) {
 	SDL_GetMouseState(&x, &y);
 	SDL_GetWindowSize(manager->engine->ctx.window, &win_x, &win_y);
 
+	float n = 0;
+	if (Controller()) {
+		int cx = SDL_GameControllerGetAxis(Controller(), SDL_CONTROLLER_AXIS_RIGHTX);
+		int cy = SDL_GameControllerGetAxis(Controller(), SDL_CONTROLLER_AXIS_RIGHTY);
+
+		n = (abs(cx) > 200 || abs(cy) > 200)? atan2(cx/32768.f, cy/32768.f) : 0;
+	}
+
 	glm::vec2 pos(x * 1.f/win_x, y * 1.f/win_y);
 	glm::vec2 meh = glm::normalize(glm::vec2(cam->direction().x, cam->direction().z));
 	glm::vec2 center(0.5);
 	glm::vec2 diff = pos - center;
+
+	if (n == 0) {
+		n = atan2(diff.x, diff.y);
+	}
 	//glm::quat rot(glm::vec3(0, atan2(diff.x, diff.y) - atan2(meh.x, -meh.y), 0));
-	glm::quat rot(glm::vec3(0, atan2(diff.x, diff.y) - atan2(meh.x, -meh.y) - M_PI/2.f, 0));
+	//glm::quat rot(glm::vec3(0, n + atan2(diff.x, diff.y) - atan2(meh.x, -meh.y) - M_PI/2.f, 0));
+	glm::quat rot(glm::vec3(0, n - atan2(meh.x, -meh.y) - M_PI/2.f, 0));
 
 	TRS transform = ent->node->getTransformTRS();
 	transform.rotation = rot;
@@ -142,8 +156,93 @@ void touchRotationHandler::handleEvent(entityManager *manager,
 	}
 }
 
+bindFunc camMovement2D(inputQueue q, camera::ptr cam, float accel) {
+	auto curdir = std::make_shared<glm::vec3>(0);
+	auto pressed = std::make_shared<std::map<int, glm::vec3>>();
+
+	return [=] (SDL_Event& ev, unsigned flags) {
+		glm::vec3 dir, right, up;
+		bool any = false;
+
+		dir   = glm::normalize(cam->direction() * glm::vec3(1, 0, 1));
+		right = glm::normalize(cam->right() * glm::vec3(1, 0, 1));
+		up    = glm::vec3(0, 1, 0);
+
+		if (ev.type == SDL_KEYDOWN && !pressed->count(ev.key.keysym.sym)) {
+			glm::vec3 evdir(0);
+
+			switch (ev.key.keysym.sym) {
+				case SDLK_w:     evdir =  dir; break;
+				case SDLK_s:     evdir = -dir; break;
+				case SDLK_a:     evdir =  right; break;
+				case SDLK_d:     evdir = -right; break;
+				case SDLK_q:     evdir =  up; break;
+				case SDLK_e:     evdir = -up; break;
+				case SDLK_SPACE: evdir =  up; break;
+				default: break;
+			};
+
+			pressed->insert({ev.key.keysym.sym, evdir});
+			*curdir += evdir;
+			any = true;
+
+		} else if (ev.type == SDL_KEYUP && pressed->count(ev.key.keysym.sym)) {
+			auto it = pressed->find(ev.key.keysym.sym);
+			auto& [_, evdir] = *it;
+
+			pressed->erase(ev.key.keysym.sym);
+			*curdir -= evdir;
+			any = true;
+
+		} else if (ev.type == SDL_CONTROLLERBUTTONDOWN) {
+			glm::vec3 evdir(0);
+
+			switch (ev.cbutton.button) {
+				case SDL_CONTROLLER_BUTTON_DPAD_UP:
+					evdir =  dir;
+					break;
+				case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+					evdir = -dir;
+					break;
+				case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+					evdir =  right;
+					break;
+				case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+					evdir = -right;
+					break;
+				default:
+					break;
+			}
+
+			pressed->insert({ev.cbutton.button, evdir});
+			*curdir += evdir;
+			any = true;
+
+		} else if (ev.type == SDL_CONTROLLERBUTTONUP) {
+			auto it = pressed->find(ev.cbutton.button);
+			auto& [_, evdir] = *it;
+
+			pressed->erase(ev.cbutton.button);
+			*curdir -= evdir;
+			any = true;
+		}
+
+		//cam->setVelocity(*curdir);
+		if (any) {
+			q->push_back({
+				.type = inputEvent::types::move,
+				.data = *curdir,
+				.active = ev.type == SDL_KEYDOWN,
+			});
+		}
+
+		return MODAL_NO_CHANGE;
+	};
+}
+
 bindFunc inputMapper(inputQueue q, camera::ptr cam) {
 	return [=] (SDL_Event& ev, unsigned flags) {
+		/*
 		if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
 			switch (ev.key.keysym.sym) {
 				case SDLK_w:
@@ -163,6 +262,7 @@ bindFunc inputMapper(inputQueue q, camera::ptr cam) {
 					break;
 			}
 		}
+		*/
 
 		if (ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP) {
 			// down = active (clicked), up = inactive
@@ -192,6 +292,46 @@ bindFunc inputMapper(inputQueue q, camera::ptr cam) {
 						.active = active,
 					});
 					break;
+			}
+		}
+
+		if (ev.type == SDL_CONTROLLERBUTTONDOWN/* || ev.type == SDL_CONTROLLERBUTTONUP*/) {
+			bool active = ev.type == SDL_CONTROLLERBUTTONDOWN;
+
+			switch (ev.cbutton.button) {
+				case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: 
+					q->push_back({
+						.type = inputEvent::types::primaryAction,
+						.data = cam->direction(),
+						.active = active,
+					});
+					break;
+
+				case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: 
+					q->push_back({
+						.type = inputEvent::types::secondaryAction,
+						.data = cam->direction(),
+						.active = active,
+					});
+					break;
+
+				case SDL_CONTROLLER_BUTTON_X: 
+					q->push_back({
+						.type = inputEvent::types::tertiaryAction,
+						.data = cam->direction(),
+						.active = active,
+					});
+					break;
+
+				case SDL_CONTROLLER_BUTTON_Y: 
+					q->push_back({
+						.type = inputEvent::types::primaryAction,
+						.data = cam->direction(),
+						.active = active,
+					});
+					break;
+
+				default: break;
 			}
 		}
 

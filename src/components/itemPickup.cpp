@@ -1,6 +1,7 @@
 #include <components/itemPickup.hpp>
 #include <components/inventory.hpp>
 #include <utility/serializer.hpp>
+#include <logic/gameController.hpp>
 #include <grend/gameEditor.hpp>
 
 #include <logic/UI.hpp>
@@ -22,7 +23,8 @@ void pickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
 	// big-ish XXX: ideally input events should all be dispatched through handlers,
 	//              but that would be much messier... being able to poll for state
 	//              here is conceptually much easier to work with
-	if (keystates[SDL_SCANCODE_X]) {
+	if (keystates[SDL_SCANCODE_X] || SDL_GameControllerGetButton(Controller(), SDL_CONTROLLER_BUTTON_X))
+	{
 		// XXX: manager->engine
 		SDL_Log("Picking up an item!");
 		inv->insert(manager, other);

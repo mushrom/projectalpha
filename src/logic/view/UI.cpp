@@ -8,24 +8,151 @@
 #include <components/inventory.hpp>
 #include <entities/items/items.hpp>
 #include <logic/globalMessages.hpp>
+#include <logic/gameController.hpp>
+
+static uint8_t foo[SDL_NUM_SCANCODES];
+static uint8_t bar[SDL_NUM_SCANCODES];
+static uint8_t edgefoo[SDL_NUM_SCANCODES];
+static uint8_t edgebar[SDL_NUM_SCANCODES];
+
+static inline bool toggleScancode(int n) {
+	const uint8_t *keystates = SDL_GetKeyboardState(NULL);
+
+	if (keystates[n] && !foo[n]) {
+		foo[n] = 1;
+		return true;
+
+	} else if (!keystates[n] && foo[n]) {
+		foo[n] = 0;
+		return false;
+	}
+
+	return false;
+}
+
+static inline bool edgeScancode(int n) {
+	const uint8_t *keystates = SDL_GetKeyboardState(NULL);
+
+	return keystates[n] && edgefoo[n];
+}
+
+static inline bool toggleGamepad(SDL_GameControllerButton n) {
+	if (!Controller()) return false;
+
+	bool pressed = SDL_GameControllerGetButton(Controller(), n);
+
+	if (pressed && !bar[n]) {
+		bar[n] = 1;
+		return true;
+	}
+
+	else if (!pressed && bar[n]) {
+		bar[n] = 0;
+		return false;
+	}
+
+	return false;
+}
+
+static inline bool edgeGamepad(SDL_GameControllerButton n) {
+	if (!Controller()) return false;
+	bool pressed = SDL_GameControllerGetButton(Controller(), n);
+
+	return pressed && edgebar[n];
+}
+
+static inline void pushSelectedButton(struct nk_context *nk_ctx) {
+	nk_style_push_style_item(nk_ctx, &nk_ctx->style.button.normal, nk_style_item_color(nk_rgb(255, 0, 0)));
+	nk_style_push_style_item(nk_ctx, &nk_ctx->style.button.active, nk_style_item_color(nk_rgb(255, 0, 0)));
+	nk_style_push_style_item(nk_ctx, &nk_ctx->style.button.hover, nk_style_item_color(nk_rgb(255, 0, 0)));
+	nk_style_push_vec2(nk_ctx, &nk_ctx->style.button.padding, nk_vec2(2, 2));
+}
+
+static inline void popSelectedButton(struct nk_context *nk_ctx) {
+	nk_style_pop_style_item(nk_ctx);
+	nk_style_pop_style_item(nk_ctx);
+	nk_style_pop_style_item(nk_ctx);
+	nk_style_pop_vec2(nk_ctx);
+}
+
+static inline
+bool selectableButton(struct nk_context *nk_ctx,
+                      const char *label,
+					  int curIndex,
+					  int targetIndex)
+{
+	const uint8_t *keystates = SDL_GetKeyboardState(NULL);
+	bool hovered = curIndex == targetIndex;
+	bool entered = edgeScancode(SDL_SCANCODE_RETURN) || edgeGamepad(SDL_CONTROLLER_BUTTON_A);
+	bool pressed = hovered && entered;
+
+	if (hovered) pushSelectedButton(nk_ctx);
+	//bool ret = nk_button_label(nk_ctx, label) || pressed;
+	//popSelectedButton(nk_ctx);
+	bool ret = nk_button_label(nk_ctx, label) || pressed;
+	if (hovered) popSelectedButton(nk_ctx);
+
+	if (ret) {
+		SDL_Log("Button %d selected", curIndex);
+	}
+	return ret;
+}
+
+static inline bool endSelectableButton(struct nk_context *nk_ctx) {
+	//popSelectedButton(nk_ctx);
+}
+
+static inline void buttonNavUpDown(int *n, int maxval) {
+	edgefoo[SDL_SCANCODE_RETURN] = toggleScancode(SDL_SCANCODE_RETURN);
+	edgebar[SDL_CONTROLLER_BUTTON_A] = toggleGamepad(SDL_CONTROLLER_BUTTON_A);
+
+	if (toggleScancode(SDL_SCANCODE_UP))   *n = max(0,      *n - 1);
+	if (toggleScancode(SDL_SCANCODE_DOWN)) *n = min(maxval, *n + 1);
+
+	if (toggleGamepad(SDL_CONTROLLER_BUTTON_DPAD_UP))
+		*n = max(0, *n - 1);
+
+	if (toggleGamepad(SDL_CONTROLLER_BUTTON_DPAD_DOWN))
+		*n = min(maxval, *n + 1);
+}
+
+static inline void buttonNavTable(int *n, int maxval, int stride) {
+	edgefoo[SDL_SCANCODE_RETURN] = toggleScancode(SDL_SCANCODE_RETURN);
+	edgebar[SDL_CONTROLLER_BUTTON_A] = toggleGamepad(SDL_CONTROLLER_BUTTON_A);
+
+	bool up = toggleScancode(SDL_SCANCODE_UP) || toggleGamepad(SDL_CONTROLLER_BUTTON_DPAD_UP);
+	bool down = toggleScancode(SDL_SCANCODE_DOWN) || toggleGamepad(SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+	bool left = toggleScancode(SDL_SCANCODE_LEFT) || toggleGamepad(SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+	bool right = toggleScancode(SDL_SCANCODE_RIGHT) || toggleGamepad(SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+
+	if (left)  *n = max(0,      *n - 1);
+	if (right) *n = min(maxval, *n + 1);
+	if (up)    *n = max(0,      *n - stride);
+	if (down)  *n = min(maxval, *n + stride);
+}
+
 
 void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
+	static int idx = 0;
+
 	if (nk_begin(nk_ctx, "Main menu", nk_rect(50, 50, 220, 220),
 	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
 	{
+		buttonNavUpDown(&idx, 2);
+
 		nk_layout_row_dynamic(nk_ctx, 0, 1);
-		if (nk_button_label(nk_ctx, "New game")) {
+		if (selectableButton(nk_ctx, "New game", idx, 0)) {
 			SDL_Log("New game!");
 			input.setMode(modes::NewGame);
 		}
 		
 		nk_layout_row_dynamic(nk_ctx, 0, 1);
-		if (nk_button_label(nk_ctx, "Settings")) {
+		if (selectableButton(nk_ctx, "Settings", idx, 1)) {
 			SDL_Log("Settings");
 		}
 
 		nk_layout_row_dynamic(nk_ctx, 0, 1);
-		if (nk_button_label(nk_ctx, "Quit")) {
+		if (selectableButton(nk_ctx, "Quit", idx, 2)) {
 			SDL_Log("Quiterino");
 		}
 	}
@@ -33,11 +160,13 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 }
 
 void projalphaView::drawNewGameMenu(gameMain *game, int wx, int wy) {
+	static int idx;
 	bool reset = false;
 
 	if (nk_begin(nk_ctx, "New Game", nk_rect(50, 50, 1180, 600),
 	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
 	{
+		buttonNavTable(&idx, 4, 4);
 		nk_label_wrap(nk_ctx, "Select a class");
 
 		nk_layout_row_dynamic(nk_ctx, 400, 4);
@@ -52,7 +181,7 @@ void projalphaView::drawNewGameMenu(gameMain *game, int wx, int wy) {
 			nk_label_wrap(nk_ctx, "- Not very stealthy");
 			nk_label_wrap(nk_ctx, "- Low aptitude for special abilities");
 
-			if (nk_button_label(nk_ctx, "Explorer")) {
+			if (selectableButton(nk_ctx, "Explorer", idx, 0)) {
 				SDL_Log("New game!");
 				reset = true;
 			}
@@ -71,7 +200,7 @@ void projalphaView::drawNewGameMenu(gameMain *game, int wx, int wy) {
 			nk_label_wrap(nk_ctx, "- Disliked by all other clans and mobs");
 			nk_label_wrap(nk_ctx, "- Unable to do business at non-thief vendors");
 
-			if (nk_button_label(nk_ctx, "Thief")) {
+			if (selectableButton(nk_ctx, "Thief", idx, 1)) {
 				SDL_Log("New game!");
 				reset = true;
 			}
@@ -92,7 +221,7 @@ void projalphaView::drawNewGameMenu(gameMain *game, int wx, int wy) {
 			nk_label_wrap(nk_ctx, "- Does not start with a light source");
 			nk_label_wrap(nk_ctx, "- Not aligned with any clans");
 
-			if (nk_button_label(nk_ctx, "Ghoul")) {
+			if (selectableButton(nk_ctx, "Ghoul", idx, 2)) {
 				SDL_Log("New game!");
 				reset = true;
 			}
@@ -109,7 +238,7 @@ void projalphaView::drawNewGameMenu(gameMain *game, int wx, int wy) {
 			nk_label_wrap(nk_ctx, "- Not very stealthy");
 			nk_label_wrap(nk_ctx, "- Low aptitude for special abilities");
 
-			if (nk_button_label(nk_ctx, "Cultist")) {
+			if (selectableButton(nk_ctx, "Cultist", idx, 3)) {
 				SDL_Log("New game!");
 				reset = true;
 			}
@@ -118,7 +247,7 @@ void projalphaView::drawNewGameMenu(gameMain *game, int wx, int wy) {
 		}
 
 		nk_layout_row_dynamic(nk_ctx, 0, 1);
-		if (nk_button_label(nk_ctx, "Back to main menu")) {
+		if (selectableButton(nk_ctx, "Back to main menu", idx, 4)) {
 			SDL_Log("Back to main");
 			input.setMode(modes::MainMenu);
 		}
@@ -133,9 +262,13 @@ void projalphaView::drawNewGameMenu(gameMain *game, int wx, int wy) {
 }
 
 void projalphaView::drawIntroWindow(gameMain *game, int wx, int wy) {
+	static int idx = 0;
+
 	if (nk_begin(nk_ctx, "Welcome", nk_rect(200, 200, 800, 480),
 	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
 	{
+		buttonNavUpDown(&idx, 0);
+
 		nk_layout_row_static(nk_ctx, 100, 480, 1);
 		nk_label_wrap(nk_ctx,
 			"Legend has it that long ago, some dude hid a "
@@ -155,7 +288,7 @@ void projalphaView::drawIntroWindow(gameMain *game, int wx, int wy) {
 		nk_label_wrap(nk_ctx, "        Tab - Manage inventory");
 		nk_label_wrap(nk_ctx, "     Escape - Pause");
 
-		if (nk_button_label(nk_ctx, "Ok cool")) {
+		if (selectableButton(nk_ctx, "Ok cool", idx, 0)) {
 			SDL_Log("Cool");
 			input.setMode(modes::Move);
 		}
@@ -164,27 +297,32 @@ void projalphaView::drawIntroWindow(gameMain *game, int wx, int wy) {
 }
 
 void projalphaView::drawPauseMenu(gameMain *game, int wx, int wy) {
+	static int idx = 0;
+
 	if (nk_begin(nk_ctx, "Pause", nk_rect(50, 50, 220, 220),
-	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
+	    NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
+	{
+		buttonNavUpDown(&idx, 3);
+
 		nk_layout_row_dynamic(nk_ctx, 0, 1);
-		if (nk_button_label(nk_ctx, "Resume")) {
+		if (selectableButton(nk_ctx, "Resume", idx, 0)) {
 			SDL_Log("Resuming");
 			input.setMode(modes::Move);
 		}
 
 		nk_layout_row_dynamic(nk_ctx, 0, 1);
-		if (nk_button_label(nk_ctx, "Settings")) {
+		if (selectableButton(nk_ctx, "Settings", idx, 1)) {
 			SDL_Log("Settings");
 		}
 
 		nk_layout_row_dynamic(nk_ctx, 0, 1);
-		if (nk_button_label(nk_ctx, "Abandon run")) {
+		if (selectableButton(nk_ctx, "Abandon run", idx, 2)) {
 			SDL_Log("Abandon run");
 			input.setMode(modes::MainMenu);
 		}
 
 		nk_layout_row_dynamic(nk_ctx, 0, 1);
-		if (nk_button_label(nk_ctx, "Quit")) {
+		if (selectableButton(nk_ctx, "Quit", idx, 3)) {
 			SDL_Log("Quiterino");
 		}
 	}
@@ -201,15 +339,18 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 	if (!inv || !stats) return;
 
 	static std::map<entity*, std::string> names;
+	static int idx = 0;
+	int buttIdx = 0;
 
 	if (nk_begin(nk_ctx, "Player inventory", nk_rect(50, 50, 720, 250),
 	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))
 	{
-		nk_layout_row_dynamic(nk_ctx, 200, 2);
+		buttonNavTable(&idx, 4*inv->items.size(), 4);
 
+		nk_layout_row_dynamic(nk_ctx, 200, 2);
 		if (nk_group_begin(nk_ctx, "invlist", 0)) {
 			nk_layout_row_dynamic(nk_ctx, 0, 1);
-			if (nk_button_label(nk_ctx, "a button")) {
+			if (selectableButton(nk_ctx, "a button", idx, buttIdx++)) {
 				// asdf
 				SDL_Log("clicked a button");
 			}
@@ -223,7 +364,7 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 				const char *name = key.c_str();
 				entity *ent = *items.begin();
 
-				nk_layout_row_dynamic(nk_ctx, 0, 4);
+				nk_layout_row_dynamic(nk_ctx, 0, 5);
 				nk_labelf(nk_ctx, NK_TEXT_ALIGN_LEFT, "%lu : %s", items.size(), name);
 
 				Wieldable *w;
@@ -232,12 +373,21 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 				if (w) {
 					static const char *wieldClicked = nullptr;
 
-					if (nk_button_label(nk_ctx, "Wield")) {
-						SDL_Log("Wield %s", name);
+					if (selectableButton(nk_ctx, "A", idx, buttIdx++)) {
+						SDL_Log("Wield primary %s", name);
+						stats->primaryWeapon = name;
 						//stats->primaryWeapon = name;
-						wieldClicked = name;
+						//wieldClicked = name;
 					}
 
+					if (selectableButton(nk_ctx, "B", idx, buttIdx++)) {
+						SDL_Log("Wield secondary %s", name);
+						stats->secondaryWeapon = name;
+						//stats->primaryWeapon = name;
+						//wieldClicked = name;
+					}
+
+					/*
 					if (wieldClicked == name) {
 						static struct nk_rect s = {20, 100, 220, 90};
 						if (nk_popup_begin(nk_ctx, NK_POPUP_STATIC, "Error", 0, s))
@@ -264,8 +414,9 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 						} else wieldClicked = nullptr;
 
 					}
+					*/
 
-					if (nk_button_label(nk_ctx, "Use")) {
+					if (selectableButton(nk_ctx, "Use", idx, buttIdx++)) {
 						SDL_Log("Using %s", name);
 
 						inv->remove(game->entities.get(), ent);
@@ -280,7 +431,7 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 					}
 				}
 
-				if (nk_button_label(nk_ctx, "Drop")) {
+				if (selectableButton(nk_ctx, "Drop", idx, buttIdx++)) {
 					inv->remove(game->entities.get(), ent);
 					game->entities->activate(ent);
 					TRS newtrans = playerEnt->node->getTransformTRS();

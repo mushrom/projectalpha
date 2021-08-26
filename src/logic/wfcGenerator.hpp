@@ -49,8 +49,8 @@ class wfcSpec {
 //       and item placements etc
 class wfcGenerator : public worldGenerator {
 	public:
-		static constexpr int genwidth  = 40;
-		static constexpr int genheight = 40;
+		static constexpr int genwidth  = 24;
+		static constexpr int genheight = 24;
 
 		wfcGenerator(gameMain *game, wfcSpec::ptr, unsigned seed = 0xcafebabe);
 		virtual ~wfcGenerator();

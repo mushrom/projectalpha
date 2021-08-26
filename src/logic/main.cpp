@@ -11,6 +11,9 @@
 #include <grend/ecs/collision.hpp>
 #include <grend/ecs/serializer.hpp>
 
+// TODO: move this to the core grend tree
+#include <logic/gameController.hpp>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
@@ -145,6 +148,8 @@ int main(int argc, char *argv[]) { try {
 	gameMain *game = new gameMain();
 #endif
 
+	initController();
+
 	/*
 	game->jobs->addAsync([=] {
 		auto foo = openSpatialLoop(GR_PREFIX "assets/sfx/Bit Bit Loop.ogg");
@@ -154,6 +159,7 @@ int main(int argc, char *argv[]) { try {
 	});
 	*/
 
+#if 0
 	game->jobs->addAsync([=] {
 		auto hum = openAudio(DEMO_PREFIX "assets/sfx/cave themeb4.ogg");
 		auto water = openAudio(DEMO_PREFIX "assets/sfx/atmosbasement.mp3_.ogg");
@@ -174,6 +180,7 @@ int main(int argc, char *argv[]) { try {
 		//game->audio->add(bar);
 		return true;
 	});
+#endif
 
 	projalphaView::ptr view = std::make_shared<projalphaView>(game);
 	view->cam->setFar(1000.0);
