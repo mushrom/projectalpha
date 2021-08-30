@@ -194,6 +194,7 @@ bindFunc camMovement2D(inputQueue q, camera::ptr cam, float accel) {
 			*curdir -= evdir;
 			any = true;
 
+			/*
 		} else if (ev.type == SDL_CONTROLLERBUTTONDOWN) {
 			glm::vec3 evdir(0);
 
@@ -224,6 +225,46 @@ bindFunc camMovement2D(inputQueue q, camera::ptr cam, float accel) {
 
 			pressed->erase(ev.cbutton.button);
 			*curdir -= evdir;
+			any = true;
+		*/
+		}
+
+		else if (ev.type == SDL_CONTROLLERAXISMOTION) {
+			if (ev.caxis.axis == SDL_CONTROLLER_AXIS_LEFTX) {
+			}
+
+			if (ev.caxis.axis == SDL_CONTROLLER_AXIS_LEFTY) {
+			}
+
+			int cx = SDL_GameControllerGetAxis(Controller(), SDL_CONTROLLER_AXIS_LEFTX);
+			int cy = SDL_GameControllerGetAxis(Controller(), SDL_CONTROLLER_AXIS_LEFTY);
+			//uint32_t  ticks = SDL_GetTicks();
+			//
+
+			float x = cx / 32768.f;
+			float y = cy / 32768.f;
+			glm::vec2 diff(x, y);
+
+			glm::vec2 meh = glm::normalize(glm::vec2(cam->direction().x, cam->direction().z));
+			glm::quat rot(glm::vec3(0, atan2(diff.x, diff.y) - atan2(meh.x, -meh.y) - M_PI/2.f, 0));
+
+			/*
+			if (ticks - last_action > 500) {
+				last_action = ticks;
+				inputs->push_back({
+					.type = inputEvent::types::primaryAction,
+					.data = glm::normalize(dir),
+					.active = true,
+				});
+			}
+			*/
+
+			if (abs(cx) > 1000 || abs(cy) > 1000) {
+				*curdir = glm::mat3_cast(rot) * glm::vec3(1, 0, 0) * glm::length(diff);
+			} else {
+				*curdir = glm::vec3(0);
+			}
+
 			any = true;
 		}
 
