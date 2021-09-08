@@ -169,8 +169,19 @@ projalphaView::floorStates* projalphaView::getFloor(gameMain *game, int n) {
 	// TODO: what happens if there's a jump larger than one level, not
 	//       just pushing to the back?
 
+	using Foo = std::pair<wfcSpec::ptr, std::string>;
+
+	auto [s, name]
+		= (n < 3)? Foo {tunnelSpec, "Upper Tunnels"}
+		: (n < 6)? Foo {bunkerSpec, "Doomsday Bunker"}
+		: (n < 9)? Foo {guildSpec, "Thieves' Guild"}
+		: (n < 12)? Foo {cultSpec, "Cultist Den"}
+		: (n < 15)? Foo {cellarSpec, "Derelich Cellar"}
+		: (n < 18)? Foo {ossuarySpec, "Ossuary"}
+		: Foo {troveSpec, "Trove of Stuff"};
+
 	floorStates::uniqueptr foo =
-		std::make_unique<floorStates>(game, this, "catacombs", spec);
+		std::make_unique<floorStates>(game, this, name, s);
 
 	//SDL_Log("Generated floor, map queue has %lu meshes", foo.mapQueue.meshes.size());
 

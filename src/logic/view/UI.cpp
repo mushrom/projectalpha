@@ -602,9 +602,13 @@ void projalphaView::drawNavPrompts(gameMain *game, int wx, int wy) {
 		nk_end(nk_ctx);
 	}
 
-	if (nk_begin(nk_ctx, "Current floor", nk_rect(xpos, 48, 128, 32), 0)) {
-		nk_layout_row_dynamic(nk_ctx, 14, 1);
-		nk_labelf(nk_ctx, NK_TEXT_ALIGN_LEFT, "Catacombs 1-%d", currentFloor);
+	auto floor = getFloor(game, currentFloor);
+
+	if (floor) {
+		if (nk_begin(nk_ctx, "Current floor", nk_rect(xpos, 48, 128, 32), 0)) {
+			nk_layout_row_dynamic(nk_ctx, 14, 1);
+			nk_labelf(nk_ctx, NK_TEXT_ALIGN_LEFT, "%s-%d", floor->zone.c_str(), currentFloor);
+		}
 	}
 	nk_end(nk_ctx);
 }

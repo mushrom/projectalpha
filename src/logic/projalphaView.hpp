@@ -98,7 +98,14 @@ class projalphaView : public gameView {
 			messaging::mailbox::ptr pickupEvents;
 		};
 
-		wfcSpec::ptr spec;
+		wfcSpec::ptr tunnelSpec;
+		wfcSpec::ptr bunkerSpec;
+		wfcSpec::ptr guildSpec;
+		wfcSpec::ptr cultSpec;
+		wfcSpec::ptr cellarSpec;
+		wfcSpec::ptr ossuarySpec;
+		wfcSpec::ptr troveSpec;
+
 		std::unique_ptr<levelController> level;
 		//landscapeGenerator landscape;
 		//std::unique_ptr<wfcGenerator> wfcgen;

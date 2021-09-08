@@ -213,10 +213,14 @@ projalphaView::projalphaView(gameMain *game)
 	: gameView(),
 	  level(new levelController)
 {
-	spec = std::make_shared<wfcSpec>(
+	tunnelSpec = std::make_shared<wfcSpec>(
 		game,
 		DEMO_PREFIX "assets/obj/catacomb-tiles/wfc-config.json"
 	);
+
+	// XXX: all using the same spec for now 
+	bunkerSpec = guildSpec = cultSpec = cellarSpec
+		= ossuarySpec = troveSpec = tunnelSpec;
 
     //ctx = nk_sdl_init(win);
     nk_ctx = nk_sdl_init(game->ctx.window);
