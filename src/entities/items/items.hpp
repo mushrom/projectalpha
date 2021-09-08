@@ -19,3 +19,4 @@
 #include <entities/items/coinPickup.hpp>
 #include <entities/items/flareItem.hpp>
 #include <entities/items/healthPickup.hpp>
+#include <entities/items/explodyBarrel.hpp>

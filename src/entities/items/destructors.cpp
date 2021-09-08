@@ -10,3 +10,4 @@ healthPickupCollision::~healthPickupCollision() {};
 coinPickup::~coinPickup() {};
 chestItem::~chestItem() {};
 flareItem::~flareItem() {};
+explodyBarrel::~explodyBarrel() {};

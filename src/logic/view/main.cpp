@@ -316,6 +316,8 @@ projalphaView::projalphaView(gameMain *game)
 		= killedParticles::ptr(new killedParticles({"enemySpawner"}));
 	game->entities->removeEvents["playerParticles"]
 		= killedParticles::ptr(new killedParticles({"player"}));
+	game->entities->removeEvents["barrelParticles"]
+		= killedParticles::ptr(new killedParticles({"explodyBarrel"}));
 
 	inputSystem = std::make_shared<inputHandlerSystem>();
 	game->entities->systems["input"] = inputSystem;

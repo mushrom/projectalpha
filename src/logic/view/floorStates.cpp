@@ -77,7 +77,7 @@ projalphaView::floorStates::floorStates(gameMain *game,
 			game->entities->add(en);
 			levelEntities.insert(en);
 
-			int mod = rand() % 3;
+			int mod = rand() % 4;
 
 			if (mod == 0) {
 				auto hen = new healthPickup(game->entities.get(),
@@ -93,6 +93,15 @@ projalphaView::floorStates::floorStates(gameMain *game,
 
 				game->entities->add(cen);
 				levelEntities.insert(cen);
+
+			} else if (mod == 2) {
+				// chest
+				auto cen = new explodyBarrel(game->entities.get(),
+				                             ptr->getTransformTRS().position + glm::vec3(0, 0.75, 0));
+
+				game->entities->add(cen);
+				levelEntities.insert(cen);
+
 
 			} else {
 				auto xen = new coinPickup(game->entities.get(),
