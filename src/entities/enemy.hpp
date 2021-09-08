@@ -13,7 +13,14 @@ using namespace grendx::ecs;
 
 class enemy : public entity, public updatable {
 	public:
-		enemy(entityManager *manager, gameMain *game, glm::vec3 position);
+		//enemy(entityManager *manager, gameMain *game, glm::vec3 position);
+		enemy(entityManager *manager,
+		      gameMain *game,
+		      glm::vec3 position,
+		      std::string modelpath,
+		      float radius,
+		      float height,
+		      float mass);
 		enemy(entityManager *manager, entity *ent, nlohmann::json properties);
 
 		virtual ~enemy();
@@ -33,3 +40,20 @@ class enemy : public entity, public updatable {
 		uint32_t xxxid = 0;
 };
 
+class noodler : public enemy /* #1 */ {
+	public:
+		noodler(entityManager *manager, gameMain *game, glm::vec3 position)
+			: enemy(manager, game, position, DEMO_PREFIX "assets/obj/noodler.glb",
+			        1.0, 2.0, 1.0) {};
+
+		virtual ~noodler();
+};
+
+class bat : public enemy {
+	public:
+		bat(entityManager *manager, gameMain *game, glm::vec3 position)
+			: enemy(manager, game, position, DEMO_PREFIX "assets/obj/bat-test.glb",
+			        1.0, 2.5, 0.5) {};
+
+		virtual ~bat();
+};

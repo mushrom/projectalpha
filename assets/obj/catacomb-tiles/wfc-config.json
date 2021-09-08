@@ -6,7 +6,7 @@
 		"floor-tile-water-bridge": "floor-tile-water-bridge.glb",
 		"ext-corner": "ext-corner-experimental.gltf",
 		"ext-wall": "base-wall.gltf",
-		"ext-wall-light": "base-wall.gltf",
+		"ext-wall-light": "base-wall-light.gltf",
 		"ext-wall-waterfall": "base-wall-waterfall.glb",
 		"hall-wall": "base-wall.gltf",
 		"ext-hall-corner": "hall-corner-experimental.gltf"
@@ -29,6 +29,7 @@
 			"weight" : 1
 		},
 
+		{"comment": [
 		{
 			"name" : "floor-tile-water",
 			"model" : "floor-tile-water",
@@ -64,6 +65,19 @@
 		},
 
 		{
+			"name" : "ext-wall-waterfall",
+			"model" : "ext-wall-waterfall",
+			"tags" : ["nontraversable", "wall"],
+			"adjacent" : [
+				[1, "ext-wall", 0],
+				[3, "ext-wall", 0]
+			],
+			"rotations": [0, 1, 2, 3],
+			"weight" : 1
+		}]
+		},
+
+		{
 			"name" : "ext-corner",
 			"model" : "ext-corner",
 			"tags" : ["nontraversable", "wall"],
@@ -84,18 +98,6 @@
 				[3, "ext-wall", 0],
 
 				[0, "floor-tile-empty", -1]
-			],
-			"rotations": [0, 1, 2, 3],
-			"weight" : 1
-		},
-
-		{
-			"name" : "ext-wall-waterfall",
-			"model" : "ext-wall-waterfall",
-			"tags" : ["nontraversable", "wall"],
-			"adjacent" : [
-				[1, "ext-wall", 0],
-				[3, "ext-wall", 0]
 			],
 			"rotations": [0, 1, 2, 3],
 			"weight" : 1

@@ -73,8 +73,12 @@ void enemySpawner::update(entityManager *manager, float delta) {
 	if (curTime - lastSpawn > 2.0f) {
 		lastSpawn = curTime;
 
+		/*
 		auto en = new enemy(manager, manager->engine,
 		                    this->node->getTransformTRS().position);
+							*/
+		auto en = new noodler(manager, manager->engine,
+		                      this->node->getTransformTRS().position);
 		manager->add(en);
 
 		// if this spawner has an associated team, propagate that to

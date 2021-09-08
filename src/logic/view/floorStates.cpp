@@ -56,9 +56,22 @@ projalphaView::floorStates::floorStates(gameMain *game,
 		glm::vec3 amuletPos;
 
 		for (const auto& [name, ptr] : leafroot->nodes) {
+			enemy *en;
+
+			if (rand() & 1) {
+				en = new noodler(game->entities.get(),
+				                 game,
+				                 ptr->getTransformTRS().position + glm::vec3(4, 2, 0));
+			} else {
+				en = new bat(game->entities.get(),
+				             game,
+				             ptr->getTransformTRS().position + glm::vec3(4, 2, 0));
+			}
+			/*
 			auto en = new enemy(game->entities.get(),
 					game,
 					ptr->getTransformTRS().position + glm::vec3(4, 2, 0));
+					*/
 			amuletPos = ptr->getTransformTRS().position + glm::vec3(2);
 
 			game->entities->add(en);

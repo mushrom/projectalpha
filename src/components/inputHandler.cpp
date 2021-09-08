@@ -54,29 +54,30 @@ void inputHandlerSystem::handleEvent(entityManager *manager, SDL_Event& ev) {
 }
 
 void mouseRotationPoller::update(entityManager *manager, entity *ent) {
-	int x, y, win_x, win_y;
-
-	// TODO: this could be passed as a parameter to avoid calling SDL_*
-	//       functions redundantly, don't think it'll be a problem though
-	SDL_GetMouseState(&x, &y);
-	SDL_GetWindowSize(manager->engine->ctx.window, &win_x, &win_y);
-
+	glm::vec2 meh = glm::normalize(glm::vec2(cam->direction().x, cam->direction().z));
 	float n = 0;
+
 	if (Controller()) {
 		int cx = SDL_GameControllerGetAxis(Controller(), SDL_CONTROLLER_AXIS_RIGHTX);
 		int cy = SDL_GameControllerGetAxis(Controller(), SDL_CONTROLLER_AXIS_RIGHTY);
 
 		n = (abs(cx) > 200 || abs(cy) > 200)? atan2(cx/32768.f, cy/32768.f) : 0;
-	}
 
-	glm::vec2 pos(x * 1.f/win_x, y * 1.f/win_y);
-	glm::vec2 meh = glm::normalize(glm::vec2(cam->direction().x, cam->direction().z));
-	glm::vec2 center(0.5);
-	glm::vec2 diff = pos - center;
+	} else {
+		int x, y, win_x, win_y;
 
-	if (n == 0) {
+		// TODO: this could be passed as a parameter to avoid calling SDL_*
+		//       functions redundantly, don't think it'll be a problem though
+		SDL_GetMouseState(&x, &y);
+		SDL_GetWindowSize(manager->engine->ctx.window, &win_x, &win_y);
+
+		glm::vec2 pos(x * 1.f/win_x, y * 1.f/win_y);
+		glm::vec2 center(0.5);
+		glm::vec2 diff = pos - center;
+
 		n = atan2(diff.x, diff.y);
 	}
+
 	//glm::quat rot(glm::vec3(0, atan2(diff.x, diff.y) - atan2(meh.x, -meh.y), 0));
 	//glm::quat rot(glm::vec3(0, n + atan2(diff.x, diff.y) - atan2(meh.x, -meh.y) - M_PI/2.f, 0));
 	glm::quat rot(glm::vec3(0, n - atan2(meh.x, -meh.y) - M_PI/2.f, 0));

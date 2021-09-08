@@ -105,9 +105,10 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 	//lit->casts_shadows = false;
 
 	auto plit = std::make_shared<gameLightPoint>();
-	plit->diffuse = glm::vec4(0.0, 0.17, 0.46, 1.0);
-	plit->setTransform((TRS) { .position = glm::vec3(0, 0.5, 0), });
-	plit->intensity = 100;
+	//plit->diffuse = glm::vec4(0.0, 0.17, 0.46, 1.0);
+	plit->diffuse = glm::vec4(1.0);
+	plit->setTransform((TRS) { .position = glm::vec3(0, 1.5, 0), });
+	plit->intensity = 50;
 	plit->radius = 0.75;
 	plit->is_static = false;
 	plit->casts_shadows = false;
