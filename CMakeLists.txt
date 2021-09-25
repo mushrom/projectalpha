@@ -85,6 +85,7 @@ set(LANDSCAPE_DEMO_SRC
 	src/components/itemPickup.cpp
 	src/components/inventory.cpp
 	src/components/playerInfo.cpp
+	src/components/explosionParticles.cpp
 	src/components/actions/destructors.cpp
 
 	src/entities/enemy.cpp

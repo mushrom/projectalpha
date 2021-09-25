@@ -98,6 +98,7 @@ class projalphaView : public gameView {
 			messaging::mailbox::ptr pickupEvents;
 		};
 
+		// TODO: would be good to keep a map of different zones
 		wfcSpec::ptr tunnelSpec;
 		wfcSpec::ptr bunkerSpec;
 		wfcSpec::ptr guildSpec;

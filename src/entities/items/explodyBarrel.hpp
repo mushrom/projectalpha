@@ -10,6 +10,8 @@
 #include <components/health.hpp>
 #include <components/itemPickup.hpp>
 
+#include <components/explosionParticles.hpp>
+
 #include <components/actions/Wieldable.hpp>
 #include <components/actions/Throwable.hpp>
 
@@ -41,6 +43,8 @@ class explodyBarrel : public pickup {
 			new health(manager, this);
 			new projectileCollision(manager, this);
 			new syncRigidBodyTransform(manager, this);
+			new explosionParticles(manager, this);
+
 			rigidBody *body = new rigidBodyCylinder(manager, this, node->getTransformTRS().position, 5.0, box);
 
 			manager->registerComponent(this, "explodyBarrel", this);
@@ -66,8 +70,8 @@ class explodyBarrel : public pickup {
 
 			gameLightPoint::ptr lit = std::make_shared<gameLightPoint>();
 
-			lit->diffuse = glm::vec4(1.0, 0.3, 0.1, 1); // bright red
-			lit->intensity = 150;
+			lit->diffuse = glm::vec4(1.0, 0.7, 0.4, 1); // orangish
+			lit->intensity = 50;
 			lit->setTransform({ .position = {0, 1, 0} });
 			setNode("light", node, lit);
 		}
