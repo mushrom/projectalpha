@@ -257,19 +257,21 @@ projalphaView::projalphaView(gameMain *game)
 		                game->rend->globalShaderOptions)},
 		SCREEN_SIZE_X, SCREEN_SIZE_Y));
 #else
+	/*
 	post = renderPostChain::ptr(new renderPostChain(
 		{loadPostShader(GR_PREFIX "shaders/baked/texpresent.frag",
 		                game->rend->globalShaderOptions)},
 		SCREEN_SIZE_X, SCREEN_SIZE_Y));
-	/*
+		*/
 	post = renderPostChain::ptr(new renderPostChain(
 		{
+		loadPostShader(GR_PREFIX "shaders/baked/fog-volumetric.frag",
+		               game->rend->globalShaderOptions),
 			//game->rend->postShaders["fog-depth"],
 			//game->rend->postShaders["psaa"],
 		},
 		//{game->rend->postShaders["tonemap"], game->rend->postShaders["psaa"]},
 		SCREEN_SIZE_X, SCREEN_SIZE_Y));
-		*/
 #endif
 
 	// TODO: less redundant way to do this

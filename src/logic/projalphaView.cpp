@@ -112,13 +112,30 @@ void projalphaView::render(gameMain *game) {
 	SDL_GetWindowSize(game->ctx.window, &winsize_x, &winsize_y);
 	renderFlags flags = game-> rend->getLightingFlags();
 
+	post->setUniform("cameraPos",     cam->position());
+	post->setUniform("cameraForward", cam->direction());
+	post->setUniform("cameraRight",   cam->right());
+	post->setUniform("cameraUp",      cam->up());
+
+	float tim = SDL_GetTicks() * 1000.f;
+	post->setUniform("exposure", game->rend->exposure);
+	post->setUniform("time_ms",  tim);
+
+	post->setUniform("shadowmap_atlas", TEXU_SHADOWS);
+
+	post->setUniformBlock("lights", game->rend->lightBuffer, UBO_LIGHT_INFO);
+#if !defined(USE_SINGLE_UBO)
+	post->setUniformBlock("point_light_tiles", game->rend->pointTiles,
+	                      UBO_POINT_LIGHT_TILES);
+	post->setUniformBlock("spot_light_tiles", game->rend->spotTiles,
+	                      UBO_SPOT_LIGHT_TILES);
+#endif
+
 	if (input.mode == modes::MainMenu) {
 		renderWorld(game, cam, mapQueue, flags);
 
 		// TODO: need to set post size on resize event..
 		//post->setSize(winsize_x, winsize_y);
-		post->setUniform("exposure", game->rend->exposure);
-		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
 
 		drawMainMenu(game, winsize_x, winsize_y);
@@ -128,8 +145,6 @@ void projalphaView::render(gameMain *game) {
 
 		// TODO: need to set post size on resize event..
 		//post->setSize(winsize_x, winsize_y);
-		post->setUniform("exposure", game->rend->exposure);
-		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
 
 		drawNewGameMenu(game, winsize_x, winsize_y);
@@ -139,8 +154,6 @@ void projalphaView::render(gameMain *game) {
 
 		// TODO: need to set post size on resize event..
 		//post->setSize(winsize_x, winsize_y);
-		post->setUniform("exposure", game->rend->exposure);
-		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
 
 		drawIntroWindow(game, winsize_x, winsize_y);
@@ -150,8 +163,6 @@ void projalphaView::render(gameMain *game) {
 
 		// TODO: need to set post size on resize event..
 		//post->setSize(winsize_x, winsize_y);
-		post->setUniform("exposure", game->rend->exposure);
-		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
 
 		// TODO: function to do this
@@ -162,8 +173,6 @@ void projalphaView::render(gameMain *game) {
 
 		// TODO: need to set post size on resize event..
 		//post->setSize(winsize_x, winsize_y);
-		post->setUniform("exposure", game->rend->exposure);
-		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
 
 		// TODO: function to do this
@@ -182,8 +191,6 @@ void projalphaView::render(gameMain *game) {
 
 		// TODO: need to set post size on resize event..
 		//post->setSize(winsize_x, winsize_y);
-		post->setUniform("exposure", game->rend->exposure);
-		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
 		post->draw(game->rend->framebuffer);
 		//input.setMode(modes::Move);
 
@@ -197,8 +204,8 @@ void projalphaView::render(gameMain *game) {
 		//if (floor) renderWorld(game, cam, floor->mapQueue, flags);
 		renderWorld(game, cam, mapQueue, flags);
 
-		post->setUniform("exposure", game->rend->exposure);
-		post->setUniform("time_ms",  SDL_GetTicks() * 1.f);
+		glActiveTexture(TEX_GL_SHADOWS);
+		game->rend->atlases.shadows->depth_tex->bind();
 		post->draw(game->rend->framebuffer);
 
 		Framebuffer().bind();
