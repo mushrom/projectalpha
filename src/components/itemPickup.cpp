@@ -7,8 +7,10 @@
 #include <logic/UI.hpp>
 
 pickupAction::~pickupAction() {};
+autopickupAction::~autopickupAction() {};
 hasItem::~hasItem() {};
 pickup::~pickup() {};
+autopickup::~autopickup() {};
 
 void pickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
 	inventory *inv;
@@ -39,6 +41,47 @@ void pickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
 		});
 	}
 }
+
+void autopickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
+	inventory *inv;
+	castEntityComponent(inv, manager, ent, "inventory");
+
+	if (!inv) {
+		return;
+	}
+
+	const uint8_t *keystates = SDL_GetKeyboardState(NULL);
+
+	// big-ish XXX: ideally input events should all be dispatched through handlers,
+	//              but that would be much messier... being able to poll for state
+	//              here is conceptually much easier to work with
+	// XXX: manager->engine
+
+	SDL_Log("Picking up an item!");
+
+	
+	autopickup *ap;
+	castEntityComponent(ap, manager, other, "autopickup");
+
+	if (!ap) {
+		return;
+	}
+
+	ap->onEvent(manager, ap, ent);
+	manager->remove(other);
+
+	//inv->insert(manager, other);
+	//manager->remove(other);
+	//new hasItem(manager, ent, tags);
+
+	Messages()->publish({
+		.type = "itemPickedUp",
+		.ent  = other,
+		.comp = ent,
+		// TODO: tag with level
+	});
+}
+
 
 struct particleInfo {
 	glm::mat4 transform;
@@ -166,13 +209,18 @@ pickup::pickup(entityManager *manager, entity *ent, nlohmann::json properties)
 	manager->registerComponent(this, "pickup", this);
 }
 
-void pickup::update(entityManager *manager, float delta) {
-	/*
-	fragmentParticles *farts;
-	castEntityComponent(farts, manager, this, "fragmentParticles");
+autopickup::autopickup(entityManager *manager, glm::vec3 position)
+	: autopickup(manager, this,
+	             setSerializedPosition<autopickup>(position)) {};
 
-	if (farts) {
-		farts->update(manager, delta);
-	}
-	*/
+autopickup::autopickup(entityManager *manager, entity *ent, nlohmann::json properties)
+	: entity(manager, properties)
+{
+	new areaSphere(manager, this, 2.f);
+	//new fragmentParticles(manager, this);
+
+	manager->registerComponent(this, "autopickup", this);
+}
+
+void autopickup::onEvent(entityManager *manager, entity *ent, entity *other) {
 }

@@ -94,7 +94,7 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 
 	auto lit = std::make_shared<gameLightSpot>();
 	lit->setTransform((TRS) {
-		.position = glm::vec3(0, 1, 1),
+		.position = glm::vec3(0, 0.5, 1),
 		//.rotation = glm::quat(glm::vec3(0, -M_PI/2, 0)),
 	});
 
@@ -114,7 +114,7 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 	plit->casts_shadows = false;
 
 	setNode("spotlight", node, lit);
-	setNode("pointlight", node, plit);
+	//setNode("pointlight", node, plit);
 	character = std::make_shared<animatedCharacter>(playerModel);
 	//character->setAnimation("idle");
 

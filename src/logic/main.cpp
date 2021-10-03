@@ -231,6 +231,7 @@ int main(int argc, char *argv[]) { try {
 
 		new pickupAction(game->entities.get(), playerEnt, {"amuletPickup"});
 		new pickupAction(game->entities.get(), playerEnt, {"pickup"});
+		new autopickupAction(game->entities.get(), playerEnt, {"autopickup"});
 
 #if defined(__ANDROID__)
 		int wx = game->rend->screen_x;

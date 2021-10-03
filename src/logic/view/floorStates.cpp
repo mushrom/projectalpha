@@ -119,7 +119,7 @@ projalphaView::floorStates::floorStates(gameMain *game,
 		}
 		*/
 
-		if (rand() % 10 == 0) {
+		if (true || rand() % 10 == 0) {
 			auto en = new amuletPickup(game->entities.get(), game, amuletPos);
 			game->entities->add(en);
 			levelEntities.insert(en);

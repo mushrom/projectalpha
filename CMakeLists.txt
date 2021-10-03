@@ -105,6 +105,7 @@ set(LANDSCAPE_DEMO_SRC
 	src/logic/wfcGenerator.cpp
 	src/logic/generatorEvent.cpp
 	src/logic/globalMessages.cpp
+	src/logic/lootSystem.cpp
 
 	src/logic/projalphaView.cpp
 	src/logic/view/floorStates.cpp

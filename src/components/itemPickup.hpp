@@ -29,6 +29,26 @@ class pickupAction : public areaInside {
 		virtual void onEvent(entityManager *manager, entity *ent, entity *other);
 };
 
+class autopickupAction : public areaInside {
+	public:
+		autopickupAction(entityManager *manager,
+		                 entity *ent,
+		                 std::vector<std::string> _tags)
+			: areaInside(manager, ent, _tags)
+		{
+			manager->registerComponent(ent, "autopickupAction", this);
+			Messages()->publish({
+				.type = "actionCreated",
+				.ent  = ent,
+				.comp = this,
+			});
+		}
+
+		virtual ~autopickupAction();
+		virtual void onEvent(entityManager *manager, entity *ent, entity *other);
+};
+
+
 class hasItem : public component {
 	public:
 		hasItem(entityManager *manager, entity *ent, std::vector<std::string> _tags)
@@ -55,8 +75,14 @@ class pickup : public entity {
 		pickup(entityManager *manager, glm::vec3 position);
 		pickup(entityManager *manager, entity *ent, nlohmann::json properties);
 		virtual ~pickup();
+};
 
-		//virtual void update(entityManager *manager, float delta) {};
-		virtual void update(entityManager *manager, float delta);
+class autopickup : public entity {
+	public:
+		autopickup(entityManager *manager, glm::vec3 position);
+		autopickup(entityManager *manager, entity *ent, nlohmann::json properties);
+		virtual ~autopickup();
+
+		virtual void onEvent(entityManager *manager, entity *ent, entity *other);
 };
 

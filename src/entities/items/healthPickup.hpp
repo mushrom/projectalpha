@@ -13,6 +13,8 @@
 #include <components/actions/Wieldable.hpp>
 #include <components/actions/Throwable.hpp>
 
+#include <utility/serializer.hpp>
+
 class healthPickup : public pickup {
 	float heals = 30.f;
 

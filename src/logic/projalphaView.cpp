@@ -120,6 +120,7 @@ void projalphaView::render(gameMain *game) {
 	float tim = SDL_GetTicks() * 1000.f;
 	post->setUniform("exposure", game->rend->exposure);
 	post->setUniform("time_ms",  tim);
+	post->setUniform("lightThreshold", game->rend->lightThreshold);
 
 	post->setUniform("shadowmap_atlas", TEXU_SHADOWS);
 

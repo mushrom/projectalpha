@@ -12,6 +12,7 @@
 #include <grend/ecs/serializer.hpp>
 
 #include <logic/gameController.hpp>
+#include <logic/lootSystem.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -318,6 +319,8 @@ projalphaView::projalphaView(gameMain *game)
 		*/
 	game->entities->removeEvents["enemyParticles"]
 		= killedParticles::ptr(new killedParticles({"enemy"}));
+	game->entities->removeEvents["lootDrop"]
+		= std::make_shared<lootSystem>(std::vector<std::string> {"enemy"});
 	game->entities->removeEvents["spawnerParticles"]
 		= killedParticles::ptr(new killedParticles({"enemySpawner"}));
 	game->entities->removeEvents["playerParticles"]
