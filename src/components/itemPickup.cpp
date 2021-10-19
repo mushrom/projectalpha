@@ -13,8 +13,7 @@ pickup::~pickup() {};
 autopickup::~autopickup() {};
 
 void pickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
-	inventory *inv;
-	castEntityComponent(inv, manager, ent, "inventory");
+	auto inv = castEntityComponent<inventory>(manager, ent);
 
 	if (!inv) {
 		return;
