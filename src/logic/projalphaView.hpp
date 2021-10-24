@@ -43,6 +43,7 @@ class projalphaView : public gameView {
 
 		enum modes {
 			MainMenu,
+			Settings,
 			NewGame,
 			Intro,
 			Move,
@@ -131,6 +132,7 @@ class projalphaView : public gameView {
 
 	private:
 		void drawMainMenu(gameMain *game, int wx, int wy);
+		void drawSettings(gameMain *game, int wx, int wy);
 		void drawNewGameMenu(gameMain *game, int wx, int wy);
 		void drawIntroWindow(gameMain *game, int wx, int wy);
 		void drawInventory(gameMain *game, int wx, int wy);

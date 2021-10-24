@@ -34,6 +34,7 @@ void projalphaView::logic(gameMain *game, float delta) {
 	nk_input_end(nk_ctx);
 
 	if (input.mode == modes::MainMenu
+		|| input.mode == modes::Settings
 		|| input.mode == modes::NewGame
 		|| input.mode == modes::Intro
 		|| input.mode == modes::Pause
@@ -140,6 +141,15 @@ void projalphaView::render(gameMain *game) {
 		post->draw(game->rend->framebuffer);
 
 		drawMainMenu(game, winsize_x, winsize_y);
+
+	} else if (input.mode == modes::Settings) {
+		renderWorld(game, cam, mapQueue, flags);
+
+		// TODO: need to set post size on resize event..
+		//post->setSize(winsize_x, winsize_y);
+		post->draw(game->rend->framebuffer);
+
+		drawSettings(game, winsize_x, winsize_y);
 
 	} else if (input.mode == modes::NewGame) {
 		renderWorld(game, cam, mapQueue, flags);
