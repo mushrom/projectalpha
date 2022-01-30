@@ -12,7 +12,7 @@ class Throwable : public Action {
 		Throwable(entityManager *manager, entity *ent)
 			: Action(manager, ent)
 		{
-			manager->registerComponent(ent, "Throwable", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~Throwable();
 

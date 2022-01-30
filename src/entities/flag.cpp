@@ -5,7 +5,6 @@
 
 flag::~flag() {};
 flagPickup::~flagPickup() {};
-hasFlag::~hasFlag() {};
 
 flag::flag(entityManager *manager, gameMain *game,
            glm::vec3 position, std::string color)
@@ -14,7 +13,7 @@ flag::flag(entityManager *manager, gameMain *game,
 	new team(manager, this, color);
 	new areaSphere(manager, this, 2.f);
 
-	manager->registerComponent(this, "flag", this);
+	manager->registerComponent(this, this);
 
 	// TODO: resource manager
 	static gameObject::ptr flagModel = nullptr;
@@ -34,15 +33,19 @@ void flag::update(entityManager *manager, float delta) { };
 
 void flagPickup::onEvent(entityManager *manager, entity *ent, entity *other) {
 	SDL_Log("Entered flag pickup zone!");
+	team *mytem   = getComponent<team>(manager, ent);
+	team *theytem = getComponent<team>(manager, other);
+	/*
 	team *theytem;
 	team *mytem;
 	castEntityComponent(mytem,   manager, ent,   "team");
 	castEntityComponent(theytem, manager, other, "team");
+	*/
 
 	if (mytem && theytem && mytem->name != theytem->name) {
 		SDL_Log("Different teams, doing the thing!");
 		manager->remove(other);
-		new hasFlag(manager, ent, theytem->name);
+		//new hasFlag(manager, ent, theytem->name);
 
 	} else if (!mytem || !theytem) {
 		SDL_Log("Missing team component somewhere!");

@@ -13,7 +13,7 @@ class healthbar : public component {
 		healthbar(entityManager *manager, entity *ent)
 			: component(manager, ent)
 		{
-			manager->registerComponent(ent, "healthbar", this);
+			manager->registerComponent(ent, this);
 		};
 		virtual ~healthbar();
 
@@ -28,7 +28,7 @@ class worldHealthbar : public healthbar {
 		worldHealthbar(entityManager *manager, entity *ent)
 			: healthbar(manager, ent)
 		{
-			manager->registerComponent(ent, "worldHealthbar", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~worldHealthbar();

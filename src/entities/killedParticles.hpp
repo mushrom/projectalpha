@@ -8,7 +8,7 @@ using namespace grendx::ecs;
 
 class killedParticles : public entityEventSystem {
 	public:
-		killedParticles(std::vector<std::string> _tags)
+		killedParticles(std::vector<const char *> _tags)
 			: entityEventSystem(_tags) {};
 
 		virtual ~killedParticles();

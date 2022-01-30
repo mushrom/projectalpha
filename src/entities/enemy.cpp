@@ -37,8 +37,10 @@ enemy::enemy(entityManager *manager,
 	new syncRigidBodyXZVelocity(manager, this);
 	auto body = new rigidBodyCapsule(manager, this, transform.position, mass, radius, height);
 
-	manager->registerComponent(this, "enemy", this);
-	manager->registerComponent(this, "updatable", this);
+	//manager->registerComponent(this, "enemy", this);
+	//manager->registerComponent(this, "updatable", this);
+	manager->registerComponent(this, this);
+	manager->registerInterface<updatable>(this, this);
 
 	auto it = enemyModels.find(modelPath);
 
@@ -83,7 +85,7 @@ enemy::enemy(entityManager *manager, entity *ent, nlohmann::json properties)
 	                                1.0, 0.5);
 									*/
 
-	manager->registerComponent(this, "enemy", this);
+	manager->registerComponent(this, this);
 
 	// TODO:
 	if (!enemyModel) {
@@ -127,8 +129,11 @@ void enemy::update(entityManager *manager, float delta) {
 		body->phys->setAcceleration(10.f*vel);
 	}
 	*/
-	rigidBody *body = castEntityComponent<rigidBody*>(manager, this, "rigidBody");
-	health *hp = castEntityComponent<health*>(manager, this, "health");
+	//rigidBody *body = castEntityComponent<rigidBody*>(manager, this, "rigidBody");
+	//health *hp = castEntityComponent<health*>(manager, this, "health");
+
+	rigidBody *body = getComponent<rigidBody>(manager, this);
+	health *hp = getComponent<health>(manager, this);
 
 	if (!body || !hp) {
 		SDL_Log("No body/health!");

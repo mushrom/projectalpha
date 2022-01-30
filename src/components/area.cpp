@@ -50,7 +50,7 @@ void areaOutside::dispatch(entityManager *manager, entity *ent, entity *other) {
 }
 
 void areaSystem::update(entityManager *manager, float delta) {
-	auto events = manager->getComponents("areaEvent");
+	auto events = manager->getComponents(getTypeName<areaEvent>());
 
 	for (auto& evcomp : events) {
 		areaEvent *ev = dynamic_cast<areaEvent*>(evcomp);

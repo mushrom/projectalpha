@@ -32,7 +32,7 @@ class inputHandler : public component {
 		inputHandler(entityManager *manager, entity *ent)
 			: component(manager, ent)
 		{
-			manager->registerComponent(ent, "inputHandler", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~inputHandler();
 
@@ -47,7 +47,7 @@ class rawEventHandler : public component {
 		rawEventHandler(entityManager *manager, entity *ent)
 			: component(manager, ent)
 		{
-			manager->registerComponent(ent, "rawEventHandler", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~rawEventHandler();
 
@@ -62,7 +62,7 @@ class inputPoller : public component {
 		inputPoller(entityManager *manager, entity *ent)
 			: component(manager, ent)
 		{
-			manager->registerComponent(ent, "inputPoller", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~inputPoller();
 
@@ -87,7 +87,7 @@ class controllable : public component {
 		controllable(entityManager *manager, entity *ent)
 			: component(manager, ent)
 		{
-			manager->registerComponent(ent, "controllable", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~controllable();
 
@@ -100,7 +100,7 @@ class isControlled : public component {
 		isControlled(entityManager *manager, entity *ent)
 			: component(manager, ent)
 		{
-			manager->registerComponent(ent, "isControlled", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~isControlled();
 };
@@ -110,22 +110,21 @@ class movementHandler : public inputHandler {
 		movementHandler(entityManager *manager, entity *ent)
 			: inputHandler(manager, ent)
 		{
-			manager->registerComponent(ent, serializedType, this);
+			manager->registerComponent(ent, this);
 		}
 
 		// nothing special for deserializing construction
 		movementHandler(entityManager *manager, entity *ent, nlohmann::json _)
 			: inputHandler(manager, ent)
 		{
-			manager->registerComponent(ent, serializedType, this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~movementHandler();
 
 		virtual void
 		handleInput(entityManager *manager, entity *ent, inputEvent& ev) {
 			if (ev.type == inputEvent::types::move) {
-				rigidBody *body;
-				castEntityComponent(body, manager, ent, "rigidBody");
+				rigidBody *body = getComponent<rigidBody>(manager, ent);
 
 				if (body) {
 					body->phys->setVelocity(ev.data * 20.f);
@@ -147,7 +146,7 @@ class mouseRotationPoller : public inputPoller {
 			: inputPoller(manager, ent),
 			  cam(_cam)
 		{
-			manager->registerComponent(ent, "mouseRotationPoller", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~mouseRotationPoller();
 
@@ -168,7 +167,7 @@ class touchMovementHandler : public rawEventHandler {
 			: rawEventHandler(manager, ent),
 			  center(_center), radius(_radius), inputs(q), cam(_cam)
 		{
-			manager->registerComponent(ent, "touchMovementHandler", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~touchMovementHandler();
 
@@ -190,7 +189,7 @@ class touchRotationHandler : public rawEventHandler {
 			: rawEventHandler(manager, ent),
 			  center(_center), radius(_radius), inputs(q), cam(_cam)
 		{
-			manager->registerComponent(ent, "touchRotationHandler", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~touchRotationHandler();
 

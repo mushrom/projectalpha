@@ -12,7 +12,7 @@ class team : public component {
 			: component(manager, ent),
 		      name(teamname)
 		{
-			manager->registerComponent(ent, "team", this);
+			manager->registerComponent(ent, this);
 		};
 
 		virtual ~team();

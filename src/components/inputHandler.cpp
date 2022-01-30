@@ -13,13 +13,15 @@ touchMovementHandler::~touchMovementHandler() {};
 touchRotationHandler::~touchRotationHandler() {};
 
 void inputHandlerSystem::update(entityManager *manager, float delta) {
-	auto handlers  = manager->getComponents("inputHandler");
+//	auto handlers  = manager->getComponents("inputHandler");
 	// TODO: maybe have seperate system for pollers
-	auto pollers   = manager->getComponents("inputPoller");
+	//auto pollers   = manager->getComponents("inputPoller");
+	auto handlers = manager->getComponents<inputHandler>();
+	auto pollers  = manager->getComponents<inputPoller>();
 
 	for (auto& ev : *inputs) {
 		for (auto& it : handlers) {
-			inputHandler *handler = dynamic_cast<inputHandler*>(it);
+			inputHandler *handler = static_cast<inputHandler*>(it);
 			entity *ent = manager->getEntity(handler);
 
 			if (handler && ent) {
@@ -41,10 +43,11 @@ void inputHandlerSystem::update(entityManager *manager, float delta) {
 }
 
 void inputHandlerSystem::handleEvent(entityManager *manager, SDL_Event& ev) {
-	auto rawEvents = manager->getComponents("rawEventHandler");
+	//auto rawEvents = manager->getComponents("rawEventHandler");
+	auto rawEvents = manager->getComponents<rawEventHandler>();
 
 	for (auto& it : rawEvents) {
-		rawEventHandler *handler = dynamic_cast<rawEventHandler*>(it);
+		rawEventHandler *handler = static_cast<rawEventHandler*>(it);
 		entity *ent = manager->getEntity(handler);
 
 		if (handler && ent) {

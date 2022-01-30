@@ -14,7 +14,7 @@ worldHealthbar::~worldHealthbar() {};
 void worldHealthbar::draw(entityManager *manager, entity *ent,
                           struct nk_context *nk_ctx, camera::ptr cam)
 {
-	health *entHealth = castEntityComponent<health*>(manager, ent, "health");
+	health *entHealth = getComponent<health>(manager, ent);
 	// TODO: maybe an error message or something here
 	if (!entHealth)
 		return;

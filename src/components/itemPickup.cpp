@@ -13,7 +13,7 @@ pickup::~pickup() {};
 autopickup::~autopickup() {};
 
 void pickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
-	auto inv = castEntityComponent<inventory>(manager, ent);
+	auto inv = getComponent<inventory>(manager, ent);
 
 	if (!inv) {
 		return;
@@ -42,8 +42,9 @@ void pickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
 }
 
 void autopickupAction::onEvent(entityManager *manager, entity *ent, entity *other) {
-	inventory *inv;
-	castEntityComponent(inv, manager, ent, "inventory");
+	inventory *inv = getComponent<inventory>(manager, ent);
+	//inventory *inv;
+	//castEntityComponent(inv, manager, ent, "inventory");
 
 	if (!inv) {
 		return;
@@ -59,8 +60,9 @@ void autopickupAction::onEvent(entityManager *manager, entity *ent, entity *othe
 	SDL_Log("Picking up an item!");
 
 	
-	autopickup *ap;
-	castEntityComponent(ap, manager, other, "autopickup");
+	autopickup *ap = getComponent<autopickup>(manager, other);
+	//autopickup *ap;
+	//castEntityComponent(ap, manager, other, "autopickup");
 
 	if (!ap) {
 		return;
@@ -127,8 +129,8 @@ fragmentParticles::fragmentParticles(entityManager *manager, entity *ent)
 {
 	static gameObject::ptr model = nullptr;
 
-	manager->registerComponent(ent, "fragmentParticles", this);
-	manager->registerComponent(ent, "updatable", this);
+	manager->registerComponent(ent, this);
+	manager->registerInterface<updatable>(ent, this);
 
 	//new timedLifetime(manager, this, 7.f);
 	particleBuf = std::make_shared<gameParticles>(num);
@@ -205,7 +207,7 @@ pickup::pickup(entityManager *manager, entity *ent, nlohmann::json properties)
 	new dialogPrompt(manager, this, "[X] Pick up the item here");
 	new fragmentParticles(manager, this);
 
-	manager->registerComponent(this, "pickup", this);
+	manager->registerComponent(this, this);
 }
 
 autopickup::autopickup(entityManager *manager, glm::vec3 position)
@@ -218,7 +220,7 @@ autopickup::autopickup(entityManager *manager, entity *ent, nlohmann::json prope
 	new areaSphere(manager, this, 2.f);
 	//new fragmentParticles(manager, this);
 
-	manager->registerComponent(this, "autopickup", this);
+	manager->registerComponent(this, this);
 }
 
 void autopickup::onEvent(entityManager *manager, entity *ent, entity *other) {

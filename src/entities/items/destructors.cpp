@@ -6,6 +6,8 @@
 #include <components/actions/Wieldable.hpp>
 #include <components/removeBodiesOnWorldCollision.hpp>
 
+#include <entities/player.hpp>
+
 // non-pure destructors for rtti
 healthPickup::~healthPickup() {};
 healthPickupCollision::~healthPickupCollision() {};
@@ -22,16 +24,19 @@ chasePlayer::~chasePlayer() {};
 chasePlayer::chasePlayer(entityManager *manager, entity *ent)
 	: component(manager, ent)
 {
+	manager->registerComponent(ent, this);
+	manager->registerInterface<updatable>(ent, this);
 	// Hmm, why do I not have a constructor in updatable that does this...
-	manager->registerComponent(ent, "updatable", this);
-	manager->registerComponent(ent, "chasePlayer", this);
+	//manager->registerComponent(ent, "updatable", this);
+	//manager->registerComponent(ent, "chasePlayer", this);
 }
 
 void chasePlayer::update(entityManager *manager, float delta) {
 	entity *self = manager->getEntity(this);
 	glm::vec3 pos = self->node->getTransformTRS().position;
 
-	entity *p = findNearest(manager, pos, {"player"});
+	//entity *p = findNearest(manager, pos, {"player"});
+	entity *p = findNearest(manager, pos, {getTypeName<player>()});
 
 	if (p) {
 		glm::vec3 playerPos = p->node->getTransformTRS().position;

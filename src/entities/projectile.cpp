@@ -9,7 +9,8 @@ projectileDestruct::~projectileDestruct() {};
 projectileCollision::projectileCollision(entityManager *manager,
                                          entity *ent,
                                          nlohmann::json properties)
-	: collisionHandler(manager, ent, {"projectile"})
+	//: collisionHandler(manager, ent, {"projectile"})
+	: collisionHandler(manager, ent, {getTypeName<projectile>()})
 {
 	// TODO:
 }
@@ -21,7 +22,7 @@ nlohmann::json projectileCollision::serialize(entityManager *manager) {
 projectile::projectile(entityManager *manager, gameMain *game, glm::vec3 position)
 	: entity(manager)
 {
-	manager->registerComponent(this, "projectile", this);
+	manager->registerComponent(this, this);
 
 	// TODO: configurable projectile attributes
 	//new rigidBodySphere(manager, this, position, 1.0, 0.25);

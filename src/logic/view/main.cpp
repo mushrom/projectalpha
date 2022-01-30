@@ -258,12 +258,11 @@ projalphaView::projalphaView(gameMain *game)
 		                game->rend->globalShaderOptions)},
 		SCREEN_SIZE_X, SCREEN_SIZE_Y));
 #else
-	/*
 	post = renderPostChain::ptr(new renderPostChain(
 		{loadPostShader(GR_PREFIX "shaders/baked/texpresent.frag",
 		                game->rend->globalShaderOptions)},
 		SCREEN_SIZE_X, SCREEN_SIZE_Y));
-		*/
+	/*
 	post = renderPostChain::ptr(new renderPostChain(
 		{
 		loadPostShader(GR_PREFIX "shaders/baked/fog-volumetric.frag",
@@ -273,8 +272,10 @@ projalphaView::projalphaView(gameMain *game)
 		},
 		//{game->rend->postShaders["tonemap"], game->rend->postShaders["psaa"]},
 		SCREEN_SIZE_X, SCREEN_SIZE_Y));
+		*/
 #endif
 
+#if 0
 	// TODO: less redundant way to do this
 #define SERIALIZABLE(T) game->factories->add<T>()
 	SERIALIZABLE(entity);
@@ -301,6 +302,7 @@ projalphaView::projalphaView(gameMain *game)
 	SERIALIZABLE(targetArea);
 	SERIALIZABLE(areaAddScore);
 #undef SERIALIZABLE
+#endif
 
 	// TODO: names are kinda pointless here
 	// TODO: should systems be a state object in gameMain as well?
@@ -318,15 +320,20 @@ projalphaView::projalphaView(gameMain *game)
 		= std::make_shared<killedParticles>();
 		*/
 	game->entities->removeEvents["enemyParticles"]
-		= killedParticles::ptr(new killedParticles({"enemy"}));
+		= killedParticles::ptr(new killedParticles({getTypeName<enemy>()}));
+		//= killedParticles::ptr(new killedParticles({"enemy"}));
 	game->entities->removeEvents["lootDrop"]
-		= std::make_shared<lootSystem>(std::vector<std::string> {"enemy"});
+		//= std::make_shared<lootSystem>(std::vector<const char *> {"enemy"});
+		= std::make_shared<lootSystem>(std::vector<const char *> {getTypeName<enemy>()});
 	game->entities->removeEvents["spawnerParticles"]
-		= killedParticles::ptr(new killedParticles({"enemySpawner"}));
+		//= killedParticles::ptr(new killedParticles({"enemySpawner"}));
+		= killedParticles::ptr(new killedParticles({getTypeName<enemySpawner>()}));
 	game->entities->removeEvents["playerParticles"]
-		= killedParticles::ptr(new killedParticles({"player"}));
+		= killedParticles::ptr(new killedParticles({getTypeName<player>()}));
+		//= killedParticles::ptr(new killedParticles({"player"}));
 	game->entities->removeEvents["barrelParticles"]
-		= killedParticles::ptr(new killedParticles({"explodyBarrel"}));
+		= killedParticles::ptr(new killedParticles({getTypeName<explodyBarrel>()}));
+		//= killedParticles::ptr(new killedParticles({"explodyBarrel"}));
 
 	inputSystem = std::make_shared<inputHandlerSystem>();
 	game->entities->systems["input"] = inputSystem;

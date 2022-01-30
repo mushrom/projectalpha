@@ -31,7 +31,7 @@ class chestItem : public pickup {
 		chestItem(entityManager *manager, entity *ent, nlohmann::json properties)
 			: pickup(manager, ent, properties)
 		{
-			manager->registerComponent(this, "chestItem", this);
+			manager->registerComponent(this, this);
 
 			static gameObject::ptr model = nullptr;
 			// XXX: really need resource manager

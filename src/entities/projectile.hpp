@@ -24,9 +24,10 @@ class projectile : public entity {
 class projectileCollision : public collisionHandler {
 	public:
 		projectileCollision(entityManager *manager, entity *ent)
-			: collisionHandler(manager, ent, {"projectile"})
+			//: collisionHandler(manager, ent, {"projectile"})
+			: collisionHandler(manager, ent, {getTypeName<projectile>()})
 		{
-			manager->registerComponent(ent, "projectileCollision", this);
+			manager->registerComponent(ent, this);
 		}
 
 		projectileCollision(entityManager *manager,
@@ -40,11 +41,11 @@ class projectileCollision : public collisionHandler {
 		            entity *other, collision& col)
 		{
 			std::cerr << "projectile collision!" << std::endl;
-			health *entHealth;
-			projectile *proj;
+			health *entHealth = getComponent<health>(manager, ent);
+			projectile *proj  = getComponent<projectile>(manager, ent);
 
-			castEntityComponent(entHealth, manager, ent, "health");
-			castEntityComponent(proj, manager, other, "projectile");
+			//castEntityComponent(entHealth, manager, ent, "health");
+			//castEntityComponent(proj, manager, other, "projectile");
 
 			if (entHealth && proj) {
 				float x = entHealth->damage(proj->impactDamage);
@@ -66,9 +67,10 @@ class projectileCollision : public collisionHandler {
 class projectileDestruct : public collisionHandler {
 	public:
 		projectileDestruct(entityManager *manager, entity *ent)
-			: collisionHandler(manager, ent, {"projectileCollision"})
+			//: collisionHandler(manager, ent, {"projectileCollision"})
+			: collisionHandler(manager, ent, {getTypeName<projectileCollision>()})
 		{
-			manager->registerComponent(ent, "projectileDestruct", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~projectileDestruct();

@@ -13,13 +13,13 @@ class health : public component {
 			: component(manager, ent),
 			  amount(_amount), hp(_hp)
 		{
-			manager->registerComponent(ent, "health", this);
+			manager->registerComponent(ent, this);
 		}
 
 		health(entityManager *manager, entity *ent, nlohmann::json properties)
 			: component(manager, ent, properties)
 		{
-			manager->registerComponent(ent, "health", this);
+			manager->registerComponent(ent, this);
 		};
 		virtual ~health();
 

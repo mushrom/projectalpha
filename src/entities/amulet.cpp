@@ -9,7 +9,7 @@ amuletPickup::amuletPickup(entityManager *manager,
 	: entity(manager)
 {
 	new areaSphere(manager, this, 2.f);
-	manager->registerComponent(this, "amuletPickup", this);
+	manager->registerComponent(this, this);
 
 	// TODO: resource manager
 	static gameObject::ptr amuletModel = nullptr;

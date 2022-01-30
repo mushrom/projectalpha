@@ -10,6 +10,8 @@
 #include <logic/globalMessages.hpp>
 #include <logic/gameController.hpp>
 
+#include <entities/player.hpp>
+
 static uint8_t foo[SDL_NUM_SCANCODES];
 static uint8_t bar[SDL_NUM_SCANCODES];
 static uint8_t edgefoo[SDL_NUM_SCANCODES];
@@ -265,6 +267,9 @@ void projalphaView::drawMainMenu(gameMain *game, int wx, int wy) {
 	nk_end(nk_ctx);
 }
 
+
+extern struct nk_image fooimg;
+
 void projalphaView::drawSettings(gameMain *game, int wx, int wy) {
 	static int idx = 0;
 
@@ -279,8 +284,33 @@ void projalphaView::drawSettings(gameMain *game, int wx, int wy) {
 	static bool showSteps = true;
 
 	if (nk_begin(nk_ctx, "Settings", nk_rect(center_x, center_y, width, height),
-	             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE))
+	             NK_WINDOW_BORDER))
 	{
+
+		//nk_layout_row_dynamic(nk_ctx, width, 1);
+		nk_layout_row_static(nk_ctx, 64, 64, 2);
+		//SDL_Log("asdf: %d\n", fooimg.handle.id);
+		if (nk_button_image(nk_ctx, fooimg))
+		{
+			SDL_Log("asdf");
+		}
+
+		nk_image(nk_ctx, fooimg);
+
+
+		/*
+		if (nk_button_label(nk_ctx, "yo")) {
+			SDL_Log("ot");
+		}
+		*/
+
+		/*
+		if (nk_button_image_label(nk_ctx, fooimg, "asdfasdfa", NK_TEXT_CENTERED))
+		{
+			SDL_Log("asdf");
+		}
+		*/
+
 		// XXX: need a less terrible way to do this
 		static int rowidx = 0;
 		static int shadowidx = 0;
@@ -645,11 +675,14 @@ void projalphaView::drawPauseMenu(gameMain *game, int wx, int wy) {
 }
 
 void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
-	entity *playerEnt = findFirst(game->entities.get(), {"player", "inventory"});
+	//entity *playerEnt = findFirst(game->entities.get(), {"player", "inventory"});
+	entity *playerEnt = findFirst(game->entities.get(), {getTypeName<player>(), getTypeName<inventory>()});
 	if (!playerEnt) return;
 
-	auto inv = castEntityComponent<inventory*>(game->entities.get(), playerEnt, "inventory");
-	auto stats = castEntityComponent<playerInfo*>(game->entities.get(), playerEnt, "playerInfo");
+	auto inv   = getComponent<inventory>(game->entities.get(), playerEnt);
+	auto stats = getComponent<playerInfo>(game->entities.get(), playerEnt);
+	//auto inv = castEntityComponent<inventory*>(game->entities.get(), playerEnt, "inventory");
+	//auto stats = castEntityComponent<playerInfo*>(game->entities.get(), playerEnt, "playerInfo");
 
 	if (!inv || !stats) return;
 
@@ -680,8 +713,9 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 				nk_layout_row_dynamic(nk_ctx, 0, 5);
 				nk_labelf(nk_ctx, NK_TEXT_ALIGN_LEFT, "%lu : %s", items.size(), name);
 
-				Wieldable *w;
-				castEntityComponent(w, game->entities.get(), ent, "Wieldable");
+				Wieldable *w = getComponent<Wieldable>(game->entities.get(), ent);
+				//Wieldable *w;
+				//castEntityComponent(w, game->entities.get(), ent, "Wieldable");
 
 				if (w) {
 					static const char *wieldClicked = nullptr;
@@ -740,8 +774,9 @@ void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
 			std::string astr = (acc?  "" : "(empty) ") + stats->accessory;
 
 			auto useItem = [&] (entity *item) {
-				Wieldable *w;
-				castEntityComponent(w, game->entities.get(), item, "Wieldable");
+				Wieldable *w = getComponent<Wieldable>(game->entities.get(), item);
+				//Wieldable *w;
+				//castEntityComponent(w, game->entities.get(), item, "Wieldable");
 
 				if (w) {
 					inv->remove(game->entities.get(), item);

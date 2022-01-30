@@ -15,7 +15,7 @@ class playerInfo : public component {
 		           nlohmann::json properties)
 			: component(manager, ent)
 		{
-			manager->registerComponent(ent, "playerInfo", this);
+			manager->registerComponent(ent, this);
 		}
 
 		struct stats {
@@ -47,7 +47,7 @@ class wieldedHandler : public inputHandler {
 		               nlohmann::json properties={})
 			: inputHandler(manager, ent)
 		{
-			manager->registerComponent(ent, "wieldedHandler", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~wieldedHandler();
 

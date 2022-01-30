@@ -24,7 +24,7 @@ class ammoLoot : public autopickup {
 		ammoLoot(entityManager *manager, glm::vec3 position)
 			: autopickup(manager, position)
 		{
-			manager->registerComponent(this, "ammoLoot", this);
+			manager->registerComponent(this, this);
 
 			new chasePlayer(manager, this);
 
@@ -50,8 +50,9 @@ class ammoLoot : public autopickup {
 		}
 
 		virtual void onEvent(entityManager *manager, entity *ent, entity *other) {
-			inventory *inv;
-			castEntityComponent(inv, manager, other, "inventory");
+			inventory *inv = getComponent<inventory>(manager, other);
+			//inventory *inv;
+			//castEntityComponent(inv, manager, other, "inventory");
 
 			if (!inv) {
 				return;
@@ -73,7 +74,7 @@ class healthLoot : public autopickup {
 		healthLoot(entityManager *manager, glm::vec3 position)
 			: autopickup(manager, position)
 		{
-			manager->registerComponent(this, "healthLoot", this);
+			manager->registerComponent(this, this);
 
 			new chasePlayer(manager, this);
 
@@ -99,8 +100,9 @@ class healthLoot : public autopickup {
 		}
 
 		virtual void onEvent(entityManager *manager, entity *ent, entity *other) {
-			health *hp;
-			castEntityComponent(hp, manager, other, "health");
+			health *hp = getComponent<health>(manager, other);
+			//health *hp;
+			//castEntityComponent(hp, manager, other, "health");
 
 			if (!hp) {
 				return;

@@ -19,7 +19,7 @@ class timedLifetime : public component {
 			: component(manager, ent),
 			  lifetime(_lifetime)
 		{
-			manager->registerComponent(ent, "timedLifetime", this);
+			manager->registerComponent(ent, this);
 			// TODO: might be a good idea to pass start time in or something,
 			//       this could be annoying for automating test stuff
 			//
@@ -48,7 +48,8 @@ class lifetimeSystem : public entitySystem {
 
 		virtual void update(entityManager *manager, float delta) {
 			float curTime = SDL_GetTicks() / 1000.f;
-			auto timers = manager->getComponents("timedLifetime");
+			//auto timers = manager->getComponents("timedLifetime");
+			auto timers = manager->getComponents(getTypeName<timedLifetime>());
 
 			for (auto& it : timers) {
 				timedLifetime *lifetime = dynamic_cast<timedLifetime*>(it);

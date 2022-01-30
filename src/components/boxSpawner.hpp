@@ -28,7 +28,7 @@ class boxSpawner : public inputHandler {
 		           nlohmann::json properties={})
 			: inputHandler(manager, ent)
 		{
-			manager->registerComponent(ent, "boxSpawner", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~boxSpawner();
 

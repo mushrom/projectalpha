@@ -13,7 +13,7 @@ class inventory : public component {
 		inventory(entityManager *manager, entity *ent, nlohmann::json properties)
 			: component(manager, ent)
 		{
-			manager->registerComponent(ent, serializedType, this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~inventory();

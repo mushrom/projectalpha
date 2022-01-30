@@ -4,7 +4,9 @@
 #include <grend/animation.hpp>
 #include <grend/ecs/ecs.hpp>
 #include <grend/ecs/collision.hpp>
+
 #include <components/health.hpp>
+#include <entities/enemy.hpp>
 
 using namespace grendx;
 using namespace grendx::ecs;
@@ -15,10 +17,11 @@ class enemyCollision : public collisionHandler {
 
 	public:
 		enemyCollision(entityManager *manager, entity *ent, float _damage = 15.f)
-			: collisionHandler(manager, ent, {"enemy"})
+			//: collisionHandler(manager, ent, {"enemy"})
+			: collisionHandler(manager, ent, {getTypeName<enemy>()})
 		{
 			damage = _damage;
-			manager->registerComponent(ent, "enemyCollision", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~enemyCollision();
@@ -36,9 +39,12 @@ class enemyCollision : public collisionHandler {
 
 			std::cerr << "enemy collision!" << std::endl;
 			lastCollision = ticks;
+			health *entHealth = getComponent<health>(manager, ent);
+			/*
 			health *entHealth;
 
 			castEntityComponent(entHealth, manager, ent, "health");
+			*/
 
 			if (entHealth) {
 				float x = entHealth->damage(damage);

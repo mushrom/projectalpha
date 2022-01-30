@@ -27,8 +27,11 @@ void wieldedHandler::handleInput(entityManager *manager,
 	entity *playerEnt = findFirst(manager, {"player", "inventory", "playerInfo"});
 	if (!playerEnt) return;
 
-	auto inv = castEntityComponent<inventory*>(manager, playerEnt, "inventory");
-	auto stats = castEntityComponent<playerInfo*>(manager, playerEnt, "playerInfo");
+	auto inv = getComponent<inventory>(manager, playerEnt);
+	auto stats = getComponent<playerInfo>(manager, playerEnt);
+
+	//auto inv = castEntityComponent<inventory*>(manager, playerEnt, "inventory");
+	//auto stats = castEntityComponent<playerInfo*>(manager, playerEnt, "playerInfo");
 
 	if (!inv || !stats) return;
 
@@ -44,8 +47,9 @@ void wieldedHandler::handleInput(entityManager *manager,
 		std::string astr = (acc?  "" : "(empty) ") + stats->accessory;
 
 		auto useItem = [&] (entity *item) {
-			Wieldable *w;
-			castEntityComponent(w, manager, item, "Wieldable");
+			Wieldable *w = getComponent<Wieldable>(manager, item);
+			//Wieldable *w;
+			//castEntityComponent(w, manager, item, "Wieldable");
 
 			if (w) {
 				inv->remove(manager, item);

@@ -32,8 +32,9 @@ class coinPickup : public pickup {
 			: pickup(manager, ent, properties)
 		{
 			new Throwable(manager, ent);
-			new Wieldable(manager, ent, "Throwable");
-			manager->registerComponent(this, "coinPickup", this);
+			//new Wieldable(manager, ent, "Throwable");
+			new Wieldable(manager, ent, getTypeName<Throwable>());
+			manager->registerComponent(this, this);
 
 			static gameObject::ptr model = nullptr;
 			// XXX: really need resource manager

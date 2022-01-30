@@ -62,8 +62,10 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 	new syncRigidBodyPosition(manager, this);
 	rigidBody *body = new rigidBodySphere(manager, this, position, 10.0, 0.75);
 
-	manager->registerComponent(this, "player", this);
-	manager->registerComponent(this, "updatable", this);
+	//manager->registerComponent(this, "player", this);
+	//manager->registerComponent(this, "updatable", this);
+	manager->registerComponent(this, this);
+	manager->registerInterface<updatable>(this, this);
 
 	if (!playerModel) {
 		// TODO: resource cache
@@ -85,8 +87,8 @@ player::player(entityManager *manager, gameMain *game, glm::vec3 position)
 	}
 
 	TRS transform = node->getTransformTRS();
-	transform.position = position;
-	node->setTransform(transform);
+	//transform.position = position;
+	//node->setTransform(transform);
 	setNode("model", node, playerModel);
 	//setNode("light", node, std::make_shared<gameLightPoint>());
 	//setNode("light", node, std::make_shared<gameLightPoint>());
@@ -126,7 +128,7 @@ player::player(entityManager *manager,
                nlohmann::json properties)
 	: entity(manager, properties)
 {
-	manager->registerComponent(this, "player", this);
+	manager->registerComponent(this, this);
 
 	if (!playerModel) {
 		// TODO: resource cache
@@ -168,7 +170,8 @@ nlohmann::json player::serialize(entityManager *manager) {
 }
 
 void player::update(entityManager *manager, float delta) {
-	rigidBody *body = castEntityComponent<rigidBody*>(manager, this, "rigidBody");
+	//rigidBody *body = castEntityComponent<rigidBody*>(manager, this, "rigidBody");
+	rigidBody *body = getComponent<rigidBody>(manager, this);
 	if (!body) return;
 
 	body->phys->setAngularFactor(0.f);

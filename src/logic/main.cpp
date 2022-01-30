@@ -119,6 +119,9 @@ void initEntitiesFromNodes(gameObject::ptr node,
 
 #include <logic/tests/tests.hpp>
 
+// XXX: global, TODO REMOVE FOR REAL AAAAAAAAA
+struct nk_image fooimg;
+
 #if defined(_WIN32)
 extern "C" {
 //int WinMain(int argc, char *argv[]);
@@ -148,7 +151,28 @@ int main(int argc, char *argv[]) { try {
 	gameMain *game = new gameMain();
 #endif
 
+	int gl_w, gl_h;
+	SDL_GL_GetDrawableSize(game->ctx.window, &gl_w, &gl_h);
+	SDL_Log("Drawable: %dx%d", gl_w, gl_h);
+	int sdl_w, sdl_h;
+	SDL_GetWindowSize(game->ctx.window, &sdl_w, &sdl_h);
+	SDL_Log("Window size: %dx%d", gl_w, gl_h);
+
+	float diag, vert, horiz;
+	int getdpi = SDL_GetDisplayDPI(0, &diag, &vert, &horiz);
+
+	if (getdpi == 0) {
+		SDL_Log("Successful: %g, %g, %g", diag, vert, horiz);
+	} else {
+		SDL_Log("SDL_GetDisplayDPI() failed");
+	}
+
 	initController();
+
+	glEnable(GL_TEXTURE_2D);
+	SDL_Log("loading image...");
+	//fooimg = nk_image_load("/home/flux/pics/shit/thinkin.png");
+	//fooimg = nk_image_load("/tmp/portagrend/music.png");
 
 	/*
 	game->jobs->addAsync([=] {
@@ -159,7 +183,20 @@ int main(int argc, char *argv[]) { try {
 	});
 	*/
 
-#if 0
+#if 1
+	/*
+	game->jobs->addAsync([=] {
+		auto msc = openAudio("/tmp/Kyuss.ogg");
+
+		auto bar = std::make_shared<stereoAudioChannel>(msc);
+		glm::vec3 r(rand() / (float)RAND_MAX, 0, rand() / (float)RAND_MAX);
+		bar->worldPosition = glm::vec3(4*32.f * r.x, 2.f, 4*32.f * r.z);
+		bar->loopMode = audioChannel::mode::Loop;
+		game->audio->add(bar);
+		return true;
+	});
+	*/
+
 	game->jobs->addAsync([=] {
 		auto hum = openAudio(DEMO_PREFIX "assets/sfx/cave themeb4.ogg");
 		auto water = openAudio(DEMO_PREFIX "assets/sfx/atmosbasement.mp3_.ogg");
@@ -274,8 +311,12 @@ int main(int argc, char *argv[]) { try {
 
 	view->level->addLoseCondition(
 		[=] () {
+		/*
 			std::set<entity*> players
 				= searchEntities(game->entities.get(), {"player"});
+				*/
+			std::set<entity*> players
+				= searchEntities(game->entities.get(), {getTypeName<player>()});
 
 			return std::pair<bool, std::string>(players.size() == 0, "lol u died");
 		});

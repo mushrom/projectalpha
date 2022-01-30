@@ -15,7 +15,8 @@ class Fireable : public Action {
 		Fireable(entityManager *manager, entity *ent)
 			: Action(manager, ent)
 		{
-			manager->registerComponent(ent, "Fireable", this);
+			//manager->registerComponent(ent, "Fireable", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~Fireable();
 
@@ -51,11 +52,12 @@ boxBullet::boxBullet(entityManager *manager, gameMain *game, glm::vec3 position)
 {
 	static gameObject::ptr model = nullptr;
 
-	manager->registerComponent(this, "boxBullet", this);
+	manager->registerComponent(this, this);
 
 	new Fireable(manager, this);
 	//new Throwable(manager, this);
-	new Wieldable(manager, this, "Fireable");
+	//new Wieldable(manager, this, "Fireable");
+	new Wieldable(manager, this, getTypeName<Fireable>());
 
 	if (!model) {
 		// TODO: assets
@@ -90,8 +92,9 @@ void boxSpawner::handleInput(entityManager *manager, entity *ent, inputEvent& ev
 		for (unsigned i = 0; i < 1; i++) {
 			auto box = new boxBullet(manager, manager->engine, transform.position + (2.f + i)*playerrot);
 
-			rigidBody *body;
-			castEntityComponent(body, manager, box, "rigidBody");
+			rigidBody *body = getComponent<rigidBody>(manager, box);
+			//rigidBody *body;
+			//castEntityComponent(body, manager, box, "rigidBody");
 
 			if (body) {
 				body->phys->setVelocity((30.f + 5*i) * playerrot);

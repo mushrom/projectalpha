@@ -26,7 +26,7 @@ class uiComponent : public component {
 		uiComponent(entityManager *manager, entity *ent)
 			: component(manager, ent)
 		{
-			manager->registerComponent(ent, "uiComponent", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~uiComponent();
@@ -65,7 +65,7 @@ class dialogPrompt : public uiComponent {
 			: uiComponent(manager, ent),
 			  prompt(_prompt)
 		{
-			manager->registerComponent(ent, "dialogPrompt", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~dialogPrompt();

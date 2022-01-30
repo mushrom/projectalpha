@@ -16,25 +16,13 @@ class flag : public entity {
 		virtual void update(entityManager *manager, float delta);
 };
 
-class hasFlag : public component {
-	public:
-		hasFlag(entityManager *manager, entity *ent, std::string _color)
-			: component(manager, ent),
-			  color(_color)
-		{
-			manager->registerComponent(ent, "hasFlag", this);
-		}
-
-		virtual ~hasFlag();
-		std::string color;
-};
-
 class flagPickup : public areaEnter {
 	public:
 		flagPickup(entityManager *manager, entity *ent)
-			: areaEnter(manager, ent, {"flag", "area"})
+			//: areaEnter(manager, ent, {"flag", "area"})
+			: areaEnter(manager, ent, {getTypeName<flag>(), getTypeName<area>()})
 		{
-			manager->registerComponent(ent, "flagPickup", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~flagPickup();

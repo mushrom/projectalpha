@@ -15,7 +15,7 @@ targetArea::targetArea(entityManager *manager,
                        json properties)
 	: entity(manager, properties)
 {
-	manager->registerComponent(ent, "targetArea", this);
+	manager->registerComponent(ent, this);
 
 	new areaSphere(manager, this, 5.f);
 
@@ -39,16 +39,18 @@ json targetArea::serialize(entityManager *manager) {
 areaAddScore::areaAddScore(entityManager *manager,
                            entity *ent,
                            json properties)
-	: areaInside(manager, ent, {"targetArea", "area"})
+	//: areaInside(manager, ent, {"targetArea", "area"})
+	: areaInside(manager, ent, {getTypeName<targetArea>(), getTypeName<area>()})
 {
-	manager->registerComponent(ent, "areaAddScore", this);
+	manager->registerComponent(ent, this);
 }
 
 void areaAddScore::onEvent(entityManager *manager, entity *ent, entity *other) {
 	SDL_Log("Inside target area!");
-	health *ownhealth;
+	health *ownhealth = getComponent<health>(manager, ent);
+	//health *ownhealth;
 
-	castEntityComponent(ownhealth, manager, ent, "health");
+	//castEntityComponent(ownhealth, manager, ent, "health");
 
 	if (ownhealth) {
 		// TODO: need to normalize this to 60fps! this runs every frame when,

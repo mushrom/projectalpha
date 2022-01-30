@@ -10,8 +10,10 @@ class particleSystem : public component, public updatable {
 		{
 			particleBuf = std::make_shared<gameParticles>(num);
 
-			manager->registerComponent(ent, "particleSystem", this);
-			manager->registerComponent(ent, "updatable", this);
+			manager->registerComponent(ent, this);
+			manager->registerInterface<updatable>(ent, this);
+			//manager->registerComponent(ent, "particleSystem", this);
+			//manager->registerComponent(ent, "updatable", this);
 		};
 
 		virtual ~particleSystem() {};

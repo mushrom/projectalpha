@@ -20,7 +20,7 @@ enemySpawner::enemySpawner(entityManager *manager, gameMain *game, glm::vec3 pos
 	new projectileCollision(manager, this);
 	auto body = new rigidBodySphere(manager, this, position, 0.0, 1.0);
 
-	manager->registerComponent(this, "enemySpawner", this);
+	manager->registerComponent(this, this);
 
 	// TODO: resource manager
 	if (!spawnerModel) {
@@ -50,7 +50,7 @@ enemySpawner::enemySpawner(entityManager *manager,
 	auto body = new rigidBodySphere(manager, this, node->getTransformTRS().position,
 	                                0.0, 1.0);
 
-	manager->registerComponent(this, "enemySpawner", this);
+	manager->registerComponent(this, this);
 
 	// TODO: resource manager
 	if (!spawnerModel) {
@@ -83,7 +83,8 @@ void enemySpawner::update(entityManager *manager, float delta) {
 
 		// if this spawner has an associated team, propagate that to
 		// spawned enemies
-		if (team *tem = castEntityComponent<team*>(manager, this, "team")) {
+		//if (team *tem = castEntityComponent<team*>(manager, this, "team")) {
+		if (team *tem = getComponent<team>(manager, this)) {
 			new team(manager, en, tem->name);
 		}
 	}

@@ -10,7 +10,7 @@ class removeBodiesOnWorldCollision : public collisionHandler {
 		removeBodiesOnWorldCollision(entityManager *manager, entity *ent)
 			: collisionHandler(manager, ent, {})
 		{
-			manager->registerComponent(ent, "removeBodiesOnWorldCollision", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~removeBodiesOnWorldCollision();
 
@@ -30,9 +30,14 @@ class removeBodiesOnWorldCollision : public collisionHandler {
 			SDL_Log("Got here, at removeBodiesOnWorldCollision::action()!");
 
 			auto comps = manager->getEntityComponents(ent);
-			auto bodies = comps.equal_range("rigidBody");
-			auto syncs = comps.equal_range("syncRigidBody");
-			auto rms = comps.equal_range("removeBodiesOnWorldCollision");
+
+			auto bodies = comps.equal_range(getTypeName<rigidBody>());
+			auto syncs = comps.equal_range(getTypeName<syncRigidBody>());
+			auto rms = comps.equal_range(getTypeName<removeBodiesOnWorldCollision>());
+
+			//auto bodies = comps.equal_range("rigidBody");
+			//auto syncs = comps.equal_range("syncRigidBody");
+			//auto rms = comps.equal_range("removeBodiesOnWorldCollision");
 
 			std::set<component*> toRemove;
 

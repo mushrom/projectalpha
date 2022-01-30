@@ -47,7 +47,7 @@ class explodyBarrel : public pickup {
 
 			rigidBody *body = new rigidBodyCylinder(manager, this, node->getTransformTRS().position, 5.0, box);
 
-			manager->registerComponent(this, "explodyBarrel", this);
+			manager->registerComponent(this, this);
 			body->registerCollisionQueue(manager->collisions);
 
 			static gameObject::ptr model = nullptr;

@@ -14,10 +14,10 @@ class pickupAction : public areaInside {
 	public:
 		pickupAction(entityManager *manager,
 		             entity *ent,
-		             std::vector<std::string> _tags)
+		             std::vector<const char *> _tags)
 			: areaInside(manager, ent, _tags)
 		{
-			manager->registerComponent(ent, "pickupAction", this);
+			manager->registerComponent(ent, this);
 			Messages()->publish({
 				.type = "actionCreated",
 				.ent  = ent,
@@ -33,10 +33,10 @@ class autopickupAction : public areaInside {
 	public:
 		autopickupAction(entityManager *manager,
 		                 entity *ent,
-		                 std::vector<std::string> _tags)
+		                 std::vector<const char *> _tags)
 			: areaInside(manager, ent, _tags)
 		{
-			manager->registerComponent(ent, "autopickupAction", this);
+			manager->registerComponent(ent, this);
 			Messages()->publish({
 				.type = "actionCreated",
 				.ent  = ent,
@@ -48,26 +48,28 @@ class autopickupAction : public areaInside {
 		virtual void onEvent(entityManager *manager, entity *ent, entity *other);
 };
 
-
+// TODO: remove this
 class hasItem : public component {
 	public:
-		hasItem(entityManager *manager, entity *ent, std::vector<std::string> _tags)
+		hasItem(entityManager *manager, entity *ent, std::vector<const char *> _tags)
 			: component(manager, ent),
 			  tags(_tags)
 		{
-			manager->registerComponent(ent, "hasItem", this);
+			manager->registerComponent(ent, this);
 
+			/*
 			for (auto& tag : tags) {
 				// XXX: bit of a hack, should probably have a seperate query system
 				//      for this... a way to organize indexers and searching
 				//      for different component, entity types will be important,
 				//      not sure how to approach that yet though
-				manager->registerComponent(ent, "hasItem:" + tag, this);
+				//manager->registerComponent(ent, "hasItem:" + tag, this);
 			}
+			*/
 		}
 
 		virtual ~hasItem();
-		std::vector<std::string> tags;
+		std::vector<const char *> tags;
 };
 
 class pickup : public entity {

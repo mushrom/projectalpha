@@ -13,7 +13,7 @@ class area : public component {
 		area(entityManager *manager, entity *ent)
 			: component(manager, ent)
 		{
-			manager->registerComponent(ent, "area", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~area();
@@ -28,7 +28,7 @@ class areaSphere : public area {
 			: area(manager, ent),
 			  radius(_radius)
 		{
-			manager->registerComponent(ent, "areaSphere", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~areaSphere();
@@ -43,7 +43,7 @@ class areaAABB : public area {
 			: area(manager, ent),
 			  box(_box)
 		{
-			manager->registerComponent(ent, "areaAABB", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~areaAABB();
@@ -53,18 +53,18 @@ class areaAABB : public area {
 class areaEvent : public component {
 	public:
 		areaEvent(entityManager *manager, entity *ent,
-		          std::vector<std::string> _tags)
+		          std::vector<const char *> _tags)
 			: component(manager, ent),
 			  tags(_tags)
 		{
-			manager->registerComponent(ent, "areaEvent", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~areaEvent();
 		virtual void onEvent(entityManager *manager, entity *ent, entity *other) = 0;
 		virtual void dispatch(entityManager *manager, entity *ent, entity *other) = 0;
 
-		std::vector<std::string> tags;
+		std::vector<const char *> tags;
 		bool currentlyInside = false;
 		bool lastInside = false;
 };
@@ -72,10 +72,10 @@ class areaEvent : public component {
 class areaEnter : public areaEvent {
 	public:
 		areaEnter(entityManager *manager, entity *ent,
-		          std::vector<std::string> _tags)
+		          std::vector<const char *> _tags)
 			: areaEvent(manager, ent, _tags)
 		{
-			manager->registerComponent(ent, "areaEnter", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~areaEnter();
@@ -86,10 +86,10 @@ class areaEnter : public areaEvent {
 class areaLeave : public areaEvent {
 	public:
 		areaLeave(entityManager *manager, entity *ent,
-		          std::vector<std::string> _tags)
+		          std::vector<const char *> _tags)
 			: areaEvent(manager, ent, _tags)
 		{
-			manager->registerComponent(ent, "areaLeave", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~areaLeave();
@@ -100,10 +100,10 @@ class areaLeave : public areaEvent {
 class areaInside : public areaEvent {
 	public:
 		areaInside(entityManager *manager, entity *ent,
-		           std::vector<std::string> _tags)
+		           std::vector<const char *> _tags)
 			: areaEvent(manager, ent, _tags)
 		{
-			manager->registerComponent(ent, "areaInside", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~areaInside();
@@ -114,10 +114,10 @@ class areaInside : public areaEvent {
 class areaOutside : public areaEvent {
 	public:
 		areaOutside(entityManager *manager, entity *ent,
-		           std::vector<std::string> _tags)
+		           std::vector<const char *> _tags)
 			: areaEvent(manager, ent, _tags)
 		{
-			manager->registerComponent(ent, "areaOutside", this);
+			manager->registerComponent(ent, this);
 		}
 
 		virtual ~areaOutside();

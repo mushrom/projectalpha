@@ -1,7 +1,9 @@
+#include <grend/interpolation.hpp>
+
 #include "UI.hpp"
 #include <components/inputHandler.hpp>
 #include <components/healthbar.hpp>
-#include <grend/interpolation.hpp>
+#include <entities/player.hpp>
 
 #include <nuklear/canvas.h>
 
@@ -93,12 +95,15 @@ void renderHealthbars(entityManager *manager,
                       struct nk_context *nk_ctx,
                       camera::ptr cam)
 {
-	std::set<entity*> ents = searchEntities(manager, {"health", "healthbar"});
-	std::set<entity*> players = searchEntities(manager, {"player", "health"});
+	//std::set<entity*> ents = searchEntities(manager, {"health", "healthbar"});
+	//std::set<entity*> players = searchEntities(manager, {"player", "health"});
+	std::set<entity*> ents = searchEntities(manager, {getTypeName<health>(), getTypeName<healthbar>()});
+	std::set<entity*> players = searchEntities(manager, {getTypeName<player>(), getTypeName<health>()});
 
 	for (auto& ent : ents) {
-		healthbar *bar;
-		castEntityComponent(bar, manager, ent, "healthbar");
+		healthbar *bar = getComponent<healthbar>(manager, ent);
+		//healthbar *bar;
+		//castEntityComponent(bar, manager, ent, "healthbar");
 
 		if (bar) {
 			bar->draw(manager, ent, nk_ctx, cam);
@@ -107,9 +112,10 @@ void renderHealthbars(entityManager *manager,
 
 	if (players.size() > 0) {
 		entity *ent = *players.begin();
-		health *playerHealth;
+		health *playerHealth = getComponent<health>(manager, ent);
+		//health *playerHealth;
 
-		castEntityComponent(playerHealth, manager, ent, "health");
+		//castEntityComponent(playerHealth, manager, ent, "health");
 
 		if (playerHealth) {
 			drawPlayerHealthbar(manager, nk_ctx, playerHealth);

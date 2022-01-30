@@ -8,7 +8,7 @@ using namespace grendx::ecs;
 
 class lootSystem : public entityEventSystem {
 	public:
-		lootSystem(std::vector<std::string> _tags)
+		lootSystem(std::vector<const char *> _tags)
 			: entityEventSystem(_tags) {};
 
 		virtual ~lootSystem();

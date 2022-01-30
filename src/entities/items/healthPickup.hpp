@@ -35,8 +35,9 @@ class healthPickup : public pickup {
 			gameLightPoint::ptr lit = std::make_shared<gameLightPoint>();
 
 			new healingConsumable(manager, ent);
-			new Wieldable(manager, ent, "healingConsumable");
-			manager->registerComponent(this, "healthPickup", this);
+			//new Wieldable(manager, ent, "healingConsumable");
+			new Wieldable(manager, ent, getTypeName<healingConsumable>());
+			manager->registerComponent(this, this);
 
 			static gameModel::ptr model = nullptr;
 			// XXX: really need resource manager
@@ -68,10 +69,11 @@ class healthPickupCollision : public collisionHandler {
 
 	public:
 		healthPickupCollision(entityManager *manager, entity *ent, float _damage = 2.5f)
-			: collisionHandler(manager, ent, {"healthPickup"})
+			//: collisionHandler(manager, ent, {"healthPickup"})
+			: collisionHandler(manager, ent, {getTypeName<healthPickup>()})
 		{
 			damage = _damage;
-			manager->registerComponent(ent, "healthPickupCollision", this);
+			manager->registerComponent(ent, this);
 		}
 		virtual ~healthPickupCollision();
 

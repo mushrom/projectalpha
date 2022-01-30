@@ -26,6 +26,8 @@ using namespace grendx::ecs;
 #include <logic/UI.hpp>
 #include <logic/levelController.hpp>
 
+#include <entities/player.hpp>
+
 #include <nuklear/nuklear.h>
 
 void projalphaView::logic(gameMain *game, float delta) {
@@ -85,7 +87,10 @@ void projalphaView::logic(gameMain *game, float delta) {
 	game->phys->stepSimulation(delta);
 	game->phys->filterCollisions();;
 
-	entity *playerEnt = findFirst(game->entities.get(), {"player"});
+	//entity *playerEnt = findFirst(game->entities.get(), {"player"});
+	//entity *playerEnt = findFirst(game->entities.get(), {getTypeName<player>()});
+	entity *playerEnt = findFirst<player>(game->entities.get());
+	
 
 	if (playerEnt) {
 		TRS transform = playerEnt->getNode()->getTransformTRS();

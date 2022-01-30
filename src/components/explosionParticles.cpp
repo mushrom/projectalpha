@@ -7,7 +7,7 @@ explosionParticles::explosionParticles(entityManager *manager, entity *ent)
 	: particleSystem(manager, ent)
 {
 	static gameObject::ptr model = nullptr;
-	manager->registerComponent(ent, "explosionParticles", this);
+	manager->registerComponent(ent, this);
 
 	for (auto& p : particles) {
 		spawn(p);
