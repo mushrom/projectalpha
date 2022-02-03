@@ -2,6 +2,7 @@
 #include <components/inventory.hpp>
 #include <entities/items/items.hpp>
 #include <logic/globalMessages.hpp>
+#include <entities/player.hpp>
 
 playerInfo::~playerInfo() {};
 wieldedHandler::~wieldedHandler() {};
@@ -11,6 +12,13 @@ playerInfo::stats playerInfo::calcFullStats(void) {
 	//       that alter stats
 	return base;
 }
+
+/*
+template <typename... U>
+std::vector<const char *> typeList() {
+	return { getTypeName<U>()... };
+}
+*/
 
 void wieldedHandler::handleInput(entityManager *manager,
                                  entity *ent,
@@ -24,7 +32,8 @@ void wieldedHandler::handleInput(entityManager *manager,
 		return;
 	}
 
-	entity *playerEnt = findFirst(manager, {"player", "inventory", "playerInfo"});
+	//entity *playerEnt = findFirst(manager, {"player", "inventory", "playerInfo"});
+	entity *playerEnt = findFirstTypes<player, inventory, playerInfo>(manager);
 	if (!playerEnt) return;
 
 	auto inv = getComponent<inventory>(manager, playerEnt);

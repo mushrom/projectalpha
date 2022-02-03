@@ -26,9 +26,6 @@ chasePlayer::chasePlayer(entityManager *manager, entity *ent)
 {
 	manager->registerComponent(ent, this);
 	manager->registerInterface<updatable>(ent, this);
-	// Hmm, why do I not have a constructor in updatable that does this...
-	//manager->registerComponent(ent, "updatable", this);
-	//manager->registerComponent(ent, "chasePlayer", this);
 }
 
 void chasePlayer::update(entityManager *manager, float delta) {

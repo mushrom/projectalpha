@@ -4,6 +4,7 @@
 #include <components/health.hpp>
 #include <components/healthbar.hpp>
 #include <entities/projectile.hpp>
+#include <entities/player.hpp>
 #include "enemy.hpp"
 
 static channelBuffers_ptr sfx = nullptr;
@@ -110,7 +111,7 @@ void enemy::update(entityManager *manager, float delta) {
 	glm::vec3 selfPos = node->getTransformTRS().position;
 
 	entity *playerEnt =
-		findNearest(manager, node->getTransformTRS().position, {"player"});
+		findNearest<player>(manager, node->getTransformTRS().position);
 
 	if (playerEnt) {
 		playerPos = playerEnt->getNode()->getTransformTRS().position;

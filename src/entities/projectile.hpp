@@ -42,7 +42,7 @@ class projectileCollision : public collisionHandler {
 		{
 			std::cerr << "projectile collision!" << std::endl;
 			health *entHealth = getComponent<health>(manager, ent);
-			projectile *proj  = getComponent<projectile>(manager, ent);
+			projectile *proj  = getComponent<projectile>(manager, other);
 
 			//castEntityComponent(entHealth, manager, ent, "health");
 			//castEntityComponent(proj, manager, other, "projectile");

@@ -66,7 +66,7 @@ void areaSystem::update(entityManager *manager, float delta) {
 
 		for (auto& entit : ents) {
 			auto comps = manager->getEntityComponents(entit);
-			auto range = comps.equal_range("area");
+			auto range = getRange<area>(comps);
 
 			for (auto it = range.first; it != range.second; it++) {
 				auto& [name, comp] = *it;

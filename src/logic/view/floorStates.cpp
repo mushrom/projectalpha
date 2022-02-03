@@ -235,7 +235,7 @@ void projalphaView::incrementFloor(gameMain *game, int amount) {
 			}
 		}
 
-		entity *playerEnt = findFirst(game->entities.get(), {"player"});
+		entity *playerEnt = findFirst<player>(game->entities.get());
 		if (playerEnt) {
 			TRS t;
 			t.position = (amount > 0)? next->entrance : next->exit;
@@ -257,7 +257,7 @@ bool projalphaView::nearNode(gameMain *game, const std::string& name, float thre
 
 	gameObject::ptr wfcroot = floor->generator->getNode()->getNode("nodes");
 	//gameObject::ptr wfcroot = wfcgen->getNode()->getNode("nodes");
-	entity *playerEnt = findFirst(game->entities.get(), {"player"});
+	entity *playerEnt = findFirst<player>(game->entities.get());
 
 	if (wfcroot->hasNode(name) && playerEnt) {
 		TRS nodeTrans = wfcroot->getNode(name)->getTransformTRS();

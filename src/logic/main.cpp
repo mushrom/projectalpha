@@ -266,9 +266,12 @@ int main(int argc, char *argv[]) { try {
 			inv->insert(game->entities.get(), bullet);
 		}
 
-		new pickupAction(game->entities.get(), playerEnt, {"amuletPickup"});
-		new pickupAction(game->entities.get(), playerEnt, {"pickup"});
-		new autopickupAction(game->entities.get(), playerEnt, {"autopickup"});
+		//new pickupAction(game->entities.get(), playerEnt, {"amuletPickup"});
+		//new pickupAction(game->entities.get(), playerEnt, {"pickup"});
+		//new autopickupAction(game->entities.get(), playerEnt, {"autopickup"});
+		new pickupAction(game->entities.get(), playerEnt, { getTypeName<amuletPickup>() });
+		new pickupAction(game->entities.get(), playerEnt, { getTypeName<pickup>() });
+		new autopickupAction(game->entities.get(), playerEnt, { getTypeName<autopickup>() });
 
 #if defined(__ANDROID__)
 		int wx = game->rend->screen_x;

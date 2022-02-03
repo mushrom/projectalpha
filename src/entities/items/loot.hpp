@@ -51,8 +51,6 @@ class ammoLoot : public autopickup {
 
 		virtual void onEvent(entityManager *manager, entity *ent, entity *other) {
 			inventory *inv = getComponent<inventory>(manager, other);
-			//inventory *inv;
-			//castEntityComponent(inv, manager, other, "inventory");
 
 			if (!inv) {
 				return;
@@ -89,7 +87,6 @@ class healthLoot : public autopickup {
 				model->setTransform(transform);
 			}
 
-
 			gameLightPoint::ptr lit = std::make_shared<gameLightPoint>();
 			lit->diffuse = glm::vec4(1.0, 0.2, 0.2, 1.0);
 			lit->intensity = 200;
@@ -101,14 +98,10 @@ class healthLoot : public autopickup {
 
 		virtual void onEvent(entityManager *manager, entity *ent, entity *other) {
 			health *hp = getComponent<health>(manager, other);
-			//health *hp;
-			//castEntityComponent(hp, manager, other, "health");
 
-			if (!hp) {
-				return;
+			if (hp) {
+				hp->heal(10);
 			}
-
-			hp->heal(10);
 		}
 
 		virtual ~healthLoot();

@@ -12,7 +12,7 @@ projectileCollision::projectileCollision(entityManager *manager,
 	//: collisionHandler(manager, ent, {"projectile"})
 	: collisionHandler(manager, ent, {getTypeName<projectile>()})
 {
-	// TODO:
+	manager->registerComponent(ent, this);
 }
 
 nlohmann::json projectileCollision::serialize(entityManager *manager) {

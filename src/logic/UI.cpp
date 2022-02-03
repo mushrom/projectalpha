@@ -137,7 +137,7 @@ bool dialogPrompt::active(entityManager *manager, entity *ent) {
 	// TODO: some way to specify onScreen, currentlyInside, etc
 	//return currentlyInside;
 	//bool isActive;
-	entity *playerEnt = findFirst(manager, {"player"});
+	entity *playerEnt = findFirst<player>(manager);
 
 	if (!playerEnt || !playerEnt->active) {
 		return false;
@@ -180,7 +180,7 @@ void dialogPrompt::draw(entityManager *manager,
 }
 
 void uiSystem::update(entityManager *manager, float delta) {
-	auto components = manager->getComponents("uiComponent");
+	auto components = manager->getComponents<uiComponent>();
 
 	for (auto& cit : components) {
 		uiComponent *comp = dynamic_cast<uiComponent*>(cit);

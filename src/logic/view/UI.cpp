@@ -675,8 +675,7 @@ void projalphaView::drawPauseMenu(gameMain *game, int wx, int wy) {
 }
 
 void projalphaView::drawInventory(gameMain *game, int wx, int wy) {
-	//entity *playerEnt = findFirst(game->entities.get(), {"player", "inventory"});
-	entity *playerEnt = findFirst(game->entities.get(), {getTypeName<player>(), getTypeName<inventory>()});
+	entity *playerEnt = findFirstTypes<player, inventory>(game->entities.get());
 	if (!playerEnt) return;
 
 	auto inv   = getComponent<inventory>(game->entities.get(), playerEnt);
@@ -833,7 +832,7 @@ void projalphaView::drawWinScreen(gameMain *game, int wx, int wy) {
 
 #include <nuklear/canvas.h>
 void projalphaView::drawTileDebug(gameMain *game) {
-	entity *playerEnt = findFirst(game->entities.get(), {"player", "inventory"});
+	entity *playerEnt = findFirstTypes<player, inventory>(game->entities.get());
 
 	auto floor = getFloor(game, currentFloor);
 	// XXX: don't like this one bit

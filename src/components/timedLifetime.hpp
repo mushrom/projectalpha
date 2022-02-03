@@ -49,10 +49,10 @@ class lifetimeSystem : public entitySystem {
 		virtual void update(entityManager *manager, float delta) {
 			float curTime = SDL_GetTicks() / 1000.f;
 			//auto timers = manager->getComponents("timedLifetime");
-			auto timers = manager->getComponents(getTypeName<timedLifetime>());
+			auto timers = manager->getComponents<timedLifetime>();
 
 			for (auto& it : timers) {
-				timedLifetime *lifetime = dynamic_cast<timedLifetime*>(it);
+				timedLifetime *lifetime = static_cast<timedLifetime*>(it);
 				entity *ent = manager->getEntity(lifetime);
 
 				if (lifetime && ent) {
